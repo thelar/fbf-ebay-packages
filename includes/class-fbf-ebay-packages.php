@@ -157,6 +157,11 @@ class Fbf_Ebay_Packages {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
+        $this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu_page' );
+
+        $this->loader->add_action( 'admin_post_fbf_ebay_packages_add_package', $plugin_admin, 'save_post');
+        $this->loader->add_action( 'admin_notices', $plugin_admin, 'fbf_ebay_packages_admin_notices');
+
 	}
 
 	/**
