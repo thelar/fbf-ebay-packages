@@ -123,7 +123,7 @@ class Fbf_Ebay_Packages_Admin {
             __( 'eBay Packages', 'fbf-ebay' ),
             __( 'eBay Packages', 'fbf-ebay' ),
             'manage_options',
-            $this->plugin_name,
+            $this->plugin_name . '-settings',
             [$this, 'add_package'],
             'dashicons-admin-tools'
         );
