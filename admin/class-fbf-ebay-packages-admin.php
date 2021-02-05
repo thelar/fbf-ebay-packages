@@ -342,7 +342,7 @@ class Fbf_Ebay_Packages_Admin {
         if(!empty($fields['sku'])){
             $product->set_sku($fields['sku']);
         }else{
-            $sku = sprintf($fields['qty'] . '^' . $tyre->get_sku() . '^' . $fields['qty'] . $wheel->get_sku());
+            $sku = sprintf($fields['qty'] . '-' . $tyre->get_sku() . '-' . $fields['qty'] . '-' . $wheel->get_sku());
             $product->get_sku($sku);
         }
 
