@@ -254,9 +254,12 @@ class Fbf_Ebay_Packages_Admin {
         }
 
         // Check if SKU exists
-        if(wc_get_product_id_by_sku($fields['sku'])){
-            $this->errors[] = 'SKU must be unique';
+        if(!empty($fields['sku'])){
+            if(wc_get_product_id_by_sku($fields['sku'])){
+                $this->errors[] = 'SKU must be unique';
+            }
         }
+
 
         // Check the stock
         $stock = min($tyre->get_stock_quantity(), $wheel->get_stock_quantity());
