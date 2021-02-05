@@ -272,7 +272,6 @@ class Fbf_Ebay_Packages_Admin {
         // Create product
         $product = new WC_Product();
         $product->set_name($fields['name']);
-        $product->set_sku($fields['sku']);
         $product->set_category_ids([$term->term_id]);
         //$product->set_attributes($attrs);
         $prod_id = $product->save();
@@ -335,6 +334,14 @@ class Fbf_Ebay_Packages_Admin {
             'wheel' => $fields['wheel']
         ];
         $product->update_meta_data('_fbf_ebay_packages_linked', $linked);
+
+        // Set SKU
+        if(!empty($fields['sku'])){
+            $product->set_sku($fields['sku']);
+        }else{
+            $sku = sprintf($fields['qty'] . '^' . $tyre->get_sku() . '^' . $fields['qty'] . $wheel->get_sku());
+            $product->get_sku($sku);
+        }
 
         $product->save();
 
