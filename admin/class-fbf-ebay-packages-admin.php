@@ -340,7 +340,7 @@ class Fbf_Ebay_Packages_Admin {
 
         $package_link = urlencode(get_admin_url() . 'post.php?post=' . $prod_id . '&action=edit');
 
-        wp_redirect(sprintf(get_admin_url() . 'admin.php?page=fbf-ebay-packages-settings&fbf_ebay_packages_status=success&fbf_ebay_packages_message=%s&fbf_ebay_packages_link=%s', 'Saved', $package_link));
+        wp_redirect(sprintf(get_admin_url() . 'admin.php?page=fbf-ebay-packages-settings&fbf_ebay_packages_status=success&fbf_ebay_packages_message=%s&fbf_ebay_packages_link=%s', 'The%20eBay%20Package%20was%20created', $package_link));
     }
 
     public function update_acf_settings_path( $path ) {
