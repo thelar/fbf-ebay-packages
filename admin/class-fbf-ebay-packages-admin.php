@@ -547,4 +547,34 @@ class Fbf_Ebay_Packages_Admin {
     {
         return urlencode(implode('<br/>', $this->errors));
     }
+
+    public function acf_relationship($args, $field, $post_id)
+    {
+        $a = $args;
+        if(!empty($args['s'])){
+            // Is the search a valid SKU?
+            $p = wc_get_product_id_by_sku($args['s']);
+
+            if($p!==0){
+                $args['meta_query'][] = [
+                    'key' => '_sku',
+                    'value' => $args['s'],
+                    'compare' => 'LIKE'
+                ];
+                unset($args['s']);
+            }
+        }
+        if($field['key']==='field_601414bccb224'||$field['key']==='field_601414fccb225'){
+            $args['meta_query'][] = [
+                'key'     => '_stock',
+                'type'    => 'numeric',
+                'value'   => 3,
+                'compare' => '>'
+            ];
+        }
+        if(isset($args['meta_query'])){
+            $args['meta_query']['relation'] = 'AND';
+        }
+        return $args;
+    }
 }
