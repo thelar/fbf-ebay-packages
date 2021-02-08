@@ -312,11 +312,13 @@ class Fbf_Ebay_Packages_Admin {
 
         // Set the stock level
         $product->set_manage_stock(true);
-        $product->set_stock_quantity($stock);
+        $product->set_stock_quantity(floor($stock/$fields['qty'])); // E.g. if the package qty is 4 - stock level for package is the minimum stock divided by 4
 
         // Set the price
         $price = ($tyre->get_price() * $fields['qty']) + ($wheel->get_price() * $fields['qty']);
         $price = $price + (($price/100) * $fields['percentage']);
+        $product->update_meta_data('_fbf_ebay_packages_percentage', $fields['percentage']); // Need to set this because when we update prices the same calculation as above needs to be done
+        $product->update_meta_data('_fbf_ebay_packages_qty', $fields['qty']); // Will also need this to work out if Package should be hidden
         $product->set_regular_price($price);
 
         // Set the photo
@@ -345,6 +347,19 @@ class Fbf_Ebay_Packages_Admin {
             $sku = sprintf($fields['qty'] . '^' . $tyre->get_sku() . '^' . $fields['qty'] . '^' . $wheel->get_sku());
             $product->set_sku($sku);
         }
+
+        // Set yoast values
+        update_post_meta($prod_id, '_yoast_wpseo_meta-robots-noindex', true);
+        update_post_meta($prod_id, '_yoast_wpseo_meta-robots-nofollow', true);
+        update_post_meta($prod_id, '_relevanssi_noindex_reason', 'eBay Package');
+
+        // Backorders off
+        $product->set_backorders('no');
+
+        // Not in google product feed
+        update_post_meta($prod_id, '_woocommerce_gpf_data', [
+            'exclude_product' => 'on'
+        ]);
 
         $product->save();
 
@@ -556,6 +571,27 @@ class Fbf_Ebay_Packages_Admin {
     private function get_errors()
     {
         return urlencode(implode('<br/>', $this->errors));
+    }
+
+    /**
+     * Static function run daily from importer which updates stock and price on packages
+     *
+     * @param $id
+     */
+    public static function update_package($id)
+    {
+        $product = wc_get_product($id);
+        $linked = $product->get_meta('_fbf_ebay_packages_linked', true);
+        $tyre = wc_get_product($linked['tyre']);
+        $wheel = wc_get_product($linked['wheel']);
+        $percentage = $product->get_meta('_fbf_ebay_packages_percentage', true);
+        $qty = $product->get_meta('_fbf_ebay_packages_qty', true);
+        $stock = min($tyre->get_stock_quantity(), $wheel->get_stock_quantity());
+        $product->set_stock_quantity(floor($stock/$qty)); // E.g. if the package qty is 4 - stock level for package is the minimum stock divided by 4
+        $price = ($tyre->get_price() * $qty) + ($wheel->get_price() * $qty);
+        $price = $price + (($price/100) * $percentage);
+        $product->set_regular_price($price);
+        $product->save();
     }
 
     public function acf_relationship($args, $field, $post_id)
