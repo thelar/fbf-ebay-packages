@@ -162,7 +162,7 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'admin_post_fbf_ebay_packages_add_package', $plugin_admin, 'save_post');
         $this->loader->add_action( 'admin_notices', $plugin_admin, 'fbf_ebay_packages_admin_notices');
 
-        //$this->loader->add_filter('acf/fields/relationship/query', $plugin_admin, 'acf_relationship', 10, 3);
+        $this->loader->add_filter('acf/fields/relationship/query', $plugin_admin, 'acf_relationship', 10, 3);
         $this->loader->add_filter('acf/fields/relationship/result', $plugin_admin, 'acf_relationship_result', 10, 4);
 
 	}
