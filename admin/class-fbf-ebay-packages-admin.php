@@ -403,7 +403,7 @@ class Fbf_Ebay_Packages_Admin {
                         'placeholder' => '',
                         'prepend' => '',
                         'append' => '',
-                        'maxlength' => '',
+                        'maxlength' => '80',
                     ),
                     array(
                         'key' => 'field_60143699c805a',
@@ -622,5 +622,31 @@ class Fbf_Ebay_Packages_Admin {
             $args['meta_query']['relation'] = 'AND';
         }
         return $args;
+    }
+
+    public function acf_relationship_result($text, $post, $field, $post_id)
+    {
+        $product = wc_get_product($post->ID);
+        $str = '';
+        if($field['key']==='field_601414bccb224'||$field['key']==='field_601414fccb225') {
+            $p = $post_id;
+            if(has_term('steel-wheel', 'product_cat', $post->ID)){
+                $centre_bore_terms = get_the_terms($post->ID, 'pa_centre-bore');
+                $centre_bore = $centre_bore_terms[0]->name;
+                $pcd_terms = get_the_terms($post->ID, 'pa_wheel-pcd');
+                $pcd = $pcd_terms[0]->name;
+                $sku = $product->get_sku();
+                $str = sprintf(' - (SKU: %s, PCD: %s, Centre Bore: %s)', $sku, $pcd, $centre_bore );
+            }else if(has_term('alloy-wheel', 'product_cat', $post->ID)){
+                $pcd_terms = get_the_terms($post->ID, 'pa_wheel-pcd');
+                $pcd = $pcd_terms[0]->name;
+                $sku = $product->get_sku();
+                $str = sprintf(' - (SKU: %s, PCD: %s)', $sku, $pcd );
+            }else if(has_term('tyre', 'product_cat', $post->ID)){
+                $sku = $product->get_sku();
+                $str = sprintf(' - (SKU: %s)', $sku );
+            }
+        }
+        return $text . $str;
     }
 }
