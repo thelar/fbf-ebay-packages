@@ -605,6 +605,7 @@ class Fbf_Ebay_Packages_Admin {
             // Is the search a valid SKU?
             $p = wc_get_product_id_by_sku($args['s']);
 
+
             if($p!==0){
                 $args['meta_query'][] = [
                     'key' => '_sku',
