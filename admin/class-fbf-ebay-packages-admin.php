@@ -122,7 +122,7 @@ class Fbf_Ebay_Packages_Admin {
         add_menu_page(
             __( 'eBay Packages', 'fbf-ebay' ),
             __( 'eBay Packages', 'fbf-ebay' ),
-            'manage_options',
+            'manage_woocommerce',
             $this->plugin_name . '-settings',
             [$this, 'add_package'],
             'dashicons-admin-tools'
