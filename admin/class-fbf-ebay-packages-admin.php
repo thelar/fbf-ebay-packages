@@ -615,14 +615,14 @@ class Fbf_Ebay_Packages_Admin {
                 unset($args['s']);
             }
         }
-        if($field['key']==='field_601414bccb224'||$field['key']==='field_601414fccb225'){
+        /*if($field['key']==='field_601414bccb224'||$field['key']==='field_601414fccb225'){
             $args['meta_query'][] = [
                 'key'     => '_stock',
                 'type'    => 'numeric',
                 'value'   => 3,
                 'compare' => '>'
             ];
-        }
+        }*/
         if(isset($args['meta_query'])){
             $args['meta_query']['relation'] = 'AND';
         }
