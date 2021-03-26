@@ -263,9 +263,10 @@ class Fbf_Ebay_Packages_Admin {
 
         // Check the stock
         $stock = min($tyre->get_stock_quantity(), $wheel->get_stock_quantity());
-        if($stock < $fields['qty']){
+        // Need to be able to create stock even if on backorder - so comment out
+        /*if($stock < $fields['qty']){
             $this->errors[] = 'Not enough stock';
-        }
+        }*/
 
         if(!empty($this->errors)){
             wp_redirect(get_admin_url() . 'admin.php?page=fbf-ebay-packages-settings&fbf_ebay_packages_status=error&fbf_ebay_packages_message=' . $this->get_errors());
