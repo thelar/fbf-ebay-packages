@@ -1,4 +1,4 @@
-(function( $ ) {
+(function( $	 ) {
 	'use strict';
 
 	/**
@@ -30,6 +30,7 @@
 	 */
 
 	$(function() {
+
 		$('#fbf_ebay_packages_add_package').find('.acf-input input[type=text], .acf-input input[type=number]').removeAttr('required');
 		$('#fbf_ebay_packages_add_package').on('submit', function(e){
 			console.log('form submited');
@@ -111,6 +112,122 @@
 				//console.error(error);
 			}
 		}
+
+		// multiple select with AJAX search
+		$('#tyre_brands').select2({
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log(params);
+					return {
+						q: params.term, // search query
+						action: 'fbf_ebay_packages_get_brands', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
+
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+							options.push( { id: text[0], text: text[1]  } );
+						});
+
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			minimumInputLength: 3 // the minimum of symbols to input before perform a search
+		});
+
+		// datatable
+		$('#example').DataTable({
+			serverSide: true,
+			processing: true,
+			searchDelay: 700,
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: {
+					action: 'fbf_ebay_packages_ebay_listing'
+				}
+			},
+			oLanguage: {
+				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			}
+		});
+
+		// tyre select form submit
+		$('#tyre-brand-select-form').on('submit', function(){
+			console.log('tyre brand form submit');
+			let thickbox_id = 'save-listings-thickbox';
+			let $content = $('#' + thickbox_id + ' .tb-modal-content');
+			console.log($content);
+			let brands_selected = $('#tyre_brands').val();
+			console.log(brands_selected);
+			let url = '#TB_inline?&width=600&height=150&inlineId=' + thickbox_id;
+
+			let data = {
+				action: 'fbf_ebay_packages_brand_confirm',
+				brands: brands_selected,
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					let html = '';
+					$content.empty();
+					if(response.status==='success'){
+						html+= '<p>' + response.message + '</p>';
+					}else if(response.status==='error'){
+						let errors = response.errors;
+						$.each(errors, function(i, e){
+							html+= '<p>' + e + '</p>';
+						});
+					}
+					$content.append(html);
+					tb_show('Tyre Listings', url);
+				},
+			});
+
+			return false;
+		});
+
+		$('#fbf-ebay-packages-tyres-confirm-listing').bind('click', function (){
+			console.log('confirm listing button press');
+
+			let $content = $('.tb-modal-content');
+			$content.empty();
+			$content.append('<p><span class="spinner"></span> Please wait...</p>');
+
+			let data = {
+				action: 'fbf_ebay_packages_list_tyres',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log(response);
+				},
+			})
+
+			return false;
+		});
 
 	});
 

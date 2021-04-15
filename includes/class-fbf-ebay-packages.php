@@ -117,6 +117,11 @@ class Fbf_Ebay_Packages {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-fbf-ebay-packages-admin.php';
 
 		/**
+		 * The class responsible for admin ajax functions.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-fbf-ebay-packages-admin-ajax.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
@@ -153,18 +158,33 @@ class Fbf_Ebay_Packages {
 	private function define_admin_hooks() {
 
 		$plugin_admin = new Fbf_Ebay_Packages_Admin( $this->get_plugin_name(), $this->get_version() );
+		$plugin_admin_ajax = new Fbf_Ebay_Packages_Admin_Ajax($this->get_plugin_name(), $this->get_version());
+
+        $this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu_page' );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
-        $this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu_page' );
+        $this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'fbf_ebay_packages_admin_meta_box');
 
         $this->loader->add_action( 'admin_post_fbf_ebay_packages_add_package', $plugin_admin, 'save_post');
         $this->loader->add_action( 'admin_notices', $plugin_admin, 'fbf_ebay_packages_admin_notices');
 
+        /* Load the JavaScript needed for the settings screen. */
+        $this->loader->add_action("admin_footer-{$plugin_admin->page_id()}", $plugin_admin, 'meta_footer_scripts');
+
         $this->loader->add_filter('acf/fields/relationship/query', $plugin_admin, 'acf_relationship', 10, 3);
         $this->loader->add_filter('acf/fields/relationship/result', $plugin_admin, 'acf_relationship_result', 10, 4);
 
+        //Ajax
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_brands', $plugin_admin_ajax, 'fbf_ebay_packages_get_brands' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_brands', $plugin_admin_ajax, 'fbf_ebay_packages_get_brands' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_ebay_listing', $plugin_admin_ajax, 'fbf_ebay_packages_ebay_listing' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_ebay_listing', $plugin_admin_ajax, 'fbf_ebay_packages_ebay_listing' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_brand_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_brand_confirm' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_brand_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_brand_confirm' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
 	}
 
 	/**

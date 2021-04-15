@@ -16,6 +16,9 @@
  * Defines the plugin name, version, and two examples hooks for how to
  * enqueue the admin-specific stylesheet and JavaScript.
  *
+ * Meta box tutorial https://shellcreeper.com/wp-settings-meta-box/
+ * Select2 tutorial https://rudrastyh.com/wordpress/select2-for-metaboxes-with-ajax.html
+ *
  * @package    Fbf_Ebay_Packages
  * @subpackage Fbf_Ebay_Packages/admin
  * @author     Kevin Price-Ward <kevin.price-ward@4x4tyres.co.uk>
@@ -40,6 +43,7 @@ class Fbf_Ebay_Packages_Admin {
 	 */
 	private $version;
     private $errors = [];
+    public $submenu;
 
 	/**
 	 * Initialize the class and set its properties.
@@ -63,7 +67,7 @@ class Fbf_Ebay_Packages_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
+	public function enqueue_styles($hook_suffix) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -77,9 +81,19 @@ class Fbf_Ebay_Packages_Admin {
 		 * class.
 		 */
 
+        // Bootstrap
+        //wp_enqueue_style( $this->plugin_name . '-bootstrap', plugin_dir_url( __FILE__ ) . 'css/bootstrap.min.css', array(), $this->version, 'all' );
+
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/fbf-ebay-packages-admin.css', array(), $this->version, 'all' );
 
         do_action('acf/input/admin_enqueue_scripts'); // Add ACF scripts
+
+        // Enqueue scripts for meta
+        $page_hook_id = $this->page_id();
+        if ( $hook_suffix == $page_hook_id ){
+            wp_enqueue_style( 'thickbox' );
+            wp_enqueue_style( $this->plugin_name . '-datatables', plugin_dir_url( __FILE__ ) . 'css/datatables.min.css', array(), $this->version, 'all' );
+        }
 
 	}
 
@@ -88,7 +102,7 @@ class Fbf_Ebay_Packages_Admin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts($hook_suffix) {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -101,15 +115,26 @@ class Fbf_Ebay_Packages_Admin {
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
+        do_action('acf/input/admin_head'); // Add ACF admin head hooks
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbf-ebay-packages-admin.js', array( 'jquery' ), $this->version, false );
+        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbf-ebay-packages-admin.js', array( 'jquery' ), $this->version, true );
         $ajax_params = array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'ajax_nonce' => wp_create_nonce('4x4_nonce'),
+            'ajax_nonce' => wp_create_nonce($this->plugin_name),
             'acf_nonce' => wp_create_nonce('acf_nonce'),
         );
-        wp_localize_script($this->plugin_name, 'ajax_object', $ajax_params);
-        do_action('acf/input/admin_head'); // Add ACF admin head hooks
+        wp_localize_script($this->plugin_name, 'fbf_ebay_packages_admin', $ajax_params);
+
+        // Enqueue scripts for meta
+        $page_hook_id = $this->page_id();
+        if ( $hook_suffix == $page_hook_id ){
+            wp_enqueue_script( 'common' );
+            wp_enqueue_script( 'wp-lists' );
+            wp_enqueue_script( 'postbox' );
+            wp_enqueue_script( 'thickbox' );
+
+            wp_enqueue_script( $this->plugin_name . '-datatables', plugin_dir_url( __FILE__ ) . 'js/datatables.min.js', array( 'jquery' ), $this->version, false );
+        }
 	}
 
     /**
@@ -123,37 +148,26 @@ class Fbf_Ebay_Packages_Admin {
             __( 'eBay Packages', 'fbf-ebay' ),
             __( 'eBay Packages', 'fbf-ebay' ),
             'manage_woocommerce',
-            $this->plugin_name . '-settings',
+            $this->plugin_name,
             [$this, 'add_package'],
             'dashicons-admin-tools'
         );
-        /*add_submenu_page(
+        add_submenu_page(
             $this->plugin_name,
-            __('eBay Packages dashboard', 'fbf-ebay'),
-            __('Dashboard', 'fbf-ebay'),
-            'manage_options',
+            __('Create eBay Package', 'fbf-ebay'),
+            __('Create Package', 'fbf-ebay'),
+            'manage_woocommerce',
             $this->plugin_name,
-            [$this, 'display_front_page']
-        );*/
-        /*add_submenu_page(
-            $this->plugin_name,
-            __('eBay Packages add package', 'fbf-ebay'),
-            __('Add package', 'fbf-ebay'),
-            'manage_options',
-            $this->plugin_name . '-settings',
             [$this, 'add_package']
-        );*/
-    }
-
-    /**
-     * Render the front page for plugin
-     *
-     * @since  1.0.0
-     */
-    public function display_front_page() {
-        echo '<div class="wrap">';
-        echo '<h2>eBay Packages - dashboard</h2>';
-        echo '</div>';
+        );
+        $this->submenu = add_submenu_page(
+            $this->plugin_name,
+            __('Tyres', 'fbf-ebay'),
+            __('Tyres', 'fbf-ebay'),
+            'manage_woocommerce',
+            $this->plugin_name . '-tyres',
+            [$this, 'tyres']
+        );
     }
 
     /**
@@ -186,8 +200,6 @@ class Fbf_Ebay_Packages_Admin {
         echo '<input type="submit" class="button button-primary" value="Add Package"/>';
         echo '</form>';
         echo '</div>';
-
-
     }
 
     public function fbf_ebay_packages_admin_notices()
@@ -202,6 +214,34 @@ class Fbf_Ebay_Packages_Admin {
             printf('<p>%s, %s</p>', $_REQUEST['fbf_ebay_packages_message'], $link);
             echo '</div>';
         }
+    }
+
+    /**
+     * Basic Meta Box
+     * @since 0.1.0
+     * @link http://codex.wordpress.org/Function_Reference/add_meta_box
+     */
+    public function fbf_ebay_packages_admin_meta_box(){
+
+        $page_hook_id = $this->page_id();
+
+        $meta_brands = add_meta_box(
+            'tyre-brands',                  /* Meta Box ID */
+            'Tyre Brands',               /* Title */
+            [$this, 'tyre_brands_meta_box'],  /* Function Callback */
+            $page_hook_id,               /* Screen: Our Settings Page */
+            'normal',                 /* Context */
+            'default'                 /* Priority */
+        );
+
+        $meta_packages = add_meta_box(
+            'tyre-listings',
+            'eBay Tyre Listings',
+            [$this, 'tyre_listings_meta_box'],
+            $page_hook_id,
+            'normal',
+            'default'
+        );
     }
 
     public function save_post( $post_id )
@@ -566,6 +606,78 @@ class Fbf_Ebay_Packages_Admin {
                 'description' => '',
             ));
 
+            acf_add_local_field_group(array(
+                'key' => 'group_605e087c46123',
+                'title' => 'eBay meta 2',
+                'fields' => array(
+                    array(
+                        'key' => 'field_6014144ccb224',
+                        'label' => 'Quantity',
+                        'name' => 'quantity',
+                        'type' => 'number',
+                        'instructions' => 'Enter the number of Tyres.',
+                        'required' => 1,
+                        'conditional_logic' => 0,
+                        'wrapper' => array(
+                            'width' => '',
+                            'class' => '',
+                            'id' => '',
+                        ),
+                        'default_value' => 1,
+                        'placeholder' => '',
+                        'prepend' => '',
+                        'append' => '',
+                        'min' => 1,
+                        'max' => 4,
+                        'step' => '',
+                    ),
+                    array(
+                        'key' => 'field_605e087c6013a',
+                        'label' => 'Tyre',
+                        'name' => 'tyre',
+                        'type' => 'relationship',
+                        'instructions' => 'Select the Tyre for the listing',
+                        'required' => 1,
+                        'conditional_logic' => 0,
+                        'wrapper' => array(
+                            'width' => '',
+                            'class' => '',
+                            'id' => '',
+                        ),
+                        'post_type' => array(
+                            0 => 'product',
+                        ),
+                        'taxonomy' => array(
+                            0 => 'product_cat:tyre',
+                        ),
+                        'filters' => array(
+                            0 => 'search',
+                        ),
+                        'elements' => '',
+                        'min' => 1,
+                        'max' => 1,
+                        'return_format' => 'object',
+                    ),
+                ),
+                'location' => array(
+                    array(
+                        array(
+                            'param' => 'post_type',
+                            'operator' => '==',
+                            'value' => 'post',
+                        ),
+                    ),
+                ),
+                'menu_order' => 0,
+                'position' => 'normal',
+                'style' => 'default',
+                'label_placement' => 'top',
+                'instruction_placement' => 'label',
+                'hide_on_screen' => '',
+                'active' => true,
+                'description' => '',
+            ));
+
         endif;
     }
 
@@ -634,7 +746,7 @@ class Fbf_Ebay_Packages_Admin {
     {
         $product = wc_get_product($post->ID);
         $str = '';
-        if($field['key']==='field_601414bccb224'||$field['key']==='field_601414fccb225') {
+        if($field['key']==='field_601414bccb224'||$field['key']==='field_601414fccb225'||$field['key']==='field_605e087c6013a') {
             $p = $post_id;
             if(has_term('steel-wheel', 'product_cat', $post->ID)){
                 $centre_bore_terms = get_the_terms($post->ID, 'pa_centre-bore');
@@ -655,4 +767,152 @@ class Fbf_Ebay_Packages_Admin {
         }
         return $text . $str;
     }
+
+    public function tyres()
+    {
+        global $hook_suffix;
+
+        /* enable add_meta_boxes function in this page. */
+        do_action( 'add_meta_boxes', $hook_suffix, [] ); // Not entirely sure why we need an empty array here!
+
+        /**
+         * The class responsible for API auth.
+         */
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+        $auth = new Fbf_Ebay_Packages_Api_Auth();
+        $token = $auth->get_valid_token();
+        if($token['status']==='error'){
+            $this->errors[] = $token['errors'];
+        }
+
+        $msg = sprintf('<p>%s</p>', $token['status']==='error'?$this->get_errors():'eBay Access Token is valid');
+        printf('<div class="notice notice-%s is-dismissible">%s</div>', $token['status'], $msg);
+
+        ?>
+        <div class="wrap">
+            <h2>Tyre Listings</h2>
+            <?php settings_errors(); ?>
+            <div class="tyre-brand-select-meta-box-wrap">
+                <form id="tyre-brand-select-form" method="post" action="options.php">
+                    <div id="poststuff">
+                        <div id="post-body" class="metabox-holder columns-1">
+                            <div id="postbox-container-2" class="postbox-container">
+                                <?php do_meta_boxes( $hook_suffix, 'normal', null ); ?>
+                                <!-- #normal-sortables -->
+                            </div><!-- #postbox-container-2 -->
+                        </div><!-- #post-body -->
+                        <br class="clear">
+                    </div><!-- #poststuff -->
+                </form>
+            </div><!-- .fx-settings-meta-box-wrap -->
+        </div><!-- .wrap -->
+        <?php
+    }
+
+    /**
+     * Footer Script Needed for Meta Box:
+     * - Meta Box Toggle.
+     * - Spinner for Saving Option.
+     * - Reset Settings Confirmation
+     * @since 0.1.0
+     */
+    public function meta_footer_scripts(){
+        if(!empty($this->submenu)){
+            $page_hook_id = $this->page_id();
+            ?>
+            <script type="text/javascript">
+                //<![CDATA[
+                jQuery(document).ready( function($) {
+                    // toggle
+                    $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+                    postboxes.add_postbox_toggles( '<?php echo $page_hook_id; ?>' );
+                    // display spinner
+                    $('#fx-smb-form').submit( function(){
+                        $('#publishing-action .spinner').css('display','inline');
+                    });
+                    // confirm before reset
+                    $('#delete-action .submitdelete').on('click', function() {
+                        return confirm('Are you sure want to do this?');
+                    });
+                });
+                //]]>
+            </script>
+            <?php
+        }
+    }
+
+    /**
+     * Submit Meta Box Callback
+     * @since 0.1.0
+     */
+    public function tyre_brands_meta_box(){
+        $selected_brands = get_option('_fbf_ebay_packages_tyre_brands');
+        $options = '';
+        if(!empty($selected_brands)){
+            foreach($selected_brands as $brand){
+                $options.= sprintf('<option value="%s" selected="selected">%s</option>', $brand['ID'], $brand['name']);
+            }
+        }
+        ?>
+        <?php /* Simple Text Input Example */ ?>
+        <p>
+            <label for="basic-text">Use the field below to search and select Tyre brands you want to create eBay listings for:</label>
+            <select id="tyre_brands" name="tyre_brands[]" multiple="multiple" style="width: 99%; max-width: 25em;"><?=$options?></select>
+        </p>
+        <p class="howto">Click 'Save Listings' below to create an eBay Listing for each Tyre for the Brands listed above.</p>
+        <?php submit_button( __( 'Save Listings', 'text-domain'), 'primary', 'submit', false, ['style' => 'float:left'] ); ?>
+        <br class="clear"/>
+        <div id="save-listings-thickbox" style="display:none;">
+            <div class="tb-modal-content"></div>
+            <div class="tb-modal-footer" style="margin-bottom: 1em;">
+                <button role="button" type="button" class="button button-secondary" onclick="tb_remove();">
+                    Close
+                </button>
+                <button id="fbf-ebay-packages-tyres-confirm-listing" role="button" type="button" class="button button-primary">
+                    Confirm
+                </button>
+            </div>
+        </div>
+        <?php
+    }
+
+    public function tyre_listings_meta_box()
+    {
+        ?>
+        <table id="example" class="display" style="width:100%">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>SKU</th>
+                <th>Qty</th>
+                <th>Offer ID</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Title</th>
+                <th>SKU</th>
+                <th>Qty</th>
+                <th>Offer ID</th>
+            </tr>
+            </tfoot>
+        </table>
+
+        <div id="my-content-id" style="display:none;">
+            <p>
+                This is my hidden content! It will appear in ThickBox when the link is clicked.
+            </p>
+        </div>
+        <a href="#TB_inline?&width=600&height=550&inlineId=my-content-id" class="thickbox">Click here for example Thickbox modal</a>
+        <?php
+    }
+
+    public function page_id(){
+        return 'ebay-packages_page_fbf-ebay-packages-tyres';
+    }
 }
+
+

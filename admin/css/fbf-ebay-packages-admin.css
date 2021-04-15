@@ -2,3 +2,42 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
+
+#tyre-listings .inside {
+    margin-top: 20px;
+}
+
+.dataTables_processing {
+    background: rgba(0, 0, 0, 0.5) !important;
+    width: 80px !important;
+    color: #fff !important;
+    border-radius: 6px;
+    height: auto;
+    padding: 15px !important;
+    left: auto !important;
+    right: 50% !important;
+    margin-right: 20px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    padding-right: 20px !important;
+}
+
+table.dataTable thead th,
+table.dataTable thead td,
+table.dataTable tfoot th,
+table.dataTable tfoot td {
+    text-align: left;
+}
+
+#TB_window .tb-modal-footer {
+    position: absolute;
+    bottom: 0;
+    right: 15px;
+}
+
+#TB_window .tb-modal-content .spinner {
+    visibility: visible;
+    float: none;
+    margin-top: -4px;
+}
