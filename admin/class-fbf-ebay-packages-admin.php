@@ -117,13 +117,7 @@ class Fbf_Ebay_Packages_Admin {
 		 */
         do_action('acf/input/admin_head'); // Add ACF admin head hooks
 
-        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbf-ebay-packages-admin.js', array( 'jquery' ), $this->version, true );
-        $ajax_params = array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'ajax_nonce' => wp_create_nonce($this->plugin_name),
-            'acf_nonce' => wp_create_nonce('acf_nonce'),
-        );
-        wp_localize_script($this->plugin_name, 'fbf_ebay_packages_admin', $ajax_params);
+
 
         // Enqueue scripts for meta
         $page_hook_id = $this->page_id();
@@ -133,9 +127,60 @@ class Fbf_Ebay_Packages_Admin {
             wp_enqueue_script( 'postbox' );
             wp_enqueue_script( 'thickbox' );
 
+            wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbf-ebay-packages-admin.js', array( 'jquery' ), $this->version, true );
+            $ajax_params = array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'ajax_nonce' => wp_create_nonce($this->plugin_name),
+                'acf_nonce' => wp_create_nonce('acf_nonce'),
+            );
+            wp_localize_script($this->plugin_name, 'fbf_ebay_packages_admin', $ajax_params);
+
             wp_enqueue_script( $this->plugin_name . '-datatables', plugin_dir_url( __FILE__ ) . 'js/datatables.min.js', array( 'jquery' ), $this->version, false );
         }
 	}
+
+    /**
+     * Example daily event.
+     *
+     * @since 1.0.0
+     */
+    public function run_hourly_event($h=null) {
+        /**
+         * This function is provided for demonstration purposes only.
+         *
+         * An instance of this class should be passed to the run() function
+         * defined in Plugin_Name_Loader as all of the hooks are defined
+         * in that particular class.
+         *
+         * The Plugin_Name_Loader will then create the relationship
+         * between the defined hooks and the functions defined in this
+         * class.
+         */
+        // do something every hour
+
+        if(!is_null($h)){
+            $hook = $h;
+        }else{
+            $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+        }
+        $i = self::synchronise($hook, 'tyres');
+
+        // TODO: handle times when maybe the logging fails
+    }
+
+    public static function synchronise($via, $type)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
+
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-synchronise.php';
+        $sync = new Fbf_Ebay_Packages_Synchronise(FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
+        $sync_result = $sync->run('tyre');
+
+        $q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
+        $i = $wpdb->query($q);
+        return $i;
+    }
 
     /**
      * Register menu page
@@ -238,6 +283,15 @@ class Fbf_Ebay_Packages_Admin {
             'tyre-listings',
             'eBay Tyre Listings',
             [$this, 'tyre_listings_meta_box'],
+            $page_hook_id,
+            'normal',
+            'default'
+        );
+
+        $meta_schedule = add_meta_box(
+            'tyre-schedule',
+            'eBay Synchronisation',
+            [$this, 'tyre_schedule_sync_meta_box'],
             $page_hook_id,
             'normal',
             'default'
@@ -900,13 +954,43 @@ class Fbf_Ebay_Packages_Admin {
             </tr>
             </tfoot>
         </table>
+        <?php
+    }
 
-        <div id="my-content-id" style="display:none;">
-            <p>
-                This is my hidden content! It will appear in ThickBox when the link is clicked.
-            </p>
-        </div>
-        <a href="#TB_inline?&width=600&height=550&inlineId=my-content-id" class="thickbox">Click here for example Thickbox modal</a>
+    public function tyre_schedule_sync_meta_box()
+    {
+        $hourly_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+        $schedule = wp_get_schedule($hourly_hook);
+        $next_schedule = wp_next_scheduled($hourly_hook);
+        $date = new DateTime();
+        $timezone = new DateTimeZone("Europe/London");
+        $date->setTimezone($timezone);
+        $date->setTimestamp(absint($next_schedule));
+        $next = $date->format('g:iA - jS F Y') . "\n";
+        $synchronisations_to_show = 5;
+        ?>
+        <p>Upcoming scheduled synchronisation: <strong><?=$next?></strong> <em>&lt;<?=$schedule?>&gt;</em></p>
+
+        <h2>Previous <?=$synchronisations_to_show?> events:</h2>
+        <table id="fbf_ep_event_log_table" class="display">
+            <thead>
+            <tr>
+                <th>Date/time</th>
+                <th>Hook</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Date/time</th>
+                <th>Hook</th>
+            </tr>
+            </tfoot>
+        </table>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise" style="margin-top: 1em;">Synchronise with eBay</button>
+        <span class="spinner" style="margin-top: 1.2em;"></span>
+        <br class="clear"/>
         <?php
     }
 

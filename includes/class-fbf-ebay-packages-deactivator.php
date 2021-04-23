@@ -30,7 +30,7 @@ class Fbf_Ebay_Packages_Deactivator {
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-
+        Fbf_Ebay_Packages_Cron::unschedule();
 	}
 
 }

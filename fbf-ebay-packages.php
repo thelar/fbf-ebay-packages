@@ -43,6 +43,11 @@ define( 'FBF_EBAY_PACKAGES_VERSION', '1.0.1' );
 define( 'FBF_EBAY_PACKAGES_DB_VERSION', '1.0.0' );
 
 /**
+ * Plugin name.
+ */
+define( 'FBF_EBAY_PACKAGES_PLUGIN_NAME', 'fbf-ebay-packages' );
+
+/**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-fbf-ebay-packages-activator.php
  */

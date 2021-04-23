@@ -147,7 +147,7 @@
 		});
 
 		// datatable
-		$('#example').DataTable({
+		let table = $('#example').DataTable({
 			serverSide: true,
 			processing: true,
 			searchDelay: 700,
@@ -155,7 +155,28 @@
 				url: fbf_ebay_packages_admin.ajax_url,
 				type: 'POST',
 				data: {
-					action: 'fbf_ebay_packages_ebay_listing'
+					//action: 'fbf_ebay_packages_ebay_listing'
+					action: 'fbf_ebay_packages_tyre_table'
+				}
+			},
+			oLanguage: {
+				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			}
+		});
+
+		let log = $('#fbf_ep_event_log_table').DataTable({
+			paging: false,
+			searching: false,
+			ordering: false,
+			info: false,
+			serverSide: true,
+			processing: true,
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: {
+					//action: 'fbf_ebay_packages_ebay_listing'
+					action: 'fbf_ebay_packages_event_log'
 				}
 			},
 			oLanguage: {
@@ -222,10 +243,45 @@
 				data: data,
 				dataType: 'json',
 				success: function (response) {
-					console.log(response);
+					if(response.status==='success'){
+						// Close the thickbox
+						tb_remove();
+						table.search('');
+						table.columns().search('');
+						table.ajax.reload();
+					}else{
+						alert('Errors generated, check console');
+						console.log(response.errors);
+					}
 				},
 			})
 
+			return false;
+		});
+
+		$('#fbf_ebay_packages_synchronise').bind('click', function(){
+			console.log('syncronising');
+			let $loader = $(this).next();
+			$loader.addClass('is-active');
+
+			let data = {
+				action: 'fbf_ebay_packages_synchronise',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					if(response.status==='success'){
+						console.log('synchronised');
+						$loader.removeClass('is-active');
+						log.ajax.reload();
+					}
+				}
+			});
 			return false;
 		});
 

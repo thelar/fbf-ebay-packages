@@ -129,7 +129,13 @@ class Fbf_Ebay_Packages {
 
 		$this->loader = new Fbf_Ebay_Packages_Loader();
 
-	}
+        /**
+         * The class responsible for scheduling and un-scheduling events (cron jobs).
+         */
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-cron.php';
+
+
+    }
 
 	/**
 	 * Define the locale for this plugin for internationalization.
@@ -165,6 +171,9 @@ class Fbf_Ebay_Packages {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
+		// CRON Hook
+        $this->loader->add_action( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK, $plugin_admin, 'run_hourly_event' );
+
         $this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'fbf_ebay_packages_admin_meta_box');
 
         $this->loader->add_action( 'admin_post_fbf_ebay_packages_add_package', $plugin_admin, 'save_post');
@@ -185,6 +194,12 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_brand_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_brand_confirm' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_tyre_table', $plugin_admin_ajax, 'fbf_ebay_packages_tyre_table' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_tyre_table', $plugin_admin_ajax, 'fbf_ebay_packages_tyre_table' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_event_log', $plugin_admin_ajax, 'fbf_ebay_packages_event_log' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_event_log', $plugin_admin_ajax, 'fbf_ebay_packages_event_log' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_synchronise', $plugin_admin_ajax, 'fbf_ebay_packages_synchronise' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_synchronise', $plugin_admin_ajax, 'fbf_ebay_packages_synchronise' );
 	}
 
 	/**

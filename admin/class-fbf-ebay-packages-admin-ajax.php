@@ -215,6 +215,70 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_tyre_table()
+    {
+        global $wpdb;
+        $draw = $_REQUEST['draw'];
+        $start = absint($_REQUEST['start']);
+        $length = absint($_REQUEST['length']);
+        $paged = ($start/$length) + 1;
+        $data = [];
+
+
+        $s = 'FROM wp_fbf_ebay_packages_listings l
+            INNER JOIN wp_fbf_ebay_packages_skus s 
+                ON s.listing_id = l.id
+            WHERE l.status = %s
+            AND l.type = %s';
+        if(isset($_REQUEST['search']['value'])&&!empty($_REQUEST['search']['value'])){
+            $s.= '
+            AND l.name LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR s.sku LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\'';
+        }
+        if(isset($_REQUEST['order'][0]['column'])){
+            $dir = $_REQUEST['order'][0]['dir'];
+            if($_REQUEST['order'][0]['column']==='0'){
+                $s.= '
+                ORDER BY l.name ' . strtoupper($dir);
+            }else if($_REQUEST['order'][0]['column']==='1'){
+                $s.= '
+                ORDER BY s.sku ' . strtoupper($dir);
+            }else if($_REQUEST['order'][0]['column']==='2'){
+                $s.= '
+                ORDER BY l.qty ' . strtoupper($dir);
+            }
+        }
+        $s1 = 'SELECT count(*) as count
+        ' . $s;
+
+        $main_q = $wpdb->prepare("{$s1}", 'active', 'tyre');
+        $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
+
+        $s2 = 'SELECT *
+        ' . $s;
+        $paginated_q = $wpdb->prepare("{$s2}
+            LIMIT {$length}
+            OFFSET {$start}", 'active', 'tyre');
+        $results = $wpdb->get_results($paginated_q, ARRAY_A);
+        if($results!==false){
+            foreach($results as $result){
+                $data[] = [
+                    $result['name'],
+                    $result['sku'],
+                    $result['qty'],
+                    ''
+                ];
+            }
+        }
+
+        echo json_encode([
+            'draw' => $draw,
+            'recordsTotal' => $count,
+            'recordsFiltered' => $count,
+            'data' => $data
+        ]);
+        die();
+    }
+
     public function fbf_ebay_packages_list_tyres()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
@@ -224,6 +288,15 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $brands_option = get_option('_fbf_ebay_packages_tyre_brands');
         $search_brands = [];
         $post_skus = [];
+        $post_lookup = [];
+        $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
+
+        // Errors
+        $status = 'success';
+        $errors = [];
+        $warnings = [];
+
         foreach($brands_option as $brand){
             $search_brands[] = $brand['ID'];
         }
@@ -259,24 +332,193 @@ class Fbf_Ebay_Packages_Admin_Ajax
             ]
         ];
         $found = new WP_Query($args);
+
+
         if($found->have_posts()){
-            while($found->have_posts()){
-                $found->the_post();
-                $id = get_the_ID();
-                $product = wc_get_product( $id );
-                $post_skus[] = $product->get_sku();
+            foreach($found->posts as $post_id){
+                $sku = get_post_meta( $post_id, '_sku', true );
+                $post_skus[] = $sku;
+                $post_lookup[$sku] = [
+                    'title' => get_the_title($post_id),
+                    'qty' => get_post_meta($post_id, '_stock', true)
+                ];
+            }
+        }else{
+            $errors[] = 'no found posts';
+        }
+
+        // Second get ALL the current (active) Tyre listings
+        $q = $wpdb->prepare('SELECT s.sku
+            FROM wp_fbf_ebay_packages_listings l
+            INNER JOIN wp_fbf_ebay_packages_skus s
+                ON s.listing_id = l.id
+            WHERE l.status = %s
+            AND l.type = %s', 'active', 'tyre');
+        $results = $wpdb->get_col( $q );
+        if($results===false||count($results)===0){
+            $warnings[] = 'No current active tyre listings';
+        }
+
+        $to_create = array_diff($post_skus, $results); // These SKU's do NOT exist in the found set so either need to be activated (if they are present but inactive) OR created if they don't exist at all
+        $to_leave = array_intersect($post_skus, $results); // These SKU's exist and are active - nothing to do here
+        $to_deactivate = array_diff($results, $post_skus);
+
+        if(!empty($to_create)){
+            foreach($to_create as $sku){
+                // Check to see if the SKU exists - if it does just activate it
+                $q = $wpdb->prepare('SELECT l.id, s.sku
+                    FROM wp_fbf_ebay_packages_listings l
+                    INNER JOIN wp_fbf_ebay_packages_skus s
+                        ON s.listing_id = l.id
+                    WHERE s.sku = %s
+                    AND l.type = %s', $sku, 'tyre');
+                $result = $wpdb->get_row($q, ARRAY_A);
+                if(null !== $result){
+                    // Exists - make it active
+                    $u = $wpdb->update($listings_table,
+                        [
+                            'status' => 'active'
+                        ],
+                        [
+                            'id' => $result['id']
+                        ]
+                    );
+                    if($u!==false){
+                        $this->log('Listing activated', $result['id']);
+                    }else{
+                        $errors[] = $wpdb->last_error;
+                    }
+                }else{
+                    // Does not exist - create it
+                    $i = $wpdb->insert(
+                        $listings_table,
+                        [
+                            'name' => $post_lookup[$sku]['title'],
+                            'status' => 'active',
+                            'type' => 'tyre',
+                            'qty' => $post_lookup[$sku]['qty']
+                        ]
+                    );
+                    if($i!==false){
+                        // Insert the SKU
+                        $insert_id = $wpdb->insert_id;
+                        $i = $wpdb->insert(
+                            $skus_table,
+                            [
+                                'sku' => $sku,
+                                'listing_id' => $insert_id
+                            ]
+                        );
+                        if($i===false){
+                            $errors[] = $wpdb->last_error;
+                        }else{
+                            // Add log
+                            $this->log('Listing created', $insert_id);
+                        }
+                    }else{
+                        $errors[] = $wpdb->last_error;
+                    }
+                }
             }
         }
 
-        // Second get ALL the current Tyre listings
+        if(!empty($to_deactivate)){
+            // Set status to inactive on all
+            foreach($to_deactivate as $sku_to_deactivate){
+                $s = $wpdb->prepare('SELECT l.id 
+                    FROM wp_fbf_ebay_packages_listings l 
+                    INNER JOIN wp_fbf_ebay_packages_skus s ON s.listing_id = l.id
+                    WHERE s.sku = %s
+                    AND l.type = %s', $sku_to_deactivate, 'tyre');
+                $id = $wpdb->get_row($s, ARRAY_A)['id'];
+                if($id!==null){
+                    $q = $wpdb->prepare('UPDATE wp_fbf_ebay_packages_listings l
+                    INNER JOIN wp_fbf_ebay_packages_skus s ON s.listing_id = l.id
+                    SET l.status = %s
+                    WHERE s.sku = %s
+                    AND l.type = %s', 'inactive', $sku_to_deactivate, 'tyre');
+                    $result = $wpdb->query($q);
 
+                    if($result!==false){
+                        $this->log('Listing deactivated', $id);
+                    }else{
+                        $errors[] = 'Could not deactivate listing: ' . $id;
+                    }
+                }else{
+                    $errors[] = 'Could not find listing for SKU: ' . $sku_to_deactivate;
+                }
+            }
+        }
 
+        if(!empty($errors)){
+            $status = 'error';
+        }
 
         echo json_encode([
-            'status' => 'success',
-            'message' => 'testing success',
-            'skus' => $post_skus
+            'status' => $status,
+            'errors' => !empty($errors)?$errors:'',
+            'warnings' => !empty($warnings)?$warnings:''
         ]);
         die();
+    }
+
+    public function fbf_ebay_packages_synchronise()
+    {
+        if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres')){
+            $status = 'success';
+        }else{
+            $status = 'error';
+        }
+        echo json_encode([
+            'status' => $status,
+        ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_event_log()
+    {
+        global $wpdb;
+        $draw = $_REQUEST['draw'];
+        $data = [];
+        $synchronisations_to_show = 5;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
+        $timezone = new DateTimeZone("Europe/London");
+        $q = $wpdb->prepare("SELECT hook, UNIX_TIMESTAMP(created) AS d
+            FROM {$table}
+            WHERE type = %s
+            ORDER BY d DESC
+            LIMIT {$synchronisations_to_show}", 'tyres');
+        $results = $wpdb->get_results($q, ARRAY_A);
+        if($results!==false){
+            foreach($results as $result){
+                $date = new DateTime();
+                $date->setTimezone($timezone);
+                $date->setTimestamp($result['d']);
+                $data[] = [
+                    $date->format('g:i:s A'),
+                    $result['hook']
+                ];
+            }
+        }
+        echo json_encode([
+            'draw' => $draw,
+            'recordsTotal' => $synchronisations_to_show,
+            'recordsFiltered' => $synchronisations_to_show,
+            'data' => $data
+        ]);
+        die();
+    }
+
+    private function log($msg, $id)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        return $wpdb->insert(
+            $table,
+            [
+                'listing_id' => $id,
+                'log' => $msg
+            ]
+        );
     }
 }
