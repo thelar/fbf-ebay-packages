@@ -266,6 +266,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             foreach($results as $result){
                 $data[] = [
                     $result['name'],
+                    $result['post_id'],
                     $result['sku'],
                     $result['qty'],
                     $result['l_id']
@@ -343,7 +344,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 $post_skus[] = $sku;
                 $post_lookup[$sku] = [
                     'title' => get_the_title($post_id),
-                    'qty' => get_post_meta($post_id, '_stock', true)
+                    'qty' => get_post_meta($post_id, '_stock', true),
+                    'id' => $post_id
                 ];
             }
         }else{
@@ -397,6 +399,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         $listings_table,
                         [
                             'name' => $post_lookup[$sku]['title'],
+                            'post_id' => $post_lookup[$sku]['id'],
                             'status' => 'active',
                             'type' => 'tyre',
                             'qty' => $post_lookup[$sku]['qty']
