@@ -59,7 +59,8 @@ class Fbf_Ebay_Packages_List_Item
                         $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                             'status' => 'error',
                             'action' => 'none required',
-                            'response' => $create_or_update_inv
+                            'response' => $create_or_update_inv,
+                            'payload' => $payload
                         ]);
                     }
                 }else{
@@ -78,6 +79,7 @@ class Fbf_Ebay_Packages_List_Item
                     'response' => [
                         'error_msg' => 'No image'
                     ],
+                    'payload' => $payload
                 ]);
             }
 
@@ -144,7 +146,8 @@ class Fbf_Ebay_Packages_List_Item
                                 $this->logs[] = $this->log($result->id, 'update_offer', [
                                     'status' => 'error',
                                     'action' => 'none required',
-                                    'response' => $offer_update
+                                    'response' => $offer_update,
+                                    'payload' => $offer_payload
                                 ]);
                             }
                         }else{
@@ -194,7 +197,8 @@ class Fbf_Ebay_Packages_List_Item
                         $this->logs[] = $this->log($result->id, 'create_offer', [
                             'status' => 'error',
                             'action' => 'none required',
-                            'response' => $offer_create
+                            'response' => $offer_create,
+                            'payload' => $offer_payload
                         ]);
                     }
                 }
