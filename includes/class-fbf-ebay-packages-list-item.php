@@ -106,8 +106,10 @@ class Fbf_Ebay_Packages_List_Item
                         if(is_a( $product, 'WC_Product_Variable' )){
                             $product_price = (float)$product->get_variation_regular_price() * $qty;
                         }else{
-                            $product_price = (float)$product->get_pri() * $qty;
+                            $product_price = (float)$product->get_regular_price() * $qty;
                         }
+                        $vat = ($product_price/100) * 20;
+                        $product_price = $product_price + $vat;
 
                         if ($offer_price !== $product_price) {
                             $update_required = true;
