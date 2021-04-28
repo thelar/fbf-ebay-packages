@@ -14,6 +14,10 @@ class Fbf_Ebay_Packages_List_Item
     private $buffer = 4;
     public $status = [];
     public $logs = [];
+    private $description = 'This listing is for 4 brand new tyres in the size and style specified in the listing title\r\n
+    We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV\r\n
+    Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered\r\n
+    Any questions, please feel free to ask.  Thanks';
 
     public function __construct($plugin_name, $version)
     {
@@ -324,7 +328,7 @@ class Fbf_Ebay_Packages_List_Item
         ];
         $item['product'] = [
             'title' => sprintf('%s x %s', $qty, $product->get_title()),
-            'description' => sprintf('%s x %s tyres', $qty, $product->get_title()),
+            'description' => $this->description,
             'brand' => $brand_name,
             'mpn' => $product->get_sku(),
             'aspects' => $this->get_tyre_aspects($product, $qty)
@@ -359,7 +363,7 @@ class Fbf_Ebay_Packages_List_Item
         $offer['format'] = 'FIXED_PRICE';
         $offer['availableQuantity'] = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
         $offer['categoryId'] = '179680';
-        $offer['listingDescription'] = $qty . ' x ' . $product->get_title() . ' description';
+        $offer['listingDescription'] = $this->description;
         $offer['listingPolicies'] = [
             'fulfillmentPolicyId' => '163248243010',
             'paymentPolicyId' => '191152500010',
