@@ -53,6 +53,8 @@ class Fbf_Ebay_Packages_Activator {
         $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
           `id` mediumint(9) NOT NULL AUTO_INCREMENT,
           `offer_id` varchar (20),
+          `listing_id` varchar (20),
+          `inventory_sku` varchar (80),
           `created` datetime DEFAULT CURRENT_TIMESTAMP,
           `name` varchar(120),
           `qty` smallint,

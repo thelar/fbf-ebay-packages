@@ -45,6 +45,7 @@ class Fbf_Ebay_Packages_Admin {
     private $errors = [];
     public $submenu;
 
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -145,27 +146,20 @@ class Fbf_Ebay_Packages_Admin {
      * @since 1.0.0
      */
     public function run_hourly_event($h=null) {
-        /**
-         * This function is provided for demonstration purposes only.
-         *
-         * An instance of this class should be passed to the run() function
-         * defined in Plugin_Name_Loader as all of the hooks are defined
-         * in that particular class.
-         *
-         * The Plugin_Name_Loader will then create the relationship
-         * between the defined hooks and the functions defined in this
-         * class.
-         */
-        // do something every hour
-
-        if(!is_null($h)){
-            $hook = $h;
-        }else{
-            $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+        // Do something every hour
+        // only run the sync if it's on the live site!!
+        $allowed_hosts = [
+            '4x4tyres.co.uk'
+        ];
+        if (isset($_SERVER['HTTP_HOST']) || in_array($_SERVER['HTTP_HOST'], $allowed_hosts)) {
+            if(!is_null($h)){
+                $hook = $h;
+            }else{
+                $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+            }
+            $i = self::synchronise($hook, 'tyres');
+            // TODO: handle times when maybe the logging fails
         }
-        $i = self::synchronise($hook, 'tyres');
-
-        // TODO: handle times when maybe the logging fails
     }
 
     public static function synchronise($via, $type)
@@ -177,8 +171,34 @@ class Fbf_Ebay_Packages_Admin {
         $sync = new Fbf_Ebay_Packages_Synchronise(FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
         $sync_result = $sync->run('tyre');
 
-        $q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
-        $i = $wpdb->query($q);
+        //$q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
+
+
+        $i = $wpdb->insert($table,
+            [
+                'hook' => $via,
+                'type' => $type,
+                'log' => serialize($sync_result)
+            ]
+        );
+
+        if($i!==false){
+            $scheduled_event_id = $wpdb->insert_id;
+            $listings_table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+            $log_ids = $sync_result['log_ids'];
+            if(!empty($log_ids)){
+                foreach($log_ids as $log_id){
+                    $wpdb->update($listings_table,
+                        [
+                            'scheduled_event_id' => $scheduled_event_id
+                        ],
+                        [
+                            'id' => $log_id
+                        ]
+                    );
+                }
+            }
+        }
         return $i;
     }
 
@@ -939,7 +959,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>Title</th>
                 <th>SKU</th>
                 <th>Qty</th>
-                <th>Offer ID</th>
+                <th>Listing ID</th>
             </tr>
             </thead>
             <tbody>
@@ -950,7 +970,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>Title</th>
                 <th>SKU</th>
                 <th>Qty</th>
-                <th>Offer ID</th>
+                <th>Listing ID</th>
             </tr>
             </tfoot>
         </table>

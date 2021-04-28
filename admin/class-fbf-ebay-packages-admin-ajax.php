@@ -232,7 +232,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             AND l.type = %s';
         if(isset($_REQUEST['search']['value'])&&!empty($_REQUEST['search']['value'])){
             $s.= '
-            AND l.name LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR s.sku LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\'';
+            AND l.name LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR s.sku LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR l.listing_id LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) . '%\'';
         }
         if(isset($_REQUEST['order'][0]['column'])){
             $dir = $_REQUEST['order'][0]['dir'];
@@ -245,6 +245,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
             }else if($_REQUEST['order'][0]['column']==='2'){
                 $s.= '
                 ORDER BY l.qty ' . strtoupper($dir);
+            }else if($_REQUEST['order'][0]['column']==='3'){
+                $s.= '
+                ORDER BY l.listing_id ' . strtoupper($dir);
             }
         }
         $s1 = 'SELECT count(*) as count
@@ -253,7 +256,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $main_q = $wpdb->prepare("{$s1}", 'active', 'tyre');
         $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
 
-        $s2 = 'SELECT *
+        $s2 = 'SELECT *, l.listing_id as l_id
         ' . $s;
         $paginated_q = $wpdb->prepare("{$s2}
             LIMIT {$length}
@@ -265,7 +268,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     $result['name'],
                     $result['sku'],
                     $result['qty'],
-                    ''
+                    $result['l_id']
                 ];
             }
         }
