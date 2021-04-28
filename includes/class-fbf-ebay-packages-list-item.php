@@ -376,7 +376,7 @@ class Fbf_Ebay_Packages_List_Item
         $offer['pricingSummary'] = [
             'price' => [
                 'currency' => 'GBP',
-                'value' => number_format((float)$reg_price * $qty, 2)
+                'value' => number_format((float)$reg_price * $qty, 2, '.', '')
             ]
         ];
         $offer['quantityLimitPerBuyer'] = 1;
