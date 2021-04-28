@@ -161,7 +161,13 @@
 			},
 			oLanguage: {
 				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
-			}
+			},
+			columnDefs: [ {
+				targets: 0,
+				render: function ( data, type, row, meta ) {
+					return '<a href="https://www.ebay.co.uk/itm/'+data+'">'+data+'<span class="dashicons dashicons-external"></span></a>';
+				}
+			} ]
 		});
 
 		let log = $('#fbf_ep_event_log_table').DataTable({

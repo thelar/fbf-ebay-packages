@@ -100,10 +100,13 @@ class Fbf_Ebay_Packages_List_Item
                         $publish_offer_id = $result->offer_id;
                         $offer_status = $offer_response->status;
 
+
+
+
                         if(is_a( $product, 'WC_Product_Variable' )){
                             $product_price = (float)$product->get_variation_regular_price() * $qty;
                         }else{
-                            $product_price = (float)$product->get_regular_price() * $qty;
+                            $product_price = (float)$product->get_pri() * $qty;
                         }
 
                         if ($offer_price !== $product_price) {
@@ -359,8 +362,11 @@ class Fbf_Ebay_Packages_List_Item
         $offer = [];
         if(is_a($product, 'WC_Product_Variable')){
             $reg_price = $product->get_variation_regular_price();
+            $ch = $product->get_children();
+            $reg_price_inc_vat = wc_get_price_including_tax($ch[0]);
         }else{
             $reg_price = $product->get_regular_price();
+            $reg_price_inc_vat = wc_get_price_including_tax($product);
         }
         $offer['sku'] = $sku;
         $offer['marketplaceId'] = 'EBAY_GB';
@@ -373,10 +379,12 @@ class Fbf_Ebay_Packages_List_Item
             'paymentPolicyId' => '191152500010',
             'returnPolicyId' => '163248142010'
         ];
+
+
         $offer['pricingSummary'] = [
             'price' => [
                 'currency' => 'GBP',
-                'value' => number_format((float)$reg_price * $qty, 2, '.', '')
+                'value' => number_format((float)$reg_price_inc_vat * $qty, 2, '.', '')
             ]
         ];
         $offer['quantityLimitPerBuyer'] = 1;
