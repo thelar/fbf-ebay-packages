@@ -9,14 +9,14 @@ class Fbf_Ebay_Packages_List_Item
 {
     private $plugin_name;
     private $version;
-    private $use_test_image = true; // switch to false to use actual thumbnails
+    private $use_test_image = false; // switch to false to use actual thumbnails
     private $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
     private $buffer = 4;
     public $status = [];
     public $logs = [];
-    private $description = 'This listing is for 4 brand new tyres in the size and style specified in the listing title\r\n
-    We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV\r\n
-    Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered\r\n
+    private $description = 'This listing is for 4 brand new tyres in the size and style specified in the listing title<br/>
+    We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV<br/>
+    Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered<br/>
     Any questions, please feel free to ask.  Thanks';
 
     public function __construct($plugin_name, $version)
