@@ -165,7 +165,11 @@
 			columnDefs: [ {
 				targets: 3,
 				render: function ( data, type, row, meta ) {
-					return '<a href="https://www.ebay.co.uk/itm/'+data+'">'+data+'<span class="dashicons dashicons-external"></span></a>';
+					if(data){
+						return '<a href="https://www.ebay.co.uk/itm/'+data+'">'+data+'<span class="dashicons dashicons-external"></span></a>';
+					}else{
+						return ''
+					}
 				}
 			} ]
 		});
@@ -265,8 +269,6 @@
 			return false;
 		});
 
-
-
 		$('#fbf_ebay_packages_clean').bind('click', function(){
 			console.log('cleaning');
 			let $loader = $(this).next();
@@ -289,6 +291,7 @@
 			});
 			return false;
 		});
+
 		$('#fbf_ebay_packages_synchronise').bind('click', function(){
 			console.log('syncronising');
 			let $loader = $(this).next();
@@ -305,9 +308,9 @@
 				data: data,
 				dataType: 'json',
 				success: function (response) {
+					$loader.removeClass('is-active');
 					if(response.status==='success'){
 						console.log('synchronised');
-						$loader.removeClass('is-active');
 						log.ajax.reload();
 					}
 				}

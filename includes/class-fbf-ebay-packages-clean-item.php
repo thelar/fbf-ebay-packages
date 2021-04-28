@@ -52,19 +52,6 @@ class Fbf_Ebay_Packages_Clean_Item
             ]);
         }
 
-        global $wpdb;
-        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
-        $u = $wpdb->update($table,
-            [
-                'inventory_sku' => null,
-                'offer_id' => null,
-                'listing_id' => null
-            ],
-            [
-                'id' => $this->id
-            ]
-        );
-
         return $clean;
     }
     private function log($id, $ebay_action, $log)

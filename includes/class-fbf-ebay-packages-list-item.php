@@ -365,7 +365,8 @@ class Fbf_Ebay_Packages_List_Item
         }else{
             $reg_price = $product->get_regular_price();
         }
-        $reg_price = $reg_price + (($reg_price/20) * 100);
+        $vat = ($reg_price/100) * 20;
+        $reg_price = $reg_price + $vat;
         $offer['sku'] = $sku;
         $offer['marketplaceId'] = 'EBAY_GB';
         $offer['format'] = 'FIXED_PRICE';
