@@ -339,7 +339,7 @@ class Fbf_Ebay_Packages_List_Item
                 $this->test_image
             ];
         }else{
-            if(has_post_thumbnail()){
+            if(has_post_thumbnail($product->get_id())){
                 $image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'full')[0];
                 $item['product']['imageUrls'] = [
                     $image
