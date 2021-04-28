@@ -465,6 +465,12 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_clean(){
+        $resp = Fbf_Ebay_Packages_Admin::clean('manual', 'tyres');
+        echo json_encode($resp);
+        die();
+    }
+
     public function fbf_ebay_packages_synchronise()
     {
         if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres')){

@@ -162,6 +162,28 @@ class Fbf_Ebay_Packages_Admin {
         }*/
     }
 
+    public static function clean(){
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $l = $wpdb->get_results("SELECT * FROM {$table}", ARRAY_A);
+        $cleaned = [];
+
+        if(!empty($l)){
+            foreach($l as $row){
+                if(!is_null($row['inventory_sku'])){
+                    $cleaned[$row['inventory_sku']] = [];
+
+                    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-clean-item.php';
+                    $clean_item = new Fbf_Ebay_Packages_Clean_Item($row['inventory_sku'], FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
+                    $clean_result = $clean_item->clean('tyre');
+
+                    $cleaned[$row['inventory_sku']] = $clean_result;
+                }
+            }
+        }
+        return $cleaned;
+    }
+
     public static function synchronise($via, $type)
     {
         global $wpdb;
@@ -1009,6 +1031,7 @@ class Fbf_Ebay_Packages_Admin {
             </tfoot>
         </table>
         <button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise" style="margin-top: 1em;">Synchronise with eBay</button>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_clean" style="margin-top: 1em;">Clean eBay</button>
         <span class="spinner" style="margin-top: 1.2em;"></span>
         <br class="clear"/>
         <?php

@@ -265,6 +265,30 @@
 			return false;
 		});
 
+
+
+		$('#fbf_ebay_packages_clean').bind('click', function(){
+			console.log('cleaning');
+			let $loader = $(this).next();
+			$loader.addClass('is-active');
+
+			let data = {
+				action: 'fbf_ebay_packages_clean',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					$loader.removeClass('is-active');
+				}
+			});
+			return false;
+		});
 		$('#fbf_ebay_packages_synchronise').bind('click', function(){
 			console.log('syncronising');
 			let $loader = $(this).next();
