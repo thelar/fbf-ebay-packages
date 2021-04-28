@@ -294,7 +294,7 @@
 
 		$('#fbf_ebay_packages_synchronise').bind('click', function(){
 			console.log('syncronising');
-			let $loader = $(this).next();
+			let $loader = $(this).parent().find('.spinner');
 			$loader.addClass('is-active');
 
 			let data = {
