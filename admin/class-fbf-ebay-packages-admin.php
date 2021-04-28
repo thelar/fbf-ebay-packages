@@ -151,7 +151,7 @@ class Fbf_Ebay_Packages_Admin {
         $allowed_hosts = [
             '4x4tyres.co.uk'
         ];
-        if (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], $allowed_hosts)) {
+        /*if (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], $allowed_hosts)) {
             if(!is_null($h)){
                 $hook = $h;
             }else{
@@ -159,7 +159,7 @@ class Fbf_Ebay_Packages_Admin {
             }
             $i = self::synchronise($hook, 'tyres');
             // TODO: handle times when maybe the logging fails
-        }
+        }*/
     }
 
     public static function synchronise($via, $type)
