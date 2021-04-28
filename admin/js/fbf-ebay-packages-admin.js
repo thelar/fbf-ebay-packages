@@ -166,7 +166,7 @@
 				targets: 3,
 				render: function ( data, type, row, meta ) {
 					if(data){
-						return '<a href="https://www.ebay.co.uk/itm/'+data+'" style="text-decoration: none;">'+data+'<span class="dashicons dashicons-external" style="position: relative; top: -3px;"></span></a>';
+						return '<a href="https://www.ebay.co.uk/itm/'+data+'" style="text-decoration: none;" target="_blank">'+data+'<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a>';
 					}else{
 						return ''
 					}
