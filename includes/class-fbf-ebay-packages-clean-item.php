@@ -5,13 +5,15 @@ class Fbf_Ebay_Packages_Clean_Item
 {
     public $plugin_name;
     public $version;
-    public $item;
+    public $inventory_sku;
+    public $id;
 
-    public function __construct($item, $plugin_name, $version)
+    public function __construct($id, $inv_sku, $plugin_name, $version)
     {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-        $this->item = $item;
+        $this->inventory_sku = $inv_sku;
+        $this->id = $id;
     }
 
     public function clean()
@@ -20,8 +22,68 @@ class Fbf_Ebay_Packages_Clean_Item
         $auth = new Fbf_Ebay_Packages_Api_Auth();
         $token = $auth->get_valid_token();
 
-        $clean = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $this->item, 'DELETE', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+        $clean = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $this->inventory_sku, 'DELETE', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+        if($clean['status']==='success'&&$clean['response_code']===204){
+            //remove the database entries
+            global $wpdb;
+            $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+            $u = $wpdb->update($table,
+                [
+                    'inventory_sku' => null,
+                    'offer_id' => null,
+                    'listing_id' => null
+                ],
+                [
+                    'id' => $this->id
+                ]
+            );
+
+            $this->log($this->id, 'delete_inv', [
+                'status' => 'success',
+                'action' => 'deleted',
+                'response' => $clean
+            ]);
+
+        }else{
+            $this->log($this->id, 'delete_inv', [
+                'status' => 'error',
+                'action' => 'none required',
+                'response' => $clean
+            ]);
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $u = $wpdb->update($table,
+            [
+                'inventory_sku' => null,
+                'offer_id' => null,
+                'listing_id' => null
+            ],
+            [
+                'id' => $this->id
+            ]
+        );
+
         return $clean;
+    }
+    private function log($id, $ebay_action, $log)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        $i = $wpdb->insert(
+            $table,
+            [
+                'listing_id' => $id,
+                'ebay_action' => $ebay_action,
+                'log' => serialize($log)
+            ]
+        );
+        if($i!==false){
+            return $wpdb->insert_id;
+        }else{
+            return $i;
+        }
     }
     private function api($url, $method, $headers, $body=null)
     {

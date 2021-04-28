@@ -174,8 +174,8 @@ class Fbf_Ebay_Packages_Admin {
                     $cleaned[$row['inventory_sku']] = [];
 
                     require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-clean-item.php';
-                    $clean_item = new Fbf_Ebay_Packages_Clean_Item($row['inventory_sku'], FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
-                    $clean_result = $clean_item->clean('tyre');
+                    $clean_item = new Fbf_Ebay_Packages_Clean_Item($row['id'], $row['inventory_sku'], FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
+                    $clean_result = $clean_item->clean();
 
                     $cleaned[$row['inventory_sku']] = $clean_result;
                 }
