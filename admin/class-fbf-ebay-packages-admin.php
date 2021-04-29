@@ -982,6 +982,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>SKU</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -993,6 +994,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>SKU</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th></th>
             </tr>
             </tfoot>
         </table>

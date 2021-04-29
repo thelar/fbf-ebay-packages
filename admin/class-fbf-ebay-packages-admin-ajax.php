@@ -265,11 +265,17 @@ class Fbf_Ebay_Packages_Admin_Ajax
         if($results!==false){
             foreach($results as $result){
                 $data[] = [
-                    $result['name'],
-                    $result['sku'],
-                    $result['qty'],
-                    $result['l_id'],
-                    $result['post_id']
+                    'DT_RowId' => sprintf('row_%s', $result['id']),
+                    'DT_RowClass' => 'dataTable_listing',
+                    'DT_RowData' => [
+                        'pKey' => $result['id']
+                    ],
+                    'name' => $result['name'],
+                    'sku' => $result['sku'],
+                    'qty' => $result['qty'],
+                    'l_id' => $result['l_id'],
+                    'post_id' => $result['post_id'],
+                    'id' => $result['id']
                 ];
             }
         }
@@ -519,6 +525,79 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'data' => $data
         ]);
         die();
+    }
+
+    public function fbf_ebay_packages_listing_info()
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $id = filter_var($_POST['id'], FILTER_SANITIZE_STRING);
+        $q = $wpdb->prepare("SELECT *
+            FROM {$table}
+            WHERE id = %s", $id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+
+        $result = [
+            'id' => $r['id'],
+            'info' => $this->get_listing_info($r['id'])
+        ];
+
+        echo json_encode([
+            'status' => 'success',
+            'result' => $result
+        ]);
+        die();
+    }
+
+    private function get_listing_info($id)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        $return = [];
+        $q = $wpdb->prepare("SELECT log, count(*) as cnt
+            FROM {$table}
+            WHERE listing_id = %s
+            AND ebay_action IS NULL
+            GROUP BY log", $id);
+        $r = $wpdb->get_results($q, ARRAY_A);
+
+        if($r!==false&&!empty($r)){
+            foreach($r as $row){
+                switch($row['log']){
+                    case 'Listing activated':
+                        $return['activated_count'] = $row['cnt'];
+                        break;
+                    case 'Listing deactivated':
+                        $return['deactivated_count'] = $row['cnt'];
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        $q = $wpdb->prepare("SELECT created
+            FROM {$table}
+            WHERE listing_id = %s
+            AND log = %s
+            ORDER BY created DESC
+            LIMIT 1", $id, 'Listing created');
+        $r = $wpdb->get_row($q, ARRAY_A);
+
+        if($r!==false&&!empty($r)){
+            $return['created'] = $r['created'];
+        }
+
+        return $return;
+
+    }
+
+    private function get_inv_info($id)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'wfbf_ebay_packages_logs';
+
+        // Get the non-ebay
     }
 
     private function log($msg, $id)

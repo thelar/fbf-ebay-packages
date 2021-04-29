@@ -162,10 +162,23 @@
 			oLanguage: {
 				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
 			},
-			columnDefs: [ {
+			columns: [
+				{ data: 'name', rowId: 'l_id' },
+				{ data: 'sku' },
+				{ data: 'qty' },
+				{ data: 'l_id' },
+				{
+					"className":      'details-control',
+					"orderable":      false,
+					"data":           null,
+					"defaultContent": 'x'
+				},
+			],
+			columnDefs: [
+				{
 					targets: 0,
 					render: function ( data, type, row, meta ) {
-						let url = '<a href="/wp/wp-admin/post.php?post='+row[4]+'&action=edit">'+data+'</a>';
+						let url = '<a href="/wp/wp-admin/post.php?post='+row.post_id+'&action=edit">'+data+'</a>';
 						return url;
 					}
 				},{
@@ -178,7 +191,7 @@
 						}
 					}
 				}
-			]
+			],
 		});
 
 		let log = $('#fbf_ep_event_log_table').DataTable({
@@ -280,22 +293,26 @@
 			console.log('cleaning');
 			let $loader = $(this).next();
 			$loader.addClass('is-active');
+			let conf = confirm('WARNING - this is a destructive act, you will delete ALL of the active eBay listings if you continue... are you sure you want to do this?');
+			if(conf===true){
+				let data = {
+					action: 'fbf_ebay_packages_clean',
+					ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				};
 
-			let data = {
-				action: 'fbf_ebay_packages_clean',
-				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
-			};
-
-			$.ajax({
-				// eslint-disable-next-line no-undef
-				url: fbf_ebay_packages_admin.ajax_url,
-				type: 'POST',
-				data: data,
-				dataType: 'json',
-				success: function (response) {
-					$loader.removeClass('is-active');
-				}
-			});
+				$.ajax({
+					// eslint-disable-next-line no-undef
+					url: fbf_ebay_packages_admin.ajax_url,
+					type: 'POST',
+					data: data,
+					dataType: 'json',
+					success: function (response) {
+						$loader.removeClass('is-active');
+					}
+				});
+			}else{
+				$loader.removeClass('is-active');
+			}
 			return false;
 		});
 
@@ -325,6 +342,67 @@
 			return false;
 		});
 
+		// Add event listener for opening and closing details
+		$('#example tbody').on('click', 'td.details-control', function () {
+			var tr = $(this).closest('tr');
+			var row = table.row( tr );
+
+			if ( row.child.isShown() ) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass('shown');
+			}
+			else {
+				// Open this row
+				row.child(format(row.data())).show();
+				tr.addClass('shown');
+			}
+		});
+
+		function format (d){
+			let data = {
+				action: 'fbf_ebay_packages_listing_info',
+				id: d.id
+			};
+
+			const result = $.ajax({
+				// eslint-disable-next-line no-undef
+				url: ajax_object.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response){
+					console.log(response);
+					let $child = $('#child_'+response.result.id);
+					let html = '';
+					if(response.result.info.created){
+						html+= '' +
+							'<tr>' +
+								'<td>Created:</td>' +
+								'<td>'+response.result.info.created+'</td>' +
+							'</tr>';
+					}
+					if(response.result.info.activated_count){
+						html+= '' +
+							'<tr>' +
+								'<td>Activated:</td>' +
+								'<td>'+response.result.info.activated_count+' times</td>' +
+							'</tr>';
+					}
+					if(response.result.info.deactivated_count){
+						html+= '' +
+							'<tr>' +
+								'<td>Deactivated:</td>' +
+								'<td>'+response.result.info.deactivated_count+' times</td>' +
+							'</tr>';
+					}
+					$child.append(html);
+				}
+			});
+
+			return '<table cellpadding="5" cellspacing="0" border="0" style="width: 100%;" id="child_'+d.id+'">'+
+				'</table>';
+		}
 	});
 
 	function validateACFinputs(nonce, form_data) {
@@ -364,6 +442,8 @@
 			},
 		});
 	}
+
+
 
 })( jQuery );
 
