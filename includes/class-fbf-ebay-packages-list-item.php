@@ -240,6 +240,46 @@ class Fbf_Ebay_Packages_List_Item
         return $this;
     }
 
+    public function clean_item($result)
+    {
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+        $auth = new Fbf_Ebay_Packages_Api_Auth();
+        $token = $auth->get_valid_token();
+
+        $clean = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $result->inventory_sku, 'DELETE', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+        if($clean['status']==='success'&&$clean['response_code']===204){
+            //remove the database entries
+            global $wpdb;
+            $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+            $u = $wpdb->update($table,
+                [
+                    'inventory_sku' => null,
+                    'offer_id' => null,
+                    'listing_id' => null
+                ],
+                [
+                    'id' => $result->id
+                ]
+            );
+
+            $this->log($result->id, 'delete_inv', [
+                'status' => 'success',
+                'action' => 'deleted',
+                'response' => $clean
+            ]);
+
+        }else{
+            $this->log($result->id, 'delete_inv', [
+                'status' => 'error',
+                'action' => 'none required',
+                'response' => $clean
+            ]);
+        }
+
+        return $clean;
+    }
+
+
     private function log($id, $ebay_action, $log)
     {
         global $wpdb;
