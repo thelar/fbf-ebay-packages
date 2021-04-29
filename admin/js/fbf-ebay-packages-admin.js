@@ -163,31 +163,22 @@
 				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
 			},
 			columnDefs: [ {
-				targets: 3,
-				render: function ( data, type, row, meta ) {
-					if(row[4]){
-						return '<a href="https://www.ebay.co.uk/itm/'+row[4]+'" style="text-decoration: none;" target="_blank">'+row[4]+'<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a>';
-					}else{
-						return ''
+					targets: 0,
+					render: function ( data, type, row, meta ) {
+						let url = '<a href="/wp/wp-admin/post.php?post='+row[4]+'&action=edit">'+data+'</a>';
+						return url;
+					}
+				},{
+					targets: 3,
+					render: function ( data, type, row, meta ) {
+						if(data){
+							return '<a href="https://www.ebay.co.uk/itm/'+data+'" style="text-decoration: none;" target="_blank">'+data+'<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a>';
+						}else{
+							return ''
+						}
 					}
 				}
-			},{
-				targets: 0,
-				render: function ( data, type, row, meta ) {
-					let url = '<a href="/wp/wp-admin/post.php?post='+row[1]+'&action=edit">'+row[0]+'</a>';
-					return url;
-				}
-			},{
-				targets: 1,
-				render: function ( data, type, row, meta ) {
-					return row[2];
-				}
-			},{
-				targets: 2,
-				render: function ( data, type, row, meta ) {
-					return row[3];
-				}
-			}]
+			]
 		});
 
 		let log = $('#fbf_ep_event_log_table').DataTable({

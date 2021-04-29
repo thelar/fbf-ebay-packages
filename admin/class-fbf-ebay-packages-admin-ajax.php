@@ -266,10 +266,10 @@ class Fbf_Ebay_Packages_Admin_Ajax
             foreach($results as $result){
                 $data[] = [
                     $result['name'],
-                    $result['post_id'],
                     $result['sku'],
                     $result['qty'],
-                    $result['l_id']
+                    $result['l_id'],
+                    $result['post_id']
                 ];
             }
         }
