@@ -550,22 +550,6 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     FROM {$table}
                     WHERE listing_id = %s";
 
-                if(isset($_REQUEST['order'][0]['column'])){
-                    $dir = $_REQUEST['order'][0]['dir'];
-                    if($_REQUEST['order'][0]['column']==='0'){
-                        $q.= '
-                            ORDER BY created ' . strtoupper($dir);
-                    }else if($_REQUEST['order'][0]['column']==='1'){
-                        $q.= '
-                            ORDER BY s.sku ' . strtoupper($dir);
-                    }else if($_REQUEST['order'][0]['column']==='2'){
-                        $q.= '
-                            ORDER BY l.qty ' . strtoupper($dir);
-                    }else if($_REQUEST['order'][0]['column']==='3'){
-                        $q.= '
-                            ORDER BY l.listing_id ' . strtoupper($dir);
-                    }
-                }
                 $q = $wpdb->prepare("SELECT *
                     FROM {$table}
                     WHERE listing_id = %s", $id);
@@ -599,11 +583,17 @@ class Fbf_Ebay_Packages_Admin_Ajax
                             $response_code = $response['response']['response_code'];
                         }
                         $all[] = [
+                            'DT_RowId' => sprintf('row_%s', $result['id']),
+                            'DT_RowClass' => 'dataTable_listing',
+                            'DT_RowData' => [
+                                'pKey' => $result['id']
+                            ],
                             'created' => $result['created'],
                             'timestamp' => $timestamp,
                             'action' =>  $action,
                             'status' => $status,
-                            'response_code' => $response_code
+                            'response_code' => $response_code,
+                            'id' => $result['id']
                         ];
                     }
                     if(isset($_REQUEST['order'][0]['column'])) {
@@ -675,6 +665,31 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 'status' => 'error'
             ]);
         }
+        die();
+    }
+
+    public function fbf_ebay_packages_detail_log_response()
+    {
+        $id = filter_var($_REQUEST['id'], FILTER_SANITIZE_STRING);
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        $q = $wpdb->prepare("SELECT log
+            FROM {$table}
+            WHERE id = %s", $id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            $log = unserialize($r['log']);
+            ob_start();
+            var_dump($log);
+            $log = ob_get_clean();
+        }else{
+            $log = '';
+        }
+        echo json_encode([
+            'status' => 'success',
+            'id' => $id,
+            'log' => $log
+        ]);
         die();
     }
 

@@ -236,7 +236,7 @@
 				{ data: 'status' },
 				{ data: 'response_code' },
 				{
-					"className":      'details-control',
+					"className":      'log-details-control',
 					"orderable":      false,
 					"data":           null,
 					"defaultContent": '<a href="#" class="dashicons dashicons-arrow-down-alt2"></a>'
@@ -387,6 +387,28 @@
 			}else{
 				// Open this row
 				row.child(format(row.data())).show();
+				tr.addClass('shown');
+				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+			}
+			return false;
+		});
+
+		$('#fbf_ep_event_log_detail tbody').on('click', 'td.log-details-control a', function () {
+			var tr = $(this).closest('tr');
+			var row = log_detail.row( tr );
+			var $icon = $(this);
+			console.log('show detail');
+			console.log(row);
+			console.log(row.data());
+
+			if( row.child.isShown() ) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass('shown');
+				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}else{
+				// Open this row
+				row.child(format2(row.data())).show();
 				tr.addClass('shown');
 				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
 			}
@@ -552,6 +574,33 @@
 					}
 
 
+					$child.append(html);
+				}
+			});
+
+			return '<table cellpadding="5" cellspacing="0" border="0" style="width: 100%;" id="child_'+d.id+'">'+
+				'</table>';
+		}
+
+		function format2 (d){
+			let data = {
+				action: 'fbf_ebay_packages_detail_log_response',
+				id: d.id
+			};
+
+			const result = $.ajax({
+				// eslint-disable-next-line no-undef
+				url: ajax_object.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log(response);
+					let $child = $('#child_' + response.id);
+					let html ='' +
+						'<tr>' +
+						'<td><pre>' + response.log + '</pre></td>' +
+						'</tr>';
 					$child.append(html);
 				}
 			});
