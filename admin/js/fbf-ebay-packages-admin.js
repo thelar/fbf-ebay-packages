@@ -433,7 +433,7 @@
 						if(response.result.inv_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span>Errors:</td>' +
+									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
 									'<td>'+response.result.inv_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
@@ -475,7 +475,7 @@
 						if(response.result.offer_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span>Errors:</td>' +
+									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
 									'<td>'+response.result.offer_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
@@ -496,19 +496,19 @@
 						if(response.result.publish_info.first_created){
 							html+='' +
 								'<tr>' +
-								'<td>Published:</td>' +
-								'<td>'+response.result.publish_info.first_created+'</td>' +
+									'<td>Published:</td>' +
+									'<td>'+response.result.publish_info.first_created+'</td>' +
 								'</tr>';
 						}
 						if(response.result.publish_info.error_count>0){
 							html+='' +
 								'<tr>' +
-								'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span>Errors:</td>' +
-								'<td>'+response.result.publish_info.error_count+'</td>' +
+									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
+									'<td>'+response.result.publish_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
-								'<td>Last error:</td>' +
-								'	<td>'+response.result.publish_info.last_error+'</td>' +
+									'<td>Last error:</td>' +
+									'<td>'+response.result.publish_info.last_error+'</td>' +
 								'</tr>';
 						}
 					}
