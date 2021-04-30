@@ -400,7 +400,7 @@
 								'<td>'+response.result.info.deactivated_count+' times</td>' +
 							'</tr>';
 					}
-					if(response.result.inv_info.length!==0){
+					if(response.result.inv_info.sku!==null){
 						html+='' +
 							'<tr>' +
 								'<td colspan="2"><strong>eBay Inventory item:</strong></td>' +
@@ -442,7 +442,7 @@
 								'</tr>';
 						}
 					}
-					if(response.result.offer_info.length!==0){
+					if(response.result.offer_info.offer_id!==null){
 						html+='' +
 							'<tr>' +
 								'<td colspan="2"><strong>eBay Offer:</strong></td>' +
@@ -484,7 +484,7 @@
 								'</tr>';
 						}
 					}
-					if(response.result.publish_info.length!==0){
+					if(response.result.publish_info.listing_id!==null){
 						html+='' +
 							'<tr>' +
 								'<td colspan="2"><strong>eBay Publish Info:</strong></td>' +
