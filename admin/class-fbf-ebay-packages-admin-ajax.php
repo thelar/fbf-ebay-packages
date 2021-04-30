@@ -611,6 +611,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             $error_count = 0;
             foreach($r as $row){
                 $log = unserialize($row['log']);
+                $info['logs'][] = $log;
                 $id = $row['id'];
                 $created = DateTime::createFromFormat ( "Y-m-d H:i:s", $row['created'] );
                 $timestamp = $created->getTimestamp();
