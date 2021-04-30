@@ -655,6 +655,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         $all = array_filter($all, function($a) use($pattern)  {
                             return preg_grep($pattern, $a);
                         });
+                        $count = count($all);
                     }
 
                     $data = array_slice($all, $start, $length);
