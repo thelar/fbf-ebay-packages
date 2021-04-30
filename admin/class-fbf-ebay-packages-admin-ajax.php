@@ -596,7 +596,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                             $response = unserialize($result['log']);
                             $status = $response['status'];
                             $action = $result['ebay_action'];
-                            $response_code = $response['response_code'];
+                            $response_code = $response['response']['response_code'];
                         }
                         $all[] = [
                             'created' => $result['created'],
@@ -648,6 +648,15 @@ class Fbf_Ebay_Packages_Admin_Ajax
                             });
                         }
                     }
+
+                    // Apply search
+                    if($_REQUEST['search']['value']){
+                        $pattern = '/' . $_REQUEST['search']['value'] . '/';
+                        $all = array_filter($all, function($a) use($pattern)  {
+                            return preg_grep($pattern, $a);
+                        });
+                    }
+
                     $data = array_slice($all, $start, $length);
                 }
             }else{
