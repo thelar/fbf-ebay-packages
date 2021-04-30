@@ -408,40 +408,83 @@
 							'<tr>' +
 								'<td>Custom Label:</td>' +
 								'<td>'+response.result.inv_info.sku+'</td>' +
-							'</tr>'
+							'</tr>';
+						if(response.result.inv_info.first_created){
+							html+='' +
+								'<tr>' +
+									'<td>Created:</td>' +
+								'	<td>'+response.result.inv_info.first_created+'</td>' +
+								'</tr>';
+						}
+						if(response.result.inv_info.update_count){
+							html+='' +
+								'<tr>' +
+									'<td>Updated:</td>' +
+									'<td>'+response.result.inv_info.update_count+' times</td>' +
+								'</tr>';
+						}
+						if(response.result.inv_info.last_update){
+							html+='' +
+								'<tr>' +
+									'<td>Last update:</td>' +
+									'<td>'+response.result.inv_info.last_update+'</td>' +
+								'</tr>';
+						}
+						if(response.result.inv_info.error_count>0){
+							html+='' +
+								'<tr>' +
+									'<td>Errors:</td>' +
+									'<td>'+response.result.inv_info.error_count+'</td>' +
+								'</tr>' +
+								'<tr>' +
+									'<td>Last error:</td>' +
+									'<td>'+response.result.inv_info.last_error+'</td>' +
+								'</tr>';
+						}
 					}
-					if(response.result.inv_info.first_created){
+					if(response.result.offer_info.length!==0){
 						html+='' +
 							'<tr>' +
-								'<td>Created:</td>' +
-								'<td>'+response.result.inv_info.first_created+' times</td>' +
-							'</tr>'
-					}
-					if(response.result.inv_info.update_count){
-						html+='' +
-							'<tr>' +
-								'<td>Updated:</td>' +
-								'<td>'+response.result.inv_info.update_count+' times</td>' +
-							'</tr>'
-					}
-					if(response.result.inv_info.last_update){
-						html+='' +
-							'<tr>' +
-								'<td>Last update:</td>' +
-								'<td>'+response.result.inv_info.last_update+'</td>' +
-							'</tr>'
-					}
-					if(response.result.inv_info.error_count>0){
-						html+='' +
-							'<tr>' +
-								'<td>Errors:</td>' +
-								'<td>'+response.result.inv_info.error_count+'</td>' +
+								'<td colspan="2"><strong>eBay Offer:</strong></td>' +
 							'</tr>' +
 							'<tr>' +
-								'<td>Last error:</td>' +
-								'<td>'+response.result.inv_info.last_error+'</td>' +
-							'</tr>'
+								'<td>ID:</td>' +
+								'<td>'+response.result.offer_info.offer_id+'</td>' +
+							'</tr>';
+						if(response.result.offer_info.first_created){
+							html+='' +
+								'<tr>' +
+									'<td>Created:</td>' +
+									'<td>'+response.result.offer_info.first_created+'</td>' +
+								'</tr>';
+						}
+						if(response.result.offer_info.update_count){
+							html+='' +
+								'<tr>' +
+									'<td>Updated:</td>' +
+									'<td>'+response.result.offer_info.update_count+' times</td>' +
+								'</tr>';
+						}
+						if(response.result.offer_info.last_update){
+							html+='' +
+								'<tr>' +
+									'<td>Last update:</td>' +
+									'<td>'+response.result.offer_info.last_update+'</td>' +
+								'</tr>';
+						}
+						if(response.result.offer_info.error_count>0){
+							html+='' +
+								'<tr>' +
+									'<td>Errors:</td>' +
+									'<td>'+response.result.offer_info.error_count+'</td>' +
+								'</tr>' +
+								'<tr>' +
+									'<td>Last error:</td>' +
+								'	<td>'+response.result.offer_info.last_error+'</td>' +
+								'</tr>';
+						}
 					}
+
 					$child.append(html);
 				}
 			});

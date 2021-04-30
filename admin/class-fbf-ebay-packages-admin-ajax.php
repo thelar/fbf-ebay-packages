@@ -540,7 +540,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $result = [
             'id' => $r['id'],
             'info' => $this->get_listing_info($r['id']),
-            'inv_info' => $this->get_inv_info($r['id'], $r['inventory_sku'])
+            'inv_info' => $this->get_inv_info($r['id'], $r['inventory_sku']),
+            'offer_info' => $this->get_offer_info($r['id'], $r['offer_id']),
         ];
 
         echo json_encode([
@@ -606,15 +607,12 @@ class Fbf_Ebay_Packages_Admin_Ajax
             AND ebay_action = %s", $id, 'create_or_update_inv');
 
         $r = $wpdb->get_results($q, ARRAY_A);
-        $info['query'] = $q;
-        $info['result'] = $r;
 
         if($r!==false&&!empty($r)){
             $update_count = 0;
             $error_count = 0;
             foreach($r as $row){
                 $log = unserialize($row['log']);
-                $info['logs'][] = $log;
                 $id = $row['id'];
                 $created = DateTime::createFromFormat ( "Y-m-d H:i:s", $row['created'] );
                 $timestamp = $created->getTimestamp();
@@ -642,6 +640,51 @@ class Fbf_Ebay_Packages_Admin_Ajax
         }
 
         // Get the non-ebay
+        return $info;
+    }
+
+    private function get_offer_info($id, $offer_id)
+    {
+        $info = [
+            'offer_id' => $offer_id
+        ];
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        $q = $wpdb->prepare("SELECT *
+            FROM {$table}
+            WHERE listing_id = %s
+            AND ebay_action IN (%s, %s)", $id, 'create_offer', 'update_offer');
+        $r = $wpdb->get_results($q, ARRAY_A);
+        if($r!==false&&!empty($r)) {
+            $update_count = 0;
+            $error_count = 0;
+            foreach ($r as $row) {
+                $log = unserialize($row['log']);
+                $id = $row['id'];
+                $created = DateTime::createFromFormat ( "Y-m-d H:i:s", $row['created'] );
+                $timestamp = $created->getTimestamp();
+                $status = $log['status'];
+                $action = $log['action'];
+
+                if($row['ebay_action']==='create_offer'&&$status==='success'){
+                    $info['first_created'] = $row['created']; // Should get the latest 'create' if more than 1
+                }
+
+                if($row['ebay_action']==='update_offer'&&$status==='success'){
+                    $update_count++;
+                    $info['last_update'] = $row['created']; // Should get the latest 'update' if there are any
+                }
+
+                if($status==='error'){
+                    $error_count++;
+                    $info['last_error'] = $row['created'];
+                }
+            }
+            if($update_count>0){
+                $info['update_count'] = $update_count;
+            }
+            $info['error_count'] = $error_count;
+        }
         return $info;
     }
 
