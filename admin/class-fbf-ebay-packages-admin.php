@@ -312,32 +312,44 @@ class Fbf_Ebay_Packages_Admin {
 
         $page_hook_id = $this->page_id();
 
-        $meta_brands = add_meta_box(
-            'tyre-brands',                  /* Meta Box ID */
-            'Tyre Brands',               /* Title */
-            [$this, 'tyre_brands_meta_box'],  /* Function Callback */
-            $page_hook_id,               /* Screen: Our Settings Page */
-            'normal',                 /* Context */
-            'default'                 /* Priority */
-        );
+        if(!isset($_REQUEST['listing_id'])){
+            $meta_brands = add_meta_box(
+                'tyre-brands',                  /* Meta Box ID */
+                'Tyre Brands',               /* Title */
+                [$this, 'tyre_brands_meta_box'],  /* Function Callback */
+                $page_hook_id,               /* Screen: Our Settings Page */
+                'normal',                 /* Context */
+                'default'                 /* Priority */
+            );
 
-        $meta_packages = add_meta_box(
-            'tyre-listings',
-            'eBay Tyre Listings',
-            [$this, 'tyre_listings_meta_box'],
-            $page_hook_id,
-            'normal',
-            'default'
-        );
+            $meta_packages = add_meta_box(
+                'tyre-listings',
+                'eBay Tyre Listings',
+                [$this, 'tyre_listings_meta_box'],
+                $page_hook_id,
+                'normal',
+                'default'
+            );
 
-        $meta_schedule = add_meta_box(
-            'tyre-schedule',
-            'eBay Synchronisation',
-            [$this, 'tyre_schedule_sync_meta_box'],
-            $page_hook_id,
-            'normal',
-            'default'
-        );
+            $meta_schedule = add_meta_box(
+                'tyre-schedule',
+                'eBay Synchronisation',
+                [$this, 'tyre_schedule_sync_meta_box'],
+                $page_hook_id,
+                'normal',
+                'default'
+            );
+        }else{
+            $meta_schedule = add_meta_box(
+                'tyre-listing-log-detail',
+                'All log entries for item',
+                [$this, 'tyre_listing_log_detail'],
+                $page_hook_id,
+                'normal',
+                'default'
+            );
+        }
+
     }
 
     public function save_post( $post_id )
@@ -868,9 +880,6 @@ class Fbf_Ebay_Packages_Admin {
     {
         global $hook_suffix;
 
-        /* enable add_meta_boxes function in this page. */
-        do_action( 'add_meta_boxes', $hook_suffix, [] ); // Not entirely sure why we need an empty array here!
-
         /**
          * The class responsible for API auth.
          */
@@ -884,9 +893,17 @@ class Fbf_Ebay_Packages_Admin {
         $msg = sprintf('<p>%s</p>', $token['status']==='error'?$this->get_errors():'eBay Access Token is valid');
         printf('<div class="notice notice-%s is-dismissible">%s</div>', $token['status'], $msg);
 
+        /* enable add_meta_boxes function in this page. */
+        do_action( 'add_meta_boxes', $hook_suffix, [] ); // Not entirely sure why we need an empty array here!
+
+        if(isset($_REQUEST['listing_id'])){
+            $title = 'Log Detail';
+        }else{
+            $title = 'Tyre Listings';
+        }
         ?>
         <div class="wrap">
-            <h2>Tyre Listings</h2>
+            <h2><?=$title?></h2>
             <?php settings_errors(); ?>
             <div class="tyre-brand-select-meta-box-wrap">
                 <form id="tyre-brand-select-form" method="post" action="options.php">
@@ -1036,6 +1053,35 @@ class Fbf_Ebay_Packages_Admin {
         <button role="button" class="button button-primary" id="fbf_ebay_packages_clean" style="margin-top: 1em;" type="button">Clean eBay</button>
         <span class="spinner" style="margin-top: 1.2em;"></span>
         <br class="clear"/>
+        <?php
+    }
+
+    public function tyre_listing_log_detail()
+    {
+        ?>
+        <table id="fbf_ep_event_log_detail" class="display" style="width:100%">
+            <thead>
+            <tr>
+                <th>Date/Time</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Response Code</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Date/Time</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Response Code</th>
+                <th></th>
+            </tr>
+            </tfoot>
+        </table>
         <?php
     }
 

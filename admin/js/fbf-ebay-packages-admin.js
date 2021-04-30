@@ -156,7 +156,7 @@
 				type: 'POST',
 				data: {
 					//action: 'fbf_ebay_packages_ebay_listing'
-					action: 'fbf_ebay_packages_tyre_table'
+					action: 'fbf_ebay_packages_tyre_table',
 				}
 			},
 			oLanguage: {
@@ -212,6 +212,36 @@
 			oLanguage: {
 				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
 			}
+		});
+
+		let log_detail = $('#fbf_ep_event_log_detail').DataTable({
+			serverSide: true,
+			processing: true,
+			searchDelay: 700,
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: {
+					//action: 'fbf_ebay_packages_ebay_listing'
+					action: 'fbf_ebay_packages_log_detail',
+					listing_id: get('listing_id'),
+				}
+			},
+			oLanguage: {
+				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			},
+			columns: [
+				{ data: 'created' },
+				{ data: 'action' },
+				{ data: 'status' },
+				{ data: 'response_code' },
+				{
+					"className":      'details-control',
+					"orderable":      false,
+					"data":           null,
+					"defaultContent": '<a href="#" class="dashicons dashicons-arrow-down-alt2"></a>'
+				}
+			]
 		});
 
 		// tyre select form submit
@@ -512,6 +542,15 @@
 								'</tr>';
 						}
 					}
+					if(response.result.full_log_url){
+						html+='' +
+							'<tr>' +
+								'<td colspan="2">' +
+									'<a class="" href="'+response.result.full_log_url+'">View all log entries for item...</a>' +
+								'</td>' +
+							'</tr>';
+					}
+
 
 					$child.append(html);
 				}
@@ -519,6 +558,11 @@
 
 			return '<table cellpadding="5" cellspacing="0" border="0" style="width: 100%;" id="child_'+d.id+'">'+
 				'</table>';
+		}
+
+		function get(name){
+			if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+				return decodeURIComponent(name[1]);
 		}
 	});
 

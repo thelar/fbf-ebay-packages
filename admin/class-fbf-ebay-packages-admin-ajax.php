@@ -527,6 +527,147 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_log_detail()
+    {
+        global $wpdb;
+        $draw = $_REQUEST['draw'];
+        $start = absint($_REQUEST['start']);
+        $length = absint($_REQUEST['length']);
+        $paged = ($start/$length) + 1;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        $all = [];
+
+        if(isset($_REQUEST['listing_id'])){
+            $id = $_REQUEST['listing_id'];
+            $q = $wpdb->prepare("SELECT COUNT(*) AS count
+                FROM {$table}
+                WHERE listing_id = %s", $id);
+            $r = $wpdb->get_row($q, ARRAY_A);
+            if($r!==false){
+                $count = $r['count'];
+
+                $q = "SELECT *
+                    FROM {$table}
+                    WHERE listing_id = %s";
+
+                if(isset($_REQUEST['order'][0]['column'])){
+                    $dir = $_REQUEST['order'][0]['dir'];
+                    if($_REQUEST['order'][0]['column']==='0'){
+                        $q.= '
+                            ORDER BY created ' . strtoupper($dir);
+                    }else if($_REQUEST['order'][0]['column']==='1'){
+                        $q.= '
+                            ORDER BY s.sku ' . strtoupper($dir);
+                    }else if($_REQUEST['order'][0]['column']==='2'){
+                        $q.= '
+                            ORDER BY l.qty ' . strtoupper($dir);
+                    }else if($_REQUEST['order'][0]['column']==='3'){
+                        $q.= '
+                            ORDER BY l.listing_id ' . strtoupper($dir);
+                    }
+                }
+                $q = $wpdb->prepare("SELECT *
+                    FROM {$table}
+                    WHERE listing_id = %s", $id);
+                $r = $wpdb->get_results($q, ARRAY_A);
+
+                if($r!==false&&!empty($r)){
+                    foreach($r as $result){
+                        $created = DateTime::createFromFormat ( "Y-m-d H:i:s", $result['created'] );
+                        $timestamp = $created->getTimestamp();
+                        if(is_null($result['ebay_action'])){
+                            switch($result['log']){
+                                case 'Listing created':
+                                    $action = 'listing_created';
+                                    break;
+                                case 'Listing activated':
+                                    $action = 'listing_activated';
+                                    break;
+                                case 'Listing deactivated':
+                                    $action = 'listing_deactivated';
+                                    break;
+                                default:
+                                    $action = $result['log'];
+                                    break;
+                            }
+                            $response_code = '';
+                            $status = '';
+                        }else{
+                            $response = unserialize($result['log']);
+                            $status = $response['status'];
+                            $action = $result['log'];
+                            $response_code = $response['response_code'];
+                        }
+                        $all[] = [
+                            'created' => $result['created'],
+                            'timestamp' => $timestamp,
+                            'action' =>  $action,
+                            'status' => $status,
+                            'response_code' => $response_code
+                        ];
+                    }
+                    if(isset($_REQUEST['order'][0]['column'])) {
+                        if ($_REQUEST['order'][0]['column'] === '0') {
+                            usort($all, function($a, $b){
+                                $dir = $_REQUEST['order'][0]['dir'];
+                                if($dir==='desc'){
+                                    return strcmp($a['timestamp'], $b['timestamp']) * -1;
+                                }else{
+                                    return strcmp($a['timestamp'], $b['timestamp']);
+                                }
+                            });
+                        }
+                        if ($_REQUEST['order'][0]['column'] === '2') {
+                            usort($all, function($a, $b){
+                                $dir = $_REQUEST['order'][0]['dir'];
+                                if($dir==='desc'){
+                                    return strcmp($a['action'], $b['action']) * -1;
+                                }else{
+                                    return strcmp($a['action'], $b['action']);
+                                }
+                            });
+                        }
+                        if ($_REQUEST['order'][0]['column'] === '3') {
+                            usort($all, function($a, $b){
+                                $dir = $_REQUEST['order'][0]['dir'];
+                                if($dir==='desc'){
+                                    return strcmp($a['status'], $b['status']) * -1;
+                                }else{
+                                    return strcmp($a['status'], $b['status']);
+                                }
+                            });
+                        }
+                        if ($_REQUEST['order'][0]['column'] === '4') {
+                            usort($all, function($a, $b){
+                                $dir = $_REQUEST['order'][0]['dir'];
+                                if($dir==='desc'){
+                                    return strcmp($a['response_code'], $b['response_code']) * -1;
+                                }else{
+                                    return strcmp($a['response_code'], $b['response_code']);
+                                }
+                            });
+                        }
+                    }
+                    $data = array_slice($all, $start, $length);
+                }
+            }else{
+                $count = 0;
+            }
+
+            echo json_encode([
+                'draw' => $draw,
+                'recordsTotal' => $count,
+                'recordsFiltered' => $count,
+                'data' => $data
+            ]);
+        }else{
+            echo json_encode([
+                'status' => 'error'
+            ]);
+        }
+        die();
+    }
+
     public function fbf_ebay_packages_listing_info()
     {
         global $wpdb;
@@ -542,7 +683,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'info' => $this->get_listing_info($r['id']),
             'inv_info' => $this->get_inv_info($r['id'], $r['inventory_sku']),
             'offer_info' => $this->get_offer_info($r['id'], $r['offer_id']),
-            'publish_info'=> $this->get_publish_info($r['id'], $r['listing_id'])
+            'publish_info'=> $this->get_publish_info($r['id'], $r['listing_id']),
+            'full_log_url' => get_admin_url() . 'admin.php?page=' . $this->plugin_name . '-tyres&listing_id=' . $r['id']
         ];
 
         echo json_encode([
