@@ -617,7 +617,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                                 }
                             });
                         }
-                        if ($_REQUEST['order'][0]['column'] === '2') {
+                        if ($_REQUEST['order'][0]['column'] === '1') {
                             usort($all, function($a, $b){
                                 $dir = $_REQUEST['order'][0]['dir'];
                                 if($dir==='desc'){
@@ -627,7 +627,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                                 }
                             });
                         }
-                        if ($_REQUEST['order'][0]['column'] === '3') {
+                        if ($_REQUEST['order'][0]['column'] === '2') {
                             usort($all, function($a, $b){
                                 $dir = $_REQUEST['order'][0]['dir'];
                                 if($dir==='desc'){
@@ -637,7 +637,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                                 }
                             });
                         }
-                        if ($_REQUEST['order'][0]['column'] === '4') {
+                        if ($_REQUEST['order'][0]['column'] === '3') {
                             usort($all, function($a, $b){
                                 $dir = $_REQUEST['order'][0]['dir'];
                                 if($dir==='desc'){
