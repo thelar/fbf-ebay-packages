@@ -604,7 +604,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
             FROM {$table}
             WHERE listing_id = %s
             AND ebay_action = %s", $id, 'create_or_update_inv');
+
         $r = $wpdb->get_results($q, ARRAY_A);
+        $info['result'] = $r;
 
         if($r!==false&&!empty($r)){
             $update_count = 0;
