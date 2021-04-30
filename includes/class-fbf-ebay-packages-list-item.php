@@ -656,6 +656,14 @@ class Fbf_Ebay_Packages_List_Item
         }else{
             $resp['status'] = 'success';
             $resp['response'] = $response;
+
+            // Clean up headers (strip out token)
+            foreach($headers as $i => $header){
+                if(strpos($header, 'Authorization')!==false){
+                    unset($headers[$i]);
+                }
+            }
+
             $resp['response_headers'] = $headers;
             $resp['response_code'] = curl_getinfo($curl)['http_code'];
         }
