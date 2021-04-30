@@ -599,7 +599,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'sku' => $sku
         ];
         global $wpdb;
-        $table = $wpdb->prefix . 'wfbf_ebay_packages_logs';
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
         $q = $wpdb->prepare("SELECT *
             FROM {$table}
             WHERE listing_id = %s
