@@ -680,7 +680,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         if($r!==false&&!empty($r)){
             $log = unserialize($r['log']);
             ob_start();
-            var_dump($log);
+            print_r($log);
             $log = ob_get_clean();
         }else{
             $log = '';
