@@ -413,15 +413,26 @@
 					if(response.result.inv_info.update_count){
 						html+='' +
 							'<tr>' +
-								'<td><strong>Updated:</strong></td>' +
+								'<td>Updated:</td>' +
 								'<td>'+response.result.inv_info.update_count+' times</td>' +
 							'</tr>'
 					}
 					if(response.result.inv_info.last_update){
 						html+='' +
 							'<tr>' +
-								'<td><strong>Last update:</strong></td>' +
-								'<td>'+response.result.inv_info.last_update+' times</td>' +
+								'<td>Last update:</td>' +
+								'<td>'+response.result.inv_info.last_update+'</td>' +
+							'</tr>'
+					}
+					if(response.result.inv_info.error_count>0){
+						html+='' +
+							'<tr>' +
+								'<td>Errors:</td>' +
+								'<td>'+response.result.inv_info.error_count+'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td>Last error:</td>' +
+								'<td>'+response.result.inv_info.last_error+'</td>' +
 							'</tr>'
 					}
 					$child.append(html);
