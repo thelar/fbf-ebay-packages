@@ -542,6 +542,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'info' => $this->get_listing_info($r['id']),
             'inv_info' => $this->get_inv_info($r['id'], $r['inventory_sku']),
             'offer_info' => $this->get_offer_info($r['id'], $r['offer_id']),
+            'publish_info'=> $this->get_publish_info($r['id'], $r['listing_id'])
         ];
 
         echo json_encode([
@@ -682,6 +683,42 @@ class Fbf_Ebay_Packages_Admin_Ajax
             }
             if($update_count>0){
                 $info['update_count'] = $update_count;
+            }
+            $info['error_count'] = $error_count;
+        }
+        return $info;
+    }
+
+    private function get_publish_info($id, $listing_id)
+    {
+        $info = [
+            'listing_id' => $listing_id
+        ];
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
+        $q = $wpdb->prepare("SELECT *
+            FROM {$table}
+            WHERE listing_id = %s
+            AND ebay_action = %s", $id, 'publish_offer');
+        $r = $wpdb->get_results($q, ARRAY_A);
+        if ($r !== false && !empty($r)) {
+            $error_count = 0;
+            foreach ($r as $row) {
+                $log = unserialize($row['log']);
+                $id = $row['id'];
+                $created = DateTime::createFromFormat("Y-m-d H:i:s", $row['created']);
+                $timestamp = $created->getTimestamp();
+                $status = $log['status'];
+                $action = $log['action'];
+
+                if($status==='success'){
+                    $info['first_created'] = $row['created']; // Should get the latest 'create' if more than 1
+                }
+
+                if($status==='error'){
+                    $error_count++;
+                    $info['last_error'] = $row['created'];
+                }
             }
             $info['error_count'] = $error_count;
         }

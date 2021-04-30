@@ -480,7 +480,35 @@
 								'</tr>' +
 								'<tr>' +
 									'<td>Last error:</td>' +
-								'	<td>'+response.result.offer_info.last_error+'</td>' +
+									'<td>'+response.result.offer_info.last_error+'</td>' +
+								'</tr>';
+						}
+					}
+					if(response.result.publish_info.length!==0){
+						html+='' +
+							'<tr>' +
+								'<td colspan="2"><strong>eBay Publish Info:</strong></td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td>Listing ID:</td>' +
+								'<td>'+response.result.publish_info.listing_id+'</td>' +
+							'</tr>';
+						if(response.result.publish_info.first_created){
+							html+='' +
+								'<tr>' +
+								'<td>Published:</td>' +
+								'<td>'+response.result.publish_info.first_created+'</td>' +
+								'</tr>';
+						}
+						if(response.result.publish_info.error_count>0){
+							html+='' +
+								'<tr>' +
+								'<td>Errors:</td>' +
+								'<td>'+response.result.publish_info.error_count+'</td>' +
+								'</tr>' +
+								'<tr>' +
+								'<td>Last error:</td>' +
+								'	<td>'+response.result.publish_info.last_error+'</td>' +
 								'</tr>';
 						}
 					}
