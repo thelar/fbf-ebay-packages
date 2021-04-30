@@ -433,7 +433,7 @@
 						if(response.result.inv_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td>Errors:</td>' +
+									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span>Errors:</td>' +
 									'<td>'+response.result.inv_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
@@ -475,7 +475,7 @@
 						if(response.result.offer_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td>Errors:</td>' +
+									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span>Errors:</td>' +
 									'<td>'+response.result.offer_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
@@ -503,7 +503,7 @@
 						if(response.result.publish_info.error_count>0){
 							html+='' +
 								'<tr>' +
-								'<td>Errors:</td>' +
+								'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span>Errors:</td>' +
 								'<td>'+response.result.publish_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
