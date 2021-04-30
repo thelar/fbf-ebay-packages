@@ -606,6 +606,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             AND ebay_action = %s", $id, 'create_or_update_inv');
 
         $r = $wpdb->get_results($q, ARRAY_A);
+        $info['query'] = $q;
         $info['result'] = $r;
 
         if($r!==false&&!empty($r)){
