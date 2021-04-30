@@ -410,6 +410,13 @@
 								'<td>'+response.result.inv_info.sku+'</td>' +
 							'</tr>'
 					}
+					if(response.result.inv_info.updated_count){
+						html+='' +
+							'<tr>' +
+								'<td><strong>Updated:</strong></td>' +
+								'<td>'+response.result.inv_info.updated_count+' times</td>' +
+							'</tr>'
+					}
 					$child.append(html);
 				}
 			});
