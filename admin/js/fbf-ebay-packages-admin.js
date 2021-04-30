@@ -171,7 +171,7 @@
 					"className":      'details-control',
 					"orderable":      false,
 					"data":           null,
-					"defaultContent": 'x'
+					"defaultContent": '<a href="#" class="dashicons dashicons-arrow-down-alt2"></a>'
 				},
 			],
 			columnDefs: [
@@ -343,20 +343,24 @@
 		});
 
 		// Add event listener for opening and closing details
-		$('#example tbody').on('click', 'td.details-control', function () {
+		$('#example tbody').on('click', 'td.details-control a', function () {
 			var tr = $(this).closest('tr');
 			var row = table.row( tr );
+			var $icon = $(this);
+			console.log($icon);
 
-			if ( row.child.isShown() ) {
+			if( row.child.isShown() ) {
 				// This row is already open - close it
 				row.child.hide();
 				tr.removeClass('shown');
-			}
-			else {
+				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}else{
 				// Open this row
 				row.child(format(row.data())).show();
 				tr.addClass('shown');
+				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
 			}
+			return false;
 		});
 
 		function format (d){
@@ -395,6 +399,16 @@
 								'<td>Deactivated:</td>' +
 								'<td>'+response.result.info.deactivated_count+' times</td>' +
 							'</tr>';
+					}
+					if(response.result.inv_info.length!==0){
+						html+='' +
+							'<tr>' +
+								'<td colspan="2"><strong>eBay Inventory item:</strong></td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td>Custom Label:</td>' +
+								'<td>'+response.result.inv_info.sku+'</td>' +
+							'</tr>'
 					}
 					$child.append(html);
 				}

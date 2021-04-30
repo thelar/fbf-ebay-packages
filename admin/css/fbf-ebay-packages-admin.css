@@ -30,6 +30,10 @@ table.dataTable tfoot td {
     text-align: left;
 }
 
+table.dataTable td.details-control {
+    text-align: right;
+}
+
 #TB_window .tb-modal-footer {
     position: absolute;
     bottom: 0;

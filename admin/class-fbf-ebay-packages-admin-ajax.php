@@ -539,7 +539,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
         $result = [
             'id' => $r['id'],
-            'info' => $this->get_listing_info($r['id'])
+            'info' => $this->get_listing_info($r['id']),
+            'inv_info' => $this->get_inv_info($r['id'], $r['inventory_sku'])
         ];
 
         echo json_encode([
@@ -592,12 +593,52 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
     }
 
-    private function get_inv_info($id)
+    private function get_inv_info($id, $sku)
     {
+        $info = [
+            'sku' => $sku
+        ];
         global $wpdb;
         $table = $wpdb->prefix . 'wfbf_ebay_packages_logs';
+        $q = $wpdb->prepare("SELECT *
+            FROM {$table}
+            WHERE listing_id = %s
+            AND ebay_action = %s", $id, 'create_or_update_inv');
+        $r = $wpdb->get_results($q, ARRAY_A);
+
+        if($r!==false&&!empty($r)){
+            $update_count = 0;
+            $error_count = 0;
+            foreach($r as $row){
+                $log = unserialize($row['log']);
+                $id = $row['id'];
+                $created = DateTime::createFromFormat ( "Y-m-d H:i:s", $row['created'] );
+                $timestamp = $created->getTimestamp();
+                $status = $log['status'];
+                $action = $log['action'];
+
+                if($action==='updated'&&$status==='success'){
+                    $update_count++;
+                    $info['last_update'] = $row['created']; // Should get the latest 'update' if there are any
+                }
+
+                if($action==='created'&&$status==='success'){
+                    $info['first_created'] = $row['created']; // Should get the latest 'create' if more than 1
+                }
+
+                if($status==='error'){
+                    $error_count++;
+                    $info['last_error'] = $row['created'];
+                }
+            }
+            if($update_count>0){
+                $info['update_count'] = $update_count;
+            }
+            $info['error_count'] = $error_count;
+        }
 
         // Get the non-ebay
+        return $info;
     }
 
     private function log($msg, $id)
