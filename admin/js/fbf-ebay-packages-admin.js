@@ -410,6 +410,13 @@
 								'<td>'+response.result.inv_info.sku+'</td>' +
 							'</tr>'
 					}
+					if(response.result.inv_info.first_created){
+						html+='' +
+							'<tr>' +
+								'<td>Created:</td>' +
+								'<td>'+response.result.inv_info.first_created+' times</td>' +
+							'</tr>'
+					}
 					if(response.result.inv_info.update_count){
 						html+='' +
 							'<tr>' +
