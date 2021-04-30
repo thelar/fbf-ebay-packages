@@ -595,7 +595,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         }else{
                             $response = unserialize($result['log']);
                             $status = $response['status'];
-                            $action = $result['log'];
+                            $action = $result['ebay_action'];
                             $response_code = $response['response_code'];
                         }
                         $all[] = [
