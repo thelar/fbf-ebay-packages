@@ -410,11 +410,18 @@
 								'<td>'+response.result.inv_info.sku+'</td>' +
 							'</tr>'
 					}
-					if(response.result.inv_info.updated_count){
+					if(response.result.inv_info.update_count){
 						html+='' +
 							'<tr>' +
 								'<td><strong>Updated:</strong></td>' +
-								'<td>'+response.result.inv_info.updated_count+' times</td>' +
+								'<td>'+response.result.inv_info.update_count+' times</td>' +
+							'</tr>'
+					}
+					if(response.result.inv_info.last_update){
+						html+='' +
+							'<tr>' +
+								'<td><strong>Last update:</strong></td>' +
+								'<td>'+response.result.inv_info.last_update+' times</td>' +
 							'</tr>'
 					}
 					$child.append(html);
