@@ -679,6 +679,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $r = $wpdb->get_row($q, ARRAY_A);
         if($r!==false&&!empty($r)){
             $log = unserialize($r['log']);
+            if(!empty($log['response']['response'])){
+                $log['response']['response'] = json_decode($log['response']['response']);
+            }
             ob_start();
             print_r($log);
             $log = ob_get_clean();
