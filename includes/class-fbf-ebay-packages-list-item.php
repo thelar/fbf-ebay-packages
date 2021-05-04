@@ -659,8 +659,10 @@ class Fbf_Ebay_Packages_List_Item
 
             // Clean up headers (strip out token)
             foreach($headers as $i => $header){
-                if(strpos($header, 'Authorization')!==false){
-                    unset($headers[$i]);
+                if(!is_array($header)){
+                    if(strpos($header, 'Authorization')!==false){
+                        unset($headers[$i]);
+                    }
                 }
             }
 
