@@ -115,6 +115,11 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     'field' => 'id',
                     'terms' => $search_brands,
                     'operator' => 'IN'
+                ],
+                [
+                    'taxonomy' => 'pa_list-on-ebay',
+                    'field' => 'slug',
+                    'terms' => 'true'
                 ]
             ]
         ];
@@ -338,6 +343,11 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     'field' => 'id',
                     'terms' => $search_brands,
                     'operator' => 'IN'
+                ],
+                [
+                    'taxonomy' => 'pa_list-on-ebay',
+                    'field' => 'slug',
+                    'terms' => 'true'
                 ]
             ]
         ];
@@ -501,7 +511,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $synchronisations_to_show = 5;
         $table = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
         $timezone = new DateTimeZone("Europe/London");
-        $q = $wpdb->prepare("SELECT hook, UNIX_TIMESTAMP(created) AS d
+        $q = $wpdb->prepare("SELECT hook, log, UNIX_TIMESTAMP(created) AS d
             FROM {$table}
             WHERE type = %s
             ORDER BY d DESC
@@ -512,9 +522,12 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 $date = new DateTime();
                 $date->setTimezone($timezone);
                 $date->setTimestamp($result['d']);
+                $log = unserialize($result['log']);
+                $time = $log['end'] - $log['start'];
                 $data[] = [
                     $date->format('g:i:s A'),
-                    $result['hook']
+                    $result['hook'],
+                    $time,
                 ];
             }
         }

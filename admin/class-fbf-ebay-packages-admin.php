@@ -1038,6 +1038,7 @@ class Fbf_Ebay_Packages_Admin {
             <tr>
                 <th>Date/time</th>
                 <th>Hook</th>
+                <th>Execution time</th>
             </tr>
             </thead>
             <tbody>
@@ -1046,6 +1047,7 @@ class Fbf_Ebay_Packages_Admin {
             <tr>
                 <th>Date/time</th>
                 <th>Hook</th>
+                <th>Execution time</th>
             </tr>
             </tfoot>
         </table>
