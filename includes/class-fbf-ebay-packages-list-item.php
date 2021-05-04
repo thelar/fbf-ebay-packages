@@ -137,6 +137,15 @@ class Fbf_Ebay_Packages_List_Item
                                 /*$this->status['update_offer_status'] = 'success';
                                 $this->status['update_offer_action'] = 'updated';*/
 
+                                // Add som stuff to $offer update
+                                $offer_update['update_required'] = $update_required;
+                                $offer_update['curr_name'] = $curr_name;
+                                $offer_update['prod_title'] = $product->get_title();
+                                $offer_update['offer_qty'] = $offer_qty;
+                                $offer_update['product_qty'] = $product_qty;
+                                $offer_update['offer_price'] = $offer_price;
+                                $offer_update['product_price'] = $product_price;
+
                                 $this->logs[] = $this->log($result->id, 'update_offer', [
                                     'status' => 'success',
                                     'action' => 'updated',
