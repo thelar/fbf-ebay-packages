@@ -98,105 +98,92 @@ class Fbf_Ebay_Packages_List_Item
 
 
 
-                    $offer = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'GET', ['Authorization: Bearer ' . $token['token']]);
-                    if($offer['status']==='success'&&$offer['response_code']===200) {
-                        $update_required = false;
-                        $offer_response = json_decode($offer['response']);
-                        $offer_price = floatval($offer_response->pricingSummary->price->value);
-                        $publish_offer_id = $result->offer_id;
-                        $offer_status = $offer_response->status;
+                    //$offer = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'GET', ['Authorization: Bearer ' . $token['token']]);
+                    /*$update_required = false;
+                    $offer_response = json_decode($offer['response']);
+                    $offer_price = floatval($offer_response->pricingSummary->price->value);
+                    $publish_offer_id = $result->offer_id;
+                    $offer_status = $offer_response->status;
 
 
-                        if(is_a( $product, 'WC_Product_Variable' )){
-                            $product_price = $product->get_variation_regular_price();
-                        }else{
-                            $product_price = $product->get_regular_price();
-                        }
-                        $vat = ($product_price/100) * 20;
-                        $product_price = number_format(($product_price + $vat) * $qty, 2, '.', '');
+                    if(is_a( $product, 'WC_Product_Variable' )){
+                        $product_price = $product->get_variation_regular_price();
+                    }else{
+                        $product_price = $product->get_regular_price();
+                    }
+                    $vat = ($product_price/100) * 20;
+                    $product_price = number_format(($product_price + $vat) * $qty, 2, '.', '');
 
 
-                        if ($offer_price != $product_price) {
-                            $update_required = true;
-                        }
-                        $offer_qty = (int)$offer_response->availableQuantity;
-                        $product_qty = (int)floor(($product->get_stock_quantity() - $this->buffer) / $qty);
-                        if ($offer_qty !== $product_qty) {
-                            $update_required = true;
-                        }
-                        if ($curr_name != $product->get_title()) {
-                            $update_required = true;
-                        }
+                    if ($offer_price != $product_price) {
+                        $update_required = true;
+                    }
+                    $offer_qty = (int)$offer_response->availableQuantity;
+                    $product_qty = (int)floor(($product->get_stock_quantity() - $this->buffer) / $qty);
+                    if ($offer_qty !== $product_qty) {
+                        $update_required = true;
+                    }
+                    if ($curr_name != $product->get_title()) {
+                        $update_required = true;
+                    }*/
 
-                        $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
-
-
-                        // Force an update
-                        //$update_required = true;
+                    $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
 
 
-                        if ($new_update_required) {
-                        //if($this->is_offer_update_required($result->offer_id)){
-                            // Update the offer
-                            $offer_payload = $this->offer_payload($product, $sku, $qty);
-                            $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
+                    // Force an update
+                    //$update_required = true;
 
-                            if ($offer_update['status']==='success'&&$offer_update['response_code'] === 204) {
 
-                                // Update the offer here
-                                $this->insert_or_update_offer($result->offer_id, $offer_payload);
+                    if ($new_update_required) {
+                    //if($this->is_offer_update_required($result->offer_id)){
+                        // Update the offer
+                        $offer_payload = $this->offer_payload($product, $sku, $qty);
+                        $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
 
-                                /*$this->status['update_offer_status'] = 'success';
-                                $this->status['update_offer_action'] = 'updated';*/
+                        if ($offer_update['status']==='success'&&$offer_update['response_code'] === 204) {
 
-                                // Add some stuff to $offer update
-                                $offer_update['update_required'] = $update_required;
-                                $offer_update['curr_name'] = $curr_name;
-                                $offer_update['prod_title'] = $product->get_title();
-                                $offer_update['offer_qty'] = $offer_qty;
-                                $offer_update['product_qty'] = $product_qty;
-                                $offer_update['offer_price'] = $offer_price;
-                                $offer_update['product_price'] = $product_price;
-                                $offer_update['new_update_req'] = $new_update_required;
+                            // Update the offer here
+                            $this->insert_or_update_offer($result->offer_id, $offer_payload);
 
-                                $this->logs[] = $this->log($result->id, 'update_offer', [
-                                    'status' => 'success',
-                                    'action' => 'updated',
-                                    'response' => $offer_update
-                                ]);
+                            /*$this->status['update_offer_status'] = 'success';
+                            $this->status['update_offer_action'] = 'updated';*/
 
-                            } else {
-                                /*$this->status['update_offer_status'] = 'error';
-                                $this->status['update_offer_action'] = 'none';
-                                $this->status['update_offer_response'] = json_decode($offer_update['response']);*/
-
-                                $this->logs[] = $this->log($result->id, 'update_offer', [
-                                    'status' => 'error',
-                                    'action' => 'none required',
-                                    'response' => $offer_update,
-                                    'payload' => $offer_payload
-                                ]);
-                            }
-                        }else{
-                            //$this->status['update_offer_status'] = 'success';
-                            //$this->status['update_offer_action'] = 'none'; // Update wasn't required - still report as successful
+                            // Add some stuff to $offer update
+                            /*$offer_update['update_required'] = $update_required;
+                            $offer_update['curr_name'] = $curr_name;
+                            $offer_update['prod_title'] = $product->get_title();
+                            $offer_update['offer_qty'] = $offer_qty;
+                            $offer_update['product_qty'] = $product_qty;
+                            $offer_update['offer_price'] = $offer_price;
+                            $offer_update['product_price'] = $product_price;
+                            $offer_update['new_update_req'] = $new_update_required;*/
 
                             $this->logs[] = $this->log($result->id, 'update_offer', [
                                 'status' => 'success',
+                                'action' => 'updated',
+                                'response' => $offer_update
+                            ]);
+
+                        } else {
+                            /*$this->status['update_offer_status'] = 'error';
+                            $this->status['update_offer_action'] = 'none';
+                            $this->status['update_offer_response'] = json_decode($offer_update['response']);*/
+
+                            $this->logs[] = $this->log($result->id, 'update_offer', [
+                                'status' => 'error',
                                 'action' => 'none required',
-                                'response' => $offer,
-                                'new_update_req' => $new_update_required
+                                'response' => $offer_update,
+                                'payload' => $offer_payload
                             ]);
                         }
                     }else{
-                        /*$this->status['update_offer_status'] = 'error';
-                        $this->status['update_offer_action'] = 'none';
-                        $this->status['update_offer_response'] = 'OfferID not found on eBay';*/
+                        //$this->status['update_offer_status'] = 'success';
+                        //$this->status['update_offer_action'] = 'none'; // Update wasn't required - still report as successful
 
                         $this->logs[] = $this->log($result->id, 'update_offer', [
-                            'status' => 'error',
+                            'status' => 'success',
                             'action' => 'none required',
-                            'response' => $offer
+                            'new_update_req' => $new_update_required
                         ]);
                     }
 
