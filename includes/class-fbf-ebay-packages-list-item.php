@@ -131,7 +131,7 @@ class Fbf_Ebay_Packages_List_Item
                             $update_required = true;
                         }
 
-                        $new_update_required = $this->is_offer_update_required($result->offer_id, $product);
+                        $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
 
 
                         // Force an update
