@@ -131,7 +131,7 @@ class Fbf_Ebay_Packages_List_Item
                             $update_required = true;
                         }
 
-                        //$new_update_required = $this->is_offer_update_required($result->offer_id, $product);
+                        $new_update_required = $this->is_offer_update_required($result->offer_id, $product);
 
 
                         // Force an update
@@ -152,7 +152,7 @@ class Fbf_Ebay_Packages_List_Item
                                 /*$this->status['update_offer_status'] = 'success';
                                 $this->status['update_offer_action'] = 'updated';*/
 
-                                // Add som stuff to $offer update
+                                // Add some stuff to $offer update
                                 $offer_update['update_required'] = $update_required;
                                 $offer_update['curr_name'] = $curr_name;
                                 $offer_update['prod_title'] = $product->get_title();
@@ -160,6 +160,7 @@ class Fbf_Ebay_Packages_List_Item
                                 $offer_update['product_qty'] = $product_qty;
                                 $offer_update['offer_price'] = $offer_price;
                                 $offer_update['product_price'] = $product_price;
+                                $offer_update['new_update_req'] = $new_update_required;
 
                                 $this->logs[] = $this->log($result->id, 'update_offer', [
                                     'status' => 'success',
@@ -353,29 +354,26 @@ class Fbf_Ebay_Packages_List_Item
             // We have a match!
             if(!empty($r['payload'])){
                 $payload = unserialize($r['payload']);
+                if(is_array($payload) && isset($payload['availableQuantity']) && isset($payload['pricingSummary']['price']['value'])){
+                    /*if((int)$payload['availableQuantity']!==$product_qty || (float)$payload['pricingSummary']['price']['value']!=$product_price){
+                        return [
+                            'payload_qty' => (int)$payload['availableQuantity'],
+                            'prod_qty' => $product_qty,
+                            'payload_price' => (float)$payload['pricingSummary']['price']['value'],
+                            'prod_price' => $product_price
+                        ];
+                    }*/
+
+                    return [
+                        'payload_qty' => (int)$payload['availableQuantity'],
+                        'prod_qty' => $product_qty,
+                        'payload_price' => (float)$payload['pricingSummary']['price']['value'],
+                        'prod_price' => $product_price
+                    ];
+                }
             }
         }
-
-
-
-
-        $offer_qty = (int)$offer_response->availableQuantity;
-
-
-        if ($offer_qty !== $product_qty) {
-            $update_required = true;
-        }
-
-
-        if ($curr_name != $product->get_title()) {
-            $update_required = true;
-        }
-
-        if ($offer_price !== $product_price) {
-            $update_required = true;
-        }
-
-        return $update_required;
+        return false;
     }
 
     private function insert_or_update_offer($offer_id, $payload)
