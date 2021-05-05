@@ -519,7 +519,8 @@ class Fbf_Ebay_Packages_List_Item
             $reg_price = $product->get_regular_price();
         }
         $vat = ($reg_price/100) * 20;
-        $reg_price = round(($reg_price + $vat) * $qty, 2);
+        //$reg_price = round(($reg_price + $vat) * $qty, 2);
+        $reg_price = number_format(($reg_price + $vat) * $qty, 2, '.', '');
         $offer['sku'] = $sku;
         $offer['marketplaceId'] = 'EBAY_GB';
         $offer['format'] = 'FIXED_PRICE';
