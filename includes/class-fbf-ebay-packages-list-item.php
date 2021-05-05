@@ -135,7 +135,7 @@ class Fbf_Ebay_Packages_List_Item
                         //$update_required = true;
 
 
-                        if ($update_required) {
+                        if ($new_update_required) {
                         //if($this->is_offer_update_required($result->offer_id)){
                             // Update the offer
                             $offer_payload = $this->offer_payload($product, $sku, $qty);
@@ -360,18 +360,8 @@ class Fbf_Ebay_Packages_List_Item
                             'payload_price' => (float)$payload['pricingSummary']['price']['value'],
                             'prod_price' => $product_price
                         ];*/
-                        $update_req = 'yes';
-                    }else{
-                        $update_req = 'no';
+                        return true;
                     }
-
-                    return [
-                        'payload_qty' => (int)$payload['availableQuantity'],
-                        'prod_qty' => $product_qty,
-                        'payload_price' => (float)$payload['pricingSummary']['price']['value'],
-                        'prod_price' => $product_price,
-                        'update_req' => $update_req
-                    ];
                 }
             }
         }
