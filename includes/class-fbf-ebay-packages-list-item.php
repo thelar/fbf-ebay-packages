@@ -135,7 +135,7 @@ class Fbf_Ebay_Packages_List_Item
 
 
                         // Force an update
-                        //$update_required = true;
+                        $update_required = true;
 
 
                         if ($update_required) {
