@@ -182,8 +182,7 @@ class Fbf_Ebay_Packages_List_Item
 
                         $this->logs[] = $this->log($result->id, 'update_offer', [
                             'status' => 'success',
-                            'action' => 'none required',
-                            'new_update_req' => $new_update_required
+                            'action' => 'none required'
                         ]);
                     }
 
