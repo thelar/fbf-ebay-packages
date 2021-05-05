@@ -360,9 +360,9 @@ class Fbf_Ebay_Packages_List_Item
                             'payload_price' => (float)$payload['pricingSummary']['price']['value'],
                             'prod_price' => $product_price
                         ];*/
-                        $update_req = true;
+                        $update_req = 'yes';
                     }else{
-                        $update_req = false;
+                        $update_req = 'no';
                     }
 
                     return [
