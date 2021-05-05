@@ -92,6 +92,12 @@ class Fbf_Ebay_Packages_List_Item
                 //First see if there is already an Offer ID
                 if(!is_null($result->offer_id)){
                     // Exists - do we need to update it?
+
+                    // Query the offers table and attempt to get the information from the stored payload - this acts like a cache and means we don't have to go to the api
+
+
+
+
                     $offer = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'GET', ['Authorization: Bearer ' . $token['token']]);
                     if($offer['status']==='success'&&$offer['response_code']===200) {
                         $update_required = false;
@@ -125,16 +131,23 @@ class Fbf_Ebay_Packages_List_Item
                             $update_required = true;
                         }
 
+                        //$new_update_required = $this->is_offer_update_required($result->offer_id, $product);
+
+
                         // Force an update
                         //$update_required = true;
 
 
                         if ($update_required) {
+                        //if($this->is_offer_update_required($result->offer_id)){
                             // Update the offer
                             $offer_payload = $this->offer_payload($product, $sku, $qty);
                             $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
 
                             if ($offer_update['status']==='success'&&$offer_update['response_code'] === 204) {
+
+                                // Update the offer here
+                                $this->insert_or_update_offer($result->offer_id, $offer_payload);
 
                                 /*$this->status['update_offer_status'] = 'success';
                                 $this->status['update_offer_action'] = 'updated';*/
@@ -194,8 +207,12 @@ class Fbf_Ebay_Packages_List_Item
                     $offer_create = $this->api('https://api.ebay.com/sell/inventory/v1/offer', 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
                     if($offer_create['status']==='success'&&$offer_create['response_code']===201){
                         $offer_id = json_decode($offer_create['response']);
+
+                        // Create the offer here
+                        $this->insert_or_update_offer($offer_id, $offer_payload);
+
                         // Created
-                        $this->update_offer_id($offer_id->offerId, $result->id);
+                        $this->update_offer_id($offer_id->offerId, $result->id, $offer_payload);
                         /*$this->status['create_offer_status'] = 'success';
                         $this->status['create_offer_response'] = $offer_id;*/
                         $publish_offer_id = $offer_id->offerId;
@@ -310,6 +327,88 @@ class Fbf_Ebay_Packages_List_Item
         }
     }
 
+    private function is_offer_update_required($offer_id, WC_Product $product, int $qty)
+    {
+        global $wpdb;
+        $offer_table = $wpdb->prefix . 'fbf_ebay_packages_offers';
+
+        if(is_a( $product, 'WC_Product_Variable' )){
+            $product_price = (float)$product->get_variation_regular_price() * $qty;
+        }else{
+            $product_price = (float)$product->get_regular_price() * $qty;
+        }
+        $vat = ($product_price/100) * 20;
+        $product_price = round($product_price + $vat, 2);
+
+        $product_qty = (int)floor(($product->get_stock_quantity() - $this->buffer) / $qty);
+
+        $product_title = $product->get_title();
+
+        // Look in the $offer_table for the id
+        $q = $wpdb->prepare("SELECT *
+            FROM {$offer_table}
+            WHERE offer_id = %s", $offer_id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            // We have a match!
+            if(!empty($r['payload'])){
+                $payload = unserialize($r['payload']);
+            }
+        }
+
+
+
+
+        $offer_qty = (int)$offer_response->availableQuantity;
+
+
+        if ($offer_qty !== $product_qty) {
+            $update_required = true;
+        }
+
+
+        if ($curr_name != $product->get_title()) {
+            $update_required = true;
+        }
+
+        if ($offer_price !== $product_price) {
+            $update_required = true;
+        }
+
+        return $update_required;
+    }
+
+    private function insert_or_update_offer($offer_id, $payload)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_offers';
+        $q = $wpdb->prepare("SELECT *
+            FROM {$table}
+            WHERE offer_id = %s", $offer_id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            // Exists so update it
+            $u = $wpdb->update($table,
+                [
+                    'payload' => serialize($payload)
+                ],
+                [
+                    'offer_id' => $offer_id
+                ]
+            );
+            return $u;
+        }else{
+            // Doesn't exist so create it
+            $i = $wpdb->insert($table,
+                [
+                    'offer_id' => $offer_id,
+                    'payload' => serialize($payload)
+                ]
+            );
+            return $i;
+        }
+    }
+
     private function update_listing_id($listing_id, $id)
     {
         global $wpdb;
@@ -324,16 +423,19 @@ class Fbf_Ebay_Packages_List_Item
         return $result;
     }
 
-    private function update_offer_id($offer_id, $id)
+    private function update_offer_id($offer_id, $id, $offer_payload)
     {
         global $wpdb;
         $listing_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+
         $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
         $q = $wpdb->prepare("UPDATE {$listing_table} l
                     INNER JOIN {$skus_table} s ON s.listing_id = l.id
                     SET l.offer_id = %s
                     WHERE l.id = %s", $offer_id, $id);
         $result = $wpdb->query($q);
+
+
 
         return $result;
     }

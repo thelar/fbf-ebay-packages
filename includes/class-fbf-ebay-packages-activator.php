@@ -45,6 +45,7 @@ class Fbf_Ebay_Packages_Activator {
         $table_name2 = $wpdb->prefix . 'fbf_ebay_packages_skus';
         $table_name3 = $wpdb->prefix . 'fbf_ebay_packages_logs';
         $table_name4 = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
+        $table_name5 = $wpdb->prefix . 'fbf_ebay_packages_offers';
 
         $charset_collate = $wpdb->get_charset_collate();
 
@@ -96,6 +97,15 @@ class Fbf_Ebay_Packages_Activator {
             PRIMARY KEY (`id`)
         ) $charset_collate;";
         dbDelta($sql4);
+
+        $sql5 = "CREATE TABLE IF NOT EXISTS `$table_name5` (
+            `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+            `offer_id` varchar (20),
+            `payload` mediumtext NOT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `offer_id` (`offer_id`)
+        ) $charset_collate;";
+        dbDelta($sql5);
 
         $wpdb->query("ALTER TABLE $table_name2 ADD FOREIGN KEY (`listing_id`) REFERENCES  $table_name(`id`) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
         $wpdb->query("ALTER TABLE $table_name3 ADD FOREIGN KEY (`listing_id`) REFERENCES  $table_name(`id`) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
