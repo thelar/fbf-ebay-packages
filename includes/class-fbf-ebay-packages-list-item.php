@@ -353,20 +353,24 @@ class Fbf_Ebay_Packages_List_Item
             if(!empty($r['payload'])){
                 $payload = unserialize($r['payload']);
                 if(is_array($payload) && isset($payload['availableQuantity']) && isset($payload['pricingSummary']['price']['value'])){
-                    /*if((int)$payload['availableQuantity']!==$product_qty || (float)$payload['pricingSummary']['price']['value']!=$product_price){
-                        return [
+                    if((int)$payload['availableQuantity']!==$product_qty || (float)$payload['pricingSummary']['price']['value']!=$product_price){
+                        /*return [
                             'payload_qty' => (int)$payload['availableQuantity'],
                             'prod_qty' => $product_qty,
                             'payload_price' => (float)$payload['pricingSummary']['price']['value'],
                             'prod_price' => $product_price
-                        ];
-                    }*/
+                        ];*/
+                        $update_req = true;
+                    }else{
+                        $update_req = false;
+                    }
 
                     return [
                         'payload_qty' => (int)$payload['availableQuantity'],
                         'prod_qty' => $product_qty,
                         'payload_price' => (float)$payload['pricingSummary']['price']['value'],
-                        'prod_price' => $product_price
+                        'prod_price' => $product_price,
+                        'update_req' => $update_req
                     ];
                 }
             }
