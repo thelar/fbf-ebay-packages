@@ -107,19 +107,16 @@ class Fbf_Ebay_Packages_List_Item
                         $offer_status = $offer_response->status;
 
 
-
-
                         if(is_a( $product, 'WC_Product_Variable' )){
-                            $product_price = (float)$product->get_variation_regular_price() * $qty;
+                            $product_price = $product->get_variation_regular_price();
                         }else{
-                            $product_price = (float)$product->get_regular_price() * $qty;
+                            $product_price = $product->get_regular_price();
                         }
                         $vat = ($product_price/100) * 20;
-                        $product_price = round($product_price + $vat, 2);
+                        $product_price = number_format(($product_price + $vat) * $qty, 2, '.', '');
 
 
-
-                        if ($offer_price !== $product_price) {
+                        if ($offer_price != $product_price) {
                             $update_required = true;
                         }
                         $offer_qty = (int)$offer_response->availableQuantity;
@@ -135,7 +132,7 @@ class Fbf_Ebay_Packages_List_Item
 
 
                         // Force an update
-                        $update_required = true;
+                        //$update_required = true;
 
 
                         if ($update_required) {
@@ -187,7 +184,8 @@ class Fbf_Ebay_Packages_List_Item
                             $this->logs[] = $this->log($result->id, 'update_offer', [
                                 'status' => 'success',
                                 'action' => 'none required',
-                                'response' => $offer
+                                'response' => $offer,
+                                'new_update_req' => $new_update_required
                             ]);
                         }
                     }else{
