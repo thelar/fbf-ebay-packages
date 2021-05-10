@@ -180,7 +180,8 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'admin_notices', $plugin_admin, 'fbf_ebay_packages_admin_notices');
 
         /* Load the JavaScript needed for the settings screen. */
-        $this->loader->add_action("admin_footer-{$plugin_admin->page_id()}", $plugin_admin, 'meta_footer_scripts');
+        $this->loader->add_action("admin_footer-{$plugin_admin->page_id()}", $plugin_admin, 'meta_footer_scripts'); // Tyres
+        $this->loader->add_action("admin_footer-{$plugin_admin->wheel_page_id()}", $plugin_admin, 'meta_footer_scripts_wheels'); // Wheels
 
         $this->loader->add_filter('acf/fields/relationship/query', $plugin_admin, 'acf_relationship', 10, 3);
         $this->loader->add_filter('acf/fields/relationship/result', $plugin_admin, 'acf_relationship_result', 10, 4);
@@ -188,10 +189,24 @@ class Fbf_Ebay_Packages {
         //Ajax
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_brands', $plugin_admin_ajax, 'fbf_ebay_packages_get_brands' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_brands', $plugin_admin_ajax, 'fbf_ebay_packages_get_brands' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_manufacturers', $plugin_admin_ajax, 'fbf_ebay_packages_get_manufacturers' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_manufacturers', $plugin_admin_ajax, 'fbf_ebay_packages_get_manufacturers' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_ebay_listing', $plugin_admin_ajax, 'fbf_ebay_packages_ebay_listing' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_ebay_listing', $plugin_admin_ajax, 'fbf_ebay_packages_ebay_listing' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_brand_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_brand_confirm' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_brand_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_brand_confirm' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_wheel_brands_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_brands_confirm' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_wheel_brands_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_brands_confirm' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_save_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_save_chassis' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_save_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_save_chassis' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_wheel_create_listings', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_create_listings' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_wheel_create_listings', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_create_listings' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_wheel_confirm_listings', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_confirm_listings' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_wheel_confirm_listings', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_confirm_listings' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_wheel_manufacturers_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_manufacturers_confirm' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_wheel_manufacturers_confirm', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_manufacturers_confirm' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_wheel_get_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_get_chassis' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_wheel_get_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_wheel_get_chassis' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_tyre_table', $plugin_admin_ajax, 'fbf_ebay_packages_tyre_table' );

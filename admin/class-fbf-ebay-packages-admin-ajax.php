@@ -53,6 +53,34 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_get_manufacturers()
+    {
+        global $wpdb;
+        $data = [];
+        $search = filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING);
+        $table = $wpdb->prefix . 'fbf_vehicle_manufacturers';
+
+        $q = "SELECT * FROM {$table} WHERE enabled = %s";
+        if(!empty($search)){
+            $q.= " AND display_name LIKE %s";
+            $p = $wpdb->prepare($q, true, '%' . $search . '%');
+        }else{
+            $p = $wpdb->prepare($q, true);
+        }
+
+        $r = $wpdb->get_results($p, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            foreach($r as $result){
+                $data[] = [
+                    $result['boughto_id'],
+                    $result['display_name']
+                ];
+            }
+        }
+        echo json_encode($data);
+        die();
+    }
+
     public function fbf_ebay_packages_brand_confirm()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
@@ -94,6 +122,19 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'posts_per_page' => -1,
             'fields' => 'ids',
             'no_found_rows' => true,
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => '_stock_status',
+                    'value' => 'instock',
+                    'compare' => '=',
+                ],
+                [
+                    'key' => '_stock_status',
+                    'value' => 'onbackorder',
+                    'compare' => '=',
+                ]
+            ],
             /*'meta_query' => [
                 'relation' => 'AND',
                 [
@@ -220,6 +261,331 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_wheel_brands_confirm()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+
+        $save_brands = [];
+        $search_brands = [];
+
+        if(isset($_REQUEST['brands']) && is_array($_REQUEST['brands'])){
+            foreach($_REQUEST['brands'] as $brand){
+                $brand_id = filter_var($brand, FILTER_SANITIZE_STRING);
+                $term = get_term_by('ID', $brand, 'pa_brand-name');
+
+                $save_brands[] = [
+                    'ID' => $brand_id,
+                    'name' => $term->name,
+                ];
+
+                $search_brands[] = $brand_id;
+            }
+        }
+
+        //Save the brands if set
+        if(!empty($save_brands)){
+            $update_option = update_option('_fbf_ebay_packages_wheel_brands', $save_brands);
+        }else{
+            $resp['status'] = 'error';
+            $resp['msg'] = 'You have not selected a Wheel Brand';
+
+            echo json_encode($resp);
+            die();
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'msg' => 'Wheel Brands saved successfully'
+        ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_wheel_manufacturers_confirm()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+
+        $save_manufacturers = [];
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_vehicle_manufacturers';
+        $saved_chassis = get_option('_fbf_ebay_packages_chassis');
+        $manufacturer_ids = [];
+        if(!empty($saved_chassis)){
+            foreach($saved_chassis as $ck => $cv){
+                $manufacturer_ids[] = $ck;
+            }
+        }
+
+
+        if(isset($_REQUEST['manufacturers']) && is_array($_REQUEST['manufacturers'])) {
+            foreach ($_REQUEST['manufacturers'] as $manufacturer) {
+                $q = $wpdb->prepare("SELECT display_name
+                    FROM {$table}
+                    WHERE boughto_id = %s", $manufacturer);
+                $r = $wpdb->get_row($q, ARRAY_A);
+                if($r!==false&&!empty($r)){
+                    $save_manufacturers[] = [
+                        'ID' => $manufacturer,
+                        'name' => $r['display_name']
+                    ];
+                    if (($key = array_search($manufacturer, $manufacturer_ids)) !== false) {
+                        unset($manufacturer_ids[$key]);
+                    }
+                }
+            }
+        }
+
+        //Remove any ids that are left in $manufacturer_ids and re-save chassis option
+        if(!empty($manufacturer_ids)){
+            foreach($manufacturer_ids as $manu){
+                unset($saved_chassis[$manu]);
+            }
+            update_option('_fbf_ebay_packages_chassis', $saved_chassis);
+        }
+
+        //Save the brands if set
+        if(!empty($save_manufacturers)){
+            $update_option = update_option('_fbf_ebay_packages_wheel_manufacturers', $save_manufacturers);
+        }else{
+            $resp['status'] = 'error';
+            $resp['msg'] = 'You have not selected a Manufacturer';
+
+            echo json_encode($resp);
+            die();
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'msg' => 'Wheel Manufacturers saved successfully'
+        ]);
+        die();
+    }
+
+    /**
+     * This function gets all the chassis for the saved manufacturers
+     */
+    public function fbf_ebay_packages_wheel_get_chassis()
+    {
+        $manufacturer_data = [];
+        $saved_chassis = get_option('_fbf_ebay_packages_chassis');
+
+        if (is_plugin_active('fbf-wheel-search/fbf-wheel-search.php')) {
+            require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
+            $api = new Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
+
+            $manufacturers = get_option('_fbf_ebay_packages_wheel_manufacturers');
+            if(!empty($manufacturers)){
+                foreach($manufacturers as $manufacturer){
+                    $data = $api->get_chasis($manufacturer['ID']);
+                    $manufacturer_saved_chassis = $saved_chassis[$manufacturer['ID']];
+
+                    if(!empty($data)&&!array_key_exists('error', $data)){
+                        $all_chassis = [];
+                        $i = 0;
+                        foreach($data as $chassis){
+                            if(strpos(strtolower($chassis['name']), 'hidden')===false){
+                                $ds = DateTime::createFromFormat(DATE_ISO8601, $chassis['year_start']);
+                                $de = DateTime::createFromFormat(DATE_ISO8601, $chassis['year_end']);
+                                if($ds){
+                                    $data[$i]['ds'] = $ds->format('Y');
+                                }
+                                if($de){
+                                    $data[$i]['de'] = $de->format('Y');
+                                }
+                            }else{
+                                unset($data[$i]);
+                            }
+                            $i++;
+                        }
+
+                        if(!empty($data)){
+                            usort($data, function($a, $b){
+                                return [$a['name'], $b['ds']] <=> [$b['name'], $a['ds']];
+                            });
+                        }
+
+                        foreach($data as $chassis){
+                            $all_chassis[] = [
+                                'name' => $chassis['name'] . ' ' . $chassis['ds'] . ' - ' . $chassis['de'],
+                                'ID' => $chassis['id'],
+                                'selected' => in_array($chassis['id'], $manufacturer_saved_chassis)?'selected':''
+                            ];
+                        }
+
+                        $manufacturer_data[] = [
+                            'name' => $manufacturer['name'],
+                            'ID' => $manufacturer['ID'],
+                            'chassis' => $all_chassis
+                        ];
+                    }
+                }
+            }
+        }
+
+        $a = 1;
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $manufacturer_data
+        ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_save_chassis()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $chassis = $_REQUEST['chassis'];
+        $all_chassis = $_REQUEST['all_chassis_data'];
+        if(!empty($chassis)){
+            $update = update_option('_fbf_ebay_packages_chassis', $chassis);
+        }
+        if($update){
+            echo json_encode([
+                'status' => 'success',
+                'msg' => 'Chassis successfully saved',
+            ]);
+        }else{
+            echo json_encode([
+                'status' => 'error',
+                'msg' => 'Chassis not saved, there may be no changes',
+            ]);
+        }
+
+        die();
+    }
+
+    public function fbf_ebay_packages_wheel_create_listings()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        global $wpdb;
+
+        if (is_plugin_active('fbf-wheel-search/fbf-wheel-search.php')) {
+            require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
+            $api = new Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
+            $chassis = get_option('_fbf_ebay_packages_chassis');
+            $brands = get_option('_fbf_ebay_packages_wheel_brands');
+            $search_brands = [];
+            if(!empty($brands)){
+                foreach($brands as $brand){
+                    $search_brands[] = $brand['ID'];
+                }
+            }
+
+            $manufacturers_table = $wpdb->prefix . 'fbf_vehicle_manufacturers';
+            $wheels = [];
+            $post__in = [];
+
+            // Just build a nicer array for manufacturer/chassis reference
+            foreach($chassis as $mk => $chassis_array){
+                // Get the manufacturer name from the id here
+                $q = $wpdb->prepare("SELECT *
+                    FROM {$manufacturers_table}
+                    WHERE boughto_id = %s", $mk);
+                $r = $wpdb->get_row($q, ARRAY_A);
+                if($r!==false&&!empty($r)){
+                    $manufacturer_name = $r['name'];
+                }
+
+                foreach($chassis_array as $chassis_id){
+
+                    $wheel_data = $api->get_wheels($chassis_id);
+                    $skus_ids = [];
+
+                    if(!is_wp_error($wheel_data)&&!array_key_exists('error', $wheel_data)){
+                        foreach($wheel_data['data'] as $wheel){
+                            $product_id = wc_get_product_id_by_sku($wheel['ean']);
+                            if($product_id){
+                                $product = wc_get_product($product_id);
+                                if($product->is_in_stock()){
+                                    $skus_ids[] = $product_id;
+                                }
+                            }
+                        }
+                    }
+
+                    $wheels[$chassis_id] = [
+                        'manufacturer_id' => $mk,
+                        'manufacturer_name' => $manufacturer_name,
+                        'chassis_id' => $chassis_id,
+                        'wheel_ids' => $skus_ids
+                    ];
+                }
+
+                // Now organise into wheel_ids
+                $listings = [];
+                foreach($wheels as $wheel){
+                    foreach($wheel['wheel_ids'] as $post_id){
+                        $listings[$post_id][] = $wheel['chassis_id'];
+                    }
+                }
+            }
+
+            $post__in = array_keys($listings);
+            // Now run WP_Query to filter against the brands
+// First get all matching Tyre SKU's from the product posts
+            $args = [
+                'post_type' => 'product',
+                'posts_per_page' => -1,
+                'post__in' => $post__in,
+                'fields' => 'ids',
+                /*'meta_query' => [
+                    'relation' => 'AND',
+                    [
+                        'key' => '_stock',
+                        'type' => 'numeric',
+                        'value' => 4,
+                        'compare' => '>'
+                    ],
+                ],*/ // Handle the stock status for the query later
+                'tax_query' => [
+                    'relation' => 'AND',
+                    [
+                        'taxonomy' => 'pa_brand-name',
+                        'field' => 'id',
+                        'terms' => $search_brands,
+                        'operator' => 'IN'
+                    ],
+                    /*[
+                        'taxonomy' => 'pa_list-on-ebay',
+                        'field' => 'slug',
+                        'terms' => 'true'
+                    ]*/
+                ]
+            ];
+            $found = new WP_Query($args);
+
+            // Remove posts from $listings that aren't in $found->posts
+            foreach($listings as $lk => $listing){
+                if(!in_array($lk, $found->posts)){
+                    unset($listings[$lk]);
+                }
+            }
+
+            echo json_encode([
+                'status' => 'success',
+                'wheel_count' => count($listings),
+                'wheels_listings' => $listings,
+                'post__in' => $post__in
+            ]);
+        }
+
+
+
+        die();
+    }
+
+    public function fbf_ebay_packages_wheel_confirm_listings()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        global $wpdb;
+        if(isset($_REQUEST['listings'])){
+            $listings = json_decode(stripslashes($_REQUEST['listings']));
+        }
+        echo json_encode([
+            'status' => 'success'
+        ]);
+        die();
+    }
+
     public function fbf_ebay_packages_tyre_table()
     {
         global $wpdb;
@@ -322,6 +688,19 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'post_type' => 'product',
             'posts_per_page' => -1,
             'fields' => 'ids',
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => '_stock_status',
+                    'value' => 'instock',
+                    'compare' => '=',
+                ],
+                [
+                    'key' => '_stock_status',
+                    'value' => 'onbackorder',
+                    'compare' => '=',
+                ]
+            ],
             /*'meta_query' => [
                 'relation' => 'AND',
                 [

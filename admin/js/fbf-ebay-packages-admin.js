@@ -114,7 +114,7 @@
 		}
 
 		// multiple select with AJAX search
-		$('#tyre_brands').select2({
+		$('#tyre_brands, #wheel_brands').select2({
 			ajax: {
 				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
 				dataType: 'json',
@@ -124,6 +124,37 @@
 					return {
 						q: params.term, // search query
 						action: 'fbf_ebay_packages_get_brands', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
+
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+							options.push( { id: text[0], text: text[1]  } );
+						});
+
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			minimumInputLength: 3 // the minimum of symbols to input before perform a search
+		});
+		$('#wheel_manufacturers').select2({
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log(params);
+					return {
+						q: params.term, // search query
+						action: 'fbf_ebay_packages_get_manufacturers', // AJAX action for admin-ajax.php
 						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
 					};
 				},
@@ -285,6 +316,214 @@
 			return false;
 		});
 
+		$('#wheel-save-brands').bind('click', function(){
+			let brands_selected = $('#wheel_brands').val();
+			let $notices = $('.wheel-notice');
+			if($notices.length){
+				$notices.each(function(){
+					$(this).remove();
+				});
+			}
+
+			let data = {
+				action: 'fbf_ebay_packages_wheel_brands_confirm',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				brands: brands_selected,
+			};
+
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					$('.wheel-meta-box-wrap').before('<div class="wheel-notice notice notice-' + response.status + ' is-dismissible"><p>' + response.msg + '</p><button id="my-dismiss-admin-message" class="notice-dismiss" type="button"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
+					$("#my-dismiss-admin-message").click(function(event) {
+						event.preventDefault();
+						$('.wheel-notice').fadeTo(100, 0, function() {
+							$('.wheel-notice').slideUp(100, function() {
+								$('.wheel-notice').remove();
+							});
+						});
+					});
+				}
+			});
+
+			return false;
+		});
+
+		$('#wheel-save-manufacturers').bind('click', function (){
+			let manufacturers_selected = $('#wheel_manufacturers').val();
+			let $notices = $('.wheel-notice');
+			if($notices.length){
+				$notices.each(function(){
+					$(this).remove();
+				});
+			}
+
+			let data = {
+				action: 'fbf_ebay_packages_wheel_manufacturers_confirm',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				manufacturers: manufacturers_selected,
+			};
+
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					$('.wheel-meta-box-wrap').before('<div class="wheel-notice notice notice-' + response.status + ' is-dismissible"><p>' + response.msg + '</p><button id="my-dismiss-admin-message" class="notice-dismiss" type="button"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
+					$("#my-dismiss-admin-message").click(function(event) {
+						event.preventDefault();
+						$('.wheel-notice').fadeTo(100, 0, function() {
+							$('.wheel-notice').slideUp(100, function() {
+								$('.wheel-notice').remove();
+							});
+						});
+					});
+
+					if(response.status==='success'){
+						populate_chassis();
+					}
+				}
+			});
+
+			return false;
+		});
+
+		$('#wheel-save-chassis').bind('click', function(){
+			console.log('save chassis');
+			let $notices = $('.wheel-notice');
+			if($notices.length){
+				$notices.each(function(){
+					$(this).remove();
+				});
+			}
+
+			let chassis_data = {};
+			let all_chassis_data = {};
+			let $selects = $('.wheel-chassis-select');
+			if($selects.length){
+				$selects.each(function(key, value){
+					let id = $(this).attr('data-id');
+					chassis_data[id] = $(this).val();
+
+					let $selected = $(this).find(':selected');
+					//console.log($selected);
+					$selected.each(function(skey, svalue){
+						console.log($(this).val());
+						console.log($(this).text());
+
+						chassis_data[id] = {
+							id: $(this).val(),
+							name: $(this).text(),
+						};
+					})
+				});
+			}
+
+			console.log(chassis_data);
+
+			let data = {
+				action: 'fbf_ebay_packages_save_chassis',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				chassis: chassis_data,
+				all_chassis_data: all_chassis_data,
+			};
+
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					$('.wheel-meta-box-wrap').before('<div class="wheel-notice notice notice-' + response.status + ' is-dismissible"><p>' + response.msg + '</p><button id="my-dismiss-admin-message" class="notice-dismiss" type="button"><span class="screen-reader-text">Dismiss this notice.</span></button></div>');
+					$("#my-dismiss-admin-message").click(function(event) {
+						event.preventDefault();
+						$('.wheel-notice').fadeTo(100, 0, function() {
+							$('.wheel-notice').slideUp(100, function() {
+								$('.wheel-notice').remove();
+							});
+						});
+					});
+
+					console.log(response);
+				}
+			});
+
+			return false;
+		});
+
+		$('#wheel-create-listings').bind('click', function(){
+			let thickbox_id = 'save-listings-thickbox';
+			let $content = $('#' + thickbox_id + ' .tb-modal-content');
+			let url = '#TB_inline?&width=600&height=150&inlineId=' + thickbox_id;
+			let $confirm = $('#fbf-ebay-packages-wheels-confirm-listing');
+			$content.append('<p><span class="spinner is-active"></span>Getting Wheels... please wait</p>')
+			tb_show('Wheel Listings', url);
+			$('body').on('thickbox:removed', function(){
+				$content.empty();
+				$confirm.prop('disabled', true);
+				$('body').unbind('thickbox:removed');
+			});
+			let data = {
+				action: 'fbf_ebay_packages_wheel_create_listings',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					if(response.status==='success'){
+						$content.empty().append('<p>'+response.wheel_count+' wheels found, please click confirm to create listings...</p>');
+						$confirm.attr('data-listings', JSON.stringify(response.wheels_listings));
+						$confirm.prop('disabled', false);
+					}
+				}
+			});
+
+			return false;
+		});
+
+		$('#fbf-ebay-packages-wheels-confirm-listing').bind('click', function(){
+			console.log('Wheels confirm listing');
+			let thickbox_id = 'save-listings-thickbox';
+			let $content = $('#' + thickbox_id + ' .tb-modal-content');
+			let $confirm = $('#fbf-ebay-packages-wheels-confirm-listing');
+
+			let data = {
+				action: 'fbf_ebay_packages_wheel_confirm_listings',
+				listings: $confirm.attr('data-listings'),
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					if(response.status==='success'){
+						console.log(response);
+						$content.empty();
+						$confirm.prop('disabled', true);
+
+						// Close the thickbox
+						tb_remove();
+					}
+				}
+			});
+
+			return false;
+		});
+
 		$('#fbf-ebay-packages-tyres-confirm-listing').bind('click', function (){
 			console.log('confirm listing button press');
 
@@ -415,6 +654,8 @@
 			return false;
 		});
 
+		populate_chassis();
+
 		function format (d){
 			let data = {
 				action: 'fbf_ebay_packages_listing_info',
@@ -434,142 +675,142 @@
 					if(response.result.info.created){
 						html+= '' +
 							'<tr>' +
-								'<td>Created:</td>' +
-								'<td>'+response.result.info.created+'</td>' +
+							'<td>Created:</td>' +
+							'<td>'+response.result.info.created+'</td>' +
 							'</tr>';
 					}
 					if(response.result.info.activated_count){
 						html+= '' +
 							'<tr>' +
-								'<td>Activated:</td>' +
-								'<td>'+response.result.info.activated_count+' times</td>' +
+							'<td>Activated:</td>' +
+							'<td>'+response.result.info.activated_count+' times</td>' +
 							'</tr>';
 					}
 					if(response.result.info.deactivated_count){
 						html+= '' +
 							'<tr>' +
-								'<td>Deactivated:</td>' +
-								'<td>'+response.result.info.deactivated_count+' times</td>' +
+							'<td>Deactivated:</td>' +
+							'<td>'+response.result.info.deactivated_count+' times</td>' +
 							'</tr>';
 					}
 					if(response.result.inv_info.sku!==null){
 						html+='' +
 							'<tr>' +
-								'<td colspan="2"><strong>eBay Inventory item:</strong></td>' +
+							'<td colspan="2"><strong>eBay Inventory item:</strong></td>' +
 							'</tr>' +
 							'<tr>' +
-								'<td>Custom Label:</td>' +
-								'<td>'+response.result.inv_info.sku+'</td>' +
+							'<td>Custom Label:</td>' +
+							'<td>'+response.result.inv_info.sku+'</td>' +
 							'</tr>';
 						if(response.result.inv_info.first_created){
 							html+='' +
 								'<tr>' +
-									'<td>Created:</td>' +
+								'<td>Created:</td>' +
 								'	<td>'+response.result.inv_info.first_created+'</td>' +
 								'</tr>';
 						}
 						if(response.result.inv_info.update_count){
 							html+='' +
 								'<tr>' +
-									'<td>Updated:</td>' +
-									'<td>'+response.result.inv_info.update_count+' times</td>' +
+								'<td>Updated:</td>' +
+								'<td>'+response.result.inv_info.update_count+' times</td>' +
 								'</tr>';
 						}
 						if(response.result.inv_info.last_update){
 							html+='' +
 								'<tr>' +
-									'<td>Last update:</td>' +
-									'<td>'+response.result.inv_info.last_update+'</td>' +
+								'<td>Last update:</td>' +
+								'<td>'+response.result.inv_info.last_update+'</td>' +
 								'</tr>';
 						}
 						if(response.result.inv_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
-									'<td>'+response.result.inv_info.error_count+'</td>' +
+								'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
+								'<td>'+response.result.inv_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
-									'<td>Last error:</td>' +
-									'<td>'+response.result.inv_info.last_error+'</td>' +
+								'<td>Last error:</td>' +
+								'<td>'+response.result.inv_info.last_error+'</td>' +
 								'</tr>';
 						}
 					}
 					if(response.result.offer_info.offer_id!==null){
 						html+='' +
 							'<tr>' +
-								'<td colspan="2"><strong>eBay Offer:</strong></td>' +
+							'<td colspan="2"><strong>eBay Offer:</strong></td>' +
 							'</tr>' +
 							'<tr>' +
-								'<td>ID:</td>' +
-								'<td>'+response.result.offer_info.offer_id+'</td>' +
+							'<td>ID:</td>' +
+							'<td>'+response.result.offer_info.offer_id+'</td>' +
 							'</tr>';
 						if(response.result.offer_info.first_created){
 							html+='' +
 								'<tr>' +
-									'<td>Created:</td>' +
-									'<td>'+response.result.offer_info.first_created+'</td>' +
+								'<td>Created:</td>' +
+								'<td>'+response.result.offer_info.first_created+'</td>' +
 								'</tr>';
 						}
 						if(response.result.offer_info.update_count){
 							html+='' +
 								'<tr>' +
-									'<td>Updated:</td>' +
-									'<td>'+response.result.offer_info.update_count+' times</td>' +
+								'<td>Updated:</td>' +
+								'<td>'+response.result.offer_info.update_count+' times</td>' +
 								'</tr>';
 						}
 						if(response.result.offer_info.last_update){
 							html+='' +
 								'<tr>' +
-									'<td>Last update:</td>' +
-									'<td>'+response.result.offer_info.last_update+'</td>' +
+								'<td>Last update:</td>' +
+								'<td>'+response.result.offer_info.last_update+'</td>' +
 								'</tr>';
 						}
 						if(response.result.offer_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
-									'<td>'+response.result.offer_info.error_count+'</td>' +
+								'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
+								'<td>'+response.result.offer_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
-									'<td>Last error:</td>' +
-									'<td>'+response.result.offer_info.last_error+'</td>' +
+								'<td>Last error:</td>' +
+								'<td>'+response.result.offer_info.last_error+'</td>' +
 								'</tr>';
 						}
 					}
 					if(response.result.publish_info.listing_id!==null){
 						html+='' +
 							'<tr>' +
-								'<td colspan="2"><strong>eBay Publish Info:</strong></td>' +
+							'<td colspan="2"><strong>eBay Publish Info:</strong></td>' +
 							'</tr>' +
 							'<tr>' +
-								'<td>Listing ID:</td>' +
-								'<td>'+response.result.publish_info.listing_id+'</td>' +
+							'<td>Listing ID:</td>' +
+							'<td>'+response.result.publish_info.listing_id+'</td>' +
 							'</tr>';
 						if(response.result.publish_info.first_created){
 							html+='' +
 								'<tr>' +
-									'<td>Published:</td>' +
-									'<td>'+response.result.publish_info.first_created+'</td>' +
+								'<td>Published:</td>' +
+								'<td>'+response.result.publish_info.first_created+'</td>' +
 								'</tr>';
 						}
 						if(response.result.publish_info.error_count>0){
 							html+='' +
 								'<tr>' +
-									'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
-									'<td>'+response.result.publish_info.error_count+'</td>' +
+								'<td><span class="dashicons dashicons-warning" style="color: darkred;"></span> Errors:</td>' +
+								'<td>'+response.result.publish_info.error_count+'</td>' +
 								'</tr>' +
 								'<tr>' +
-									'<td>Last error:</td>' +
-									'<td>'+response.result.publish_info.last_error+'</td>' +
+								'<td>Last error:</td>' +
+								'<td>'+response.result.publish_info.last_error+'</td>' +
 								'</tr>';
 						}
 					}
 					if(response.result.full_log_url){
 						html+='' +
 							'<tr>' +
-								'<td colspan="2">' +
-									'<a class="" href="'+response.result.full_log_url+'">View all log entries for item...</a>' +
-								'</td>' +
+							'<td colspan="2">' +
+							'<a class="" href="'+response.result.full_log_url+'">View all log entries for item...</a>' +
+							'</td>' +
 							'</tr>';
 					}
 
@@ -613,6 +854,59 @@
 			if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
 				return decodeURIComponent(name[1]);
 		}
+
+		function populate_chassis(){
+			let data = {
+				action: 'fbf_ebay_packages_wheel_get_chassis',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					if(response.status==='success'){
+						let $chassis_wrap = $('#wheel-chassis-wrap');
+						let $selects = $('.wheel-chassis-select');
+						let ids = [];
+						$selects.each(function (key, value){
+							ids.push($(this).attr('data-id'));
+						});
+						console.log(ids);
+						// Create <select>'s that need creating
+						$.each(response.data, function(key, value){
+							// Only create it if it's not already in the ids array
+							if(!ids.includes(value.ID)){
+								let $wrap = $('<div class="wheel-chassis-select-wrap" id="wheel-chassis-wrap-'+value.ID+'" style="margin-bottom: 1em;"><label for="wheel-chassis-select-'+value.ID+'">'+value.name+':</label></div>');
+								let $select = $('<select class="wheel-chassis-select" data-id="'+value.ID+'" id="wheel-chassis-select-"'+value.ID+' multiple style="width: 99%; max-width: 25em;"></select>');
+								$.each(value.chassis, function(c_key, c_value){
+									let option = '<option value="'+c_value.ID+'" '+c_value.selected+'>'+c_value.name+'</option>';
+									$select.append(option);
+								});
+								$wrap.append($select);
+								$chassis_wrap.append($wrap);
+
+								$select.select2();
+							}
+
+							// Remove this value.ID from the ids array
+							let index = ids.indexOf(value.ID);
+							if(index > -1){
+								ids.splice(index, 1);
+							}
+						});
+
+						// Now remove remaining ids
+						$.each(ids, function(key, value){
+							let $element = $('#wheel-chassis-wrap-'+value);
+							$element.remove();
+						});
+					}
+				}
+			});
+		}
 	});
 
 	function validateACFinputs(nonce, form_data) {
@@ -652,8 +946,6 @@
 			},
 		});
 	}
-
-
 
 })( jQuery );
 
