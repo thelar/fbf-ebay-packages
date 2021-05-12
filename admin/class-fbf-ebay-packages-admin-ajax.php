@@ -366,7 +366,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
     public function fbf_ebay_packages_wheel_get_chassis()
     {
         $manufacturer_data = [];
-        $saved_chassis = get_option('_fbf_ebay_packages_chassis');
+        //$saved_chassis = get_option('_fbf_ebay_packages_chassis');
+        $all_saved_chassis = get_option('_fbf_ebay_packages_all_chassis');
 
         if (is_plugin_active('fbf-wheel-search/fbf-wheel-search.php')) {
             require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
@@ -376,7 +377,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
             if(!empty($manufacturers)){
                 foreach($manufacturers as $manufacturer){
                     $data = $api->get_chasis($manufacturer['ID']);
-                    $manufacturer_saved_chassis = $saved_chassis[$manufacturer['ID']];
+                    //$manufacturer_saved_chassis = $saved_chassis[$manufacturer['ID']];
+                    $all_manufacturer_saved_chassis = array_column($all_saved_chassis[$manufacturer['ID']], 'id');
 
                     if(!empty($data)&&!array_key_exists('error', $data)){
                         $all_chassis = [];
@@ -407,7 +409,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                             $all_chassis[] = [
                                 'name' => $chassis['name'] . ' ' . $chassis['ds'] . ' - ' . $chassis['de'],
                                 'ID' => $chassis['id'],
-                                'selected' => in_array($chassis['id'], $manufacturer_saved_chassis)?'selected':''
+                                'selected' => in_array($chassis['id'], $all_manufacturer_saved_chassis)?'selected':''
                             ];
                         }
 
@@ -437,6 +439,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $all_chassis = $_REQUEST['all_chassis_data'];
         if(!empty($chassis)){
             $update = update_option('_fbf_ebay_packages_chassis', $chassis);
+            $update = update_option('_fbf_ebay_packages_all_chassis', $all_chassis);
         }
         if($update){
             echo json_encode([
@@ -462,6 +465,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
             $api = new Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
             $chassis = get_option('_fbf_ebay_packages_chassis');
+            $all_chassis = get_option('_fbf_ebay_packages_all_chassis');
             $brands = get_option('_fbf_ebay_packages_wheel_brands');
             $search_brands = [];
             if(!empty($brands)){
@@ -473,9 +477,10 @@ class Fbf_Ebay_Packages_Admin_Ajax
             $manufacturers_table = $wpdb->prefix . 'fbf_vehicle_manufacturers';
             $wheels = [];
             $post__in = [];
+            $chassis_lookup = [];
 
             // Just build a nicer array for manufacturer/chassis reference
-            foreach($chassis as $mk => $chassis_array){
+            foreach($all_chassis as $mk => $chassis_array){
                 // Get the manufacturer name from the id here
                 $q = $wpdb->prepare("SELECT *
                     FROM {$manufacturers_table}
@@ -485,11 +490,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     $manufacturer_name = $r['name'];
                 }
 
-                foreach($chassis_array as $chassis_id){
-
-                    $wheel_data = $api->get_wheels($chassis_id);
+                foreach($chassis_array as $manu){
+                    $wheel_data = $api->get_wheels($manu['id']);
                     $skus_ids = [];
-
                     if(!is_wp_error($wheel_data)&&!array_key_exists('error', $wheel_data)){
                         foreach($wheel_data['data'] as $wheel){
                             $product_id = wc_get_product_id_by_sku($wheel['ean']);
@@ -502,11 +505,17 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         }
                     }
 
-                    $wheels[$chassis_id] = [
+                    $wheels[$manu['id']] = [
                         'manufacturer_id' => $mk,
                         'manufacturer_name' => $manufacturer_name,
-                        'chassis_id' => $chassis_id,
+                        'chassis_id' => $manu['id'],
+                        'chassis_name' => $manu['name'],
                         'wheel_ids' => $skus_ids
+                    ];
+
+                    $chassis_lookup[$manu['id']] = [
+                        'manufacturer_name' => $manufacturer_name,
+                        'chassis_name' => $manu['name'],
                     ];
                 }
 
@@ -564,7 +573,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 'status' => 'success',
                 'wheel_count' => count($listings),
                 'wheels_listings' => $listings,
-                'post__in' => $post__in
+                'post__in' => $post__in,
+                'chassis_lookup' => $chassis_lookup
             ]);
         }
 
@@ -577,9 +587,133 @@ class Fbf_Ebay_Packages_Admin_Ajax
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
         global $wpdb;
-        if(isset($_REQUEST['listings'])){
-            $listings = json_decode(stripslashes($_REQUEST['listings']));
+        $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
+        $listings = json_decode(stripslashes($_REQUEST['listings']));
+        $chassis_lookup = json_decode(stripslashes($_REQUEST['chassis_lookup']));
+        $errors = [];
+        $warnings = [];
+        $post_skus = [];
+        $post_lookup = [];
+
+        if(!empty($listings)){
+            foreach($listings as $lk => $listing) {
+                $sku = get_post_meta($lk, '_sku', true);
+                $post_skus[] = $sku;
+                $post_lookup[$sku] = [
+                    'title' => get_the_title($lk),
+                    'qty' => get_post_meta($lk, '_stock', true),
+                    'id' => $lk
+                ];
+            }
+        }else{
+            $errors[] = 'listings empty';
         }
+
+        // Get all the currently active Wheel listings
+        $q = $wpdb->prepare("SELECT s.sku
+            FROM {$listings_table} l
+            INNER JOIN {$skus_table} s
+                ON s.listing_id = l.id
+            WHERE l.status = %s
+            AND l.type = %s", 'active', 'wheel');
+        $results = $wpdb->get_col( $q );
+        if($results==false||count($results)===0){
+            $warnings[] = 'No current active tyre listings';
+        }
+
+        $to_create = array_diff($post_skus, $results); // These SKU's do NOT exist in the found set so either need to be activated (if they are present but inactive) OR created if they don't exist at all
+        $to_leave = array_intersect($post_skus, $results); // These SKU's exist and are active - nothing to do here
+        $to_deactivate = array_diff($results, $post_skus);
+
+        if(!empty($to_create)){
+            foreach($to_create as $sku){
+                // Check to see if the SKU exists - if it does just activate it
+                $q = $wpdb->prepare("SELECT l.id, s.sku
+                    FROM {$listings_table} l
+                    INNER JOIN {$skus_table} s
+                        ON s.listing_id = l.id
+                    WHERE s.sku = %s
+                    AND l.type = %s", $sku, 'wheel');
+                $result = $wpdb->get_row($q, ARRAY_A);
+                if(null !== $result){
+                    // Exists - make it active
+                    $u = $wpdb->update($listings_table,
+                        [
+                            'status' => 'active'
+                        ],
+                        [
+                            'id' => $result['id']
+                        ]
+                    );
+                    if($u!==false){
+                        $this->log('Listing activated', $result['id']);
+                    }else{
+                        $errors[] = $wpdb->last_error;
+                    }
+                }else{
+                    // Does not exist - create it
+                    $i = $wpdb->insert(
+                        $listings_table,
+                        [
+                            'name' => $post_lookup[$sku]['title'],
+                            'post_id' => $post_lookup[$sku]['id'],
+                            'status' => 'active',
+                            'type' => 'wheel',
+                            'qty' => $post_lookup[$sku]['qty']
+                        ]
+                    );
+                    if($i!==false){
+                        // Insert the SKU
+                        $insert_id = $wpdb->insert_id;
+                        $i = $wpdb->insert(
+                            $skus_table,
+                            [
+                                'sku' => $sku,
+                                'listing_id' => $insert_id
+                            ]
+                        );
+                        if($i===false){
+                            $errors[] = $wpdb->last_error;
+                        }else{
+                            // Add log
+                            $this->log('Listing created', $insert_id);
+                        }
+                    }else{
+                        $errors[] = $wpdb->last_error;
+                    }
+                }
+            }
+        }
+
+        if(!empty($to_deactivate)){
+            // Set status to inactive on all
+            foreach($to_deactivate as $sku_to_deactivate){
+                $s = $wpdb->prepare("SELECT l.id 
+                    FROM {$listings_table} l 
+                    INNER JOIN {$skus_table} s ON s.listing_id = l.id
+                    WHERE s.sku = %s
+                    AND l.type = %s", $sku_to_deactivate, 'wheel');
+                $id = $wpdb->get_row($s, ARRAY_A)['id'];
+                if($id!==null){
+                    $q = $wpdb->prepare("UPDATE {$listings_table} l
+                    INNER JOIN {$skus_table} s ON s.listing_id = l.id
+                    SET l.status = %s
+                    WHERE s.sku = %s
+                    AND l.type = %s", 'inactive', $sku_to_deactivate, 'wheel');
+                    $result = $wpdb->query($q);
+
+                    if($result!==false){
+                        $this->log('Listing deactivated', $id);
+                    }else{
+                        $errors[] = 'Could not deactivate listing: ' . $id;
+                    }
+                }else{
+                    $errors[] = 'Could not find listing for SKU: ' . $sku_to_deactivate;
+                }
+            }
+        }
+
         echo json_encode([
             'status' => 'success'
         ]);
@@ -590,6 +724,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
     {
         global $wpdb;
         $draw = $_REQUEST['draw'];
+        $type = $_REQUEST['type'];
         $start = absint($_REQUEST['start']);
         $length = absint($_REQUEST['length']);
         $paged = ($start/$length) + 1;
@@ -624,14 +759,14 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $s1 = 'SELECT count(*) as count
         ' . $s;
 
-        $main_q = $wpdb->prepare("{$s1}", 'active', 'tyre');
+        $main_q = $wpdb->prepare("{$s1}", 'active', $type);
         $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
 
         $s2 = 'SELECT *, l.listing_id as l_id
         ' . $s;
         $paginated_q = $wpdb->prepare("{$s2}
             LIMIT {$length}
-            OFFSET {$start}", 'active', 'tyre');
+            OFFSET {$start}", 'active', $type);
         $results = $wpdb->get_results($paginated_q, ARRAY_A);
         if($results!==false){
             foreach($results as $result){
@@ -755,7 +890,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             WHERE l.status = %s
             AND l.type = %s', 'active', 'tyre');
         $results = $wpdb->get_col( $q );
-        if($results===false||count($results)===0){
+        if($results==false||count($results)===0){
             $warnings[] = 'No current active tyre listings';
         }
 

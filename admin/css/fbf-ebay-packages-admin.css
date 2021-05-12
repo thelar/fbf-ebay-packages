@@ -3,7 +3,8 @@
  * included in this file.
  */
 
-#tyre-listings .inside {
+#tyre-listings .inside,
+#wheel-listings .inside {
     margin-top: 20px;
 }
 

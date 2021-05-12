@@ -236,7 +236,6 @@ class Fbf_Ebay_Packages_List_Item
         return $clean;
     }
 
-
     private function log($id, $ebay_action, $log)
     {
         global $wpdb;

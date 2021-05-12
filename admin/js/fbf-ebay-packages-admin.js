@@ -177,8 +177,11 @@
 			minimumInputLength: 3 // the minimum of symbols to input before perform a search
 		});
 
+		let $table = $('#example');
+		let type = $table.attr('data-type');
+
 		// datatable
-		let table = $('#example').DataTable({
+		let table = $table.DataTable({
 			serverSide: true,
 			processing: true,
 			searchDelay: 700,
@@ -188,6 +191,7 @@
 				data: {
 					//action: 'fbf_ebay_packages_ebay_listing'
 					action: 'fbf_ebay_packages_tyre_table',
+					type: type
 				}
 			},
 			oLanguage: {
@@ -410,22 +414,19 @@
 				$selects.each(function(key, value){
 					let id = $(this).attr('data-id');
 					chassis_data[id] = $(this).val();
-
+					let saved_chassis = [];
 					let $selected = $(this).find(':selected');
 					//console.log($selected);
 					$selected.each(function(skey, svalue){
-						console.log($(this).val());
-						console.log($(this).text());
-
-						chassis_data[id] = {
+						 let chassis = {
 							id: $(this).val(),
 							name: $(this).text(),
 						};
-					})
+						saved_chassis.push(chassis);
+					});
+					all_chassis_data[id] = saved_chassis;
 				});
 			}
-
-			console.log(chassis_data);
 
 			let data = {
 				action: 'fbf_ebay_packages_save_chassis',
@@ -484,6 +485,7 @@
 					if(response.status==='success'){
 						$content.empty().append('<p>'+response.wheel_count+' wheels found, please click confirm to create listings...</p>');
 						$confirm.attr('data-listings', JSON.stringify(response.wheels_listings));
+						$confirm.attr('data-chassis-lookup', JSON.stringify(response.chassis_lookup));
 						$confirm.prop('disabled', false);
 					}
 				}
@@ -501,6 +503,7 @@
 			let data = {
 				action: 'fbf_ebay_packages_wheel_confirm_listings',
 				listings: $confirm.attr('data-listings'),
+				chassis_lookup: $confirm.attr('data-chassis-lookup'),
 				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
 			};
 			$.ajax({
@@ -517,6 +520,11 @@
 
 						// Close the thickbox
 						tb_remove();
+
+						// Refresh table
+						table.search('');
+						table.columns().search('');
+						table.ajax.reload();
 					}
 				}
 			});

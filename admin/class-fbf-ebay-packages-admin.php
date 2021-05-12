@@ -389,6 +389,14 @@ class Fbf_Ebay_Packages_Admin {
                 'normal',                 /* Context */
                 'default'                 /* Priority */
             );
+            $meta_wheels = add_meta_box(
+                'wheel-listings',                  /* Meta Box ID */
+                'eBay Wheel Listings',               /* Title */
+                [$this, 'wheel_listings_meta_box'],  /* Function Callback */
+                $wheel_page_hook_id,               /* Screen: Our Settings Page */
+                'normal',                 /* Context */
+                'default'                 /* Priority */
+            );
         }
     }
 
@@ -665,10 +673,39 @@ class Fbf_Ebay_Packages_Admin {
         <?php
     }
 
+    public function wheel_listings_meta_box()
+    {
+        ?>
+        <table id="example" data-type="wheel" class="display" style="width:100%">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>SKU</th>
+                <th>Qty</th>
+                <th>Listing ID</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Title</th>
+                <th>SKU</th>
+                <th>Qty</th>
+                <th>Listing ID</th>
+                <th></th>
+            </tr>
+            </tfoot>
+        </table>
+        <?php
+    }
+
     public function tyre_listings_meta_box()
     {
         ?>
-        <table id="example" class="display" style="width:100%">
+        <table id="example" data-type="tyre" class="display" style="width:100%">
             <thead>
             <tr>
                 <th>Title</th>
