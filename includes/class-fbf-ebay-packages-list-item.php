@@ -439,10 +439,10 @@ class Fbf_Ebay_Packages_List_Item
         if($type==='wheel'){
             if(strpos($title, 'Steel')!==false){
                 $pos = strpos($title, 'Steel');
-                $title = str_replace('Steel', 'Steel Wheel', $title);
+                $title = str_replace('Steel', 'Steel Wheels', $title);
             }else if(strpos($title, 'ET')!==false){
                 $pos = strpos($title, 'ET');
-                $title = substr_replace($title, ' Steel Wheel', $pos - 1, 0);
+                $title = substr_replace($title, ' Steel Wheels', $pos - 1, 0);
             }
         }
         $item['product'] = [
