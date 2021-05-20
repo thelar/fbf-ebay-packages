@@ -831,7 +831,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             AND l.type = %s';
         if(isset($_REQUEST['search']['value'])&&!empty($_REQUEST['search']['value'])){
             $s.= '
-            AND l.name LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR s.sku LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR l.listing_id LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) . '%\'';
+            AND (l.name LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR s.sku LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR l.listing_id LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) . '%\')';
         }
         if(isset($_REQUEST['order'][0]['column'])){
             $dir = $_REQUEST['order'][0]['dir'];
