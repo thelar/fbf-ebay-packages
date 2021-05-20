@@ -434,8 +434,19 @@ class Fbf_Ebay_Packages_List_Item
             $aspects = $this->get_wheel_aspects($product, $qty);
             $description = $this->wheel_description;
         }
+        $title = addslashes(html_entity_decode($product->get_title()));
+        // Add Wheel to title and Steel if necessary
+        if($type==='wheel'){
+            if(strpos($title, 'Steel')!==false){
+                $pos = strpos($title, 'Steel');
+                $title = str_replace('Steel', 'Steel Wheel', $title);
+            }else if(strpos($title, 'ET')!==false){
+                $pos = strpos($title, 'ET');
+                $title = substr_replace($title, ' Steel Wheel', $pos - 1, 0);
+            }
+        }
         $item['product'] = [
-            'title' => sprintf('%s x %s', $qty, $product->get_title()),
+            'title' => sprintf('%s x %s', $qty, $title),
             'description' => $description,
             'brand' => $brand_name,
             'mpn' => $product->get_sku(),
