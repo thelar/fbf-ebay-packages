@@ -9,7 +9,7 @@ class Fbf_Ebay_Packages_List_Item
 {
     private $plugin_name;
     private $version;
-    private $use_test_image = true; // switch to false to use actual thumbnails
+    private $use_test_image = false; // switch to false to use actual thumbnails
     private $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
     private $buffer = 4;
     public $status = [];
