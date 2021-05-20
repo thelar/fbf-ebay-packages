@@ -18,10 +18,10 @@ class Fbf_Ebay_Packages_List_Item
     We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV<br/>
     Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered<br/>
     Any questions, please feel free to ask.  Thanks';
-    private $wheel_description = 'This listing is for 4 brand new wheels in the size and style specified in the listing title<br/>
-    We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV<br/>
-    Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered<br/>
-    Any questions, please feel free to ask.  Thanks';
+    private $wheel_description = 'This listing is for 4 brand new wheels in the size and style specified in the listing title
+    We are one of the country’s leading suppliers of Load Rated Steel and Alloy wheels to suit 4x4 and SUV.
+    Delivery is through a 3rd party carrier. We advise not booking tyre fitting until the wheels have been delivered
+    Any questions, please feel free to ask. Thanks';
 
     public function __construct($plugin_name, $version)
     {
