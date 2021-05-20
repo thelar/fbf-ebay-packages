@@ -452,6 +452,12 @@ class Fbf_Ebay_Packages_List_Item
             'mpn' => $product->get_sku(),
             'aspects' => $aspects
         ];
+        // Ean
+        if($product->get_attribute('ean')){
+            $item['product']['ean'] = [
+                $product->get_attribute('ean')
+            ];
+        }
         // Image
         if($this->use_test_image){
             $item['product']['imageUrls'] = [
