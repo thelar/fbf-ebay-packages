@@ -434,7 +434,7 @@ class Fbf_Ebay_Packages_List_Item
             $aspects = $this->get_wheel_aspects($product, $qty);
             $description = $this->wheel_description;
         }
-        $title = addslashes(html_entity_decode($product->get_title()));
+        $title = html_entity_decode($product->get_title());
         // Add Wheel to title and Steel if necessary
         if($type==='wheel'){
             if(strpos($title, 'Steel')!==false){
