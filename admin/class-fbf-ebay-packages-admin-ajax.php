@@ -488,6 +488,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 $r = $wpdb->get_row($q, ARRAY_A);
                 if($r!==false&&!empty($r)){
                     $manufacturer_name = $r['name'];
+                    $manufacturer_id = $r['boughto_id'];
                 }
 
                 foreach($chassis_array as $manu){
@@ -515,6 +516,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
                     $chassis_lookup[$manu['id']] = [
                         'manufacturer_name' => $manufacturer_name,
+                        'manufacturer_id' => $manufacturer_id,
                         'chassis_name' => $manu['name'],
                     ];
                 }
@@ -589,6 +591,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         global $wpdb;
         $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
         $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
+        $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
         $listings = json_decode(stripslashes($_REQUEST['listings']));
         $chassis_lookup = json_decode(stripslashes($_REQUEST['chassis_lookup']));
         $errors = [];
@@ -628,6 +631,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
         if(!empty($to_create)){
             foreach($to_create as $sku){
+                $fittings = null;
                 // Check to see if the SKU exists - if it does just activate it
                 $q = $wpdb->prepare("SELECT l.id, s.sku
                     FROM {$listings_table} l
@@ -650,6 +654,31 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         $this->log('Listing activated', $result['id']);
                     }else{
                         $errors[] = $wpdb->last_error;
+                    }
+
+                    // Delete any fittings that exist
+                    $df = $wpdb->delete(
+                        $fittings_table,
+                        [
+                            'listing_id' => $result['id']
+                        ]
+                    );
+
+                    // Insert fitting info
+                    $fittings = $listings->{$post_lookup[$sku]['id']};
+                    if(!is_null($fittings)){
+                        foreach($fittings as $fitting){
+                            $di = $wpdb->insert(
+                                $fittings_table,
+                                [
+                                    'listing_id' => $result['id'],
+                                    'chassis_id' => $fitting,
+                                    'chassis_name' => $chassis_lookup->{$fitting}->chassis_name,
+                                    'manufacturer_id' => $chassis_lookup->{$fitting}->manufacturer_id,
+                                    'manufacturer_name' => $chassis_lookup->{$fitting}->manufacturer_name,
+                                ]
+                            );
+                        }
                     }
                 }else{
                     // Does not exist - create it
@@ -678,6 +707,23 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         }else{
                             // Add log
                             $this->log('Listing created', $insert_id);
+                        }
+
+                        // Insert fitting info
+                        $fittings = $listings->{$post_lookup[$sku]['id']};
+                        if(!is_null($fittings)){
+                            foreach($fittings as $fitting){
+                                $di = $wpdb->insert(
+                                    $fittings_table,
+                                    [
+                                        'listing_id' => $insert_id,
+                                        'chassis_id' => $fitting,
+                                        'chassis_name' => $chassis_lookup->{$fitting}->chassis_name,
+                                        'manufacturer_id' => $chassis_lookup->{$fitting}->manufacturer_id,
+                                        'manufacturer_name' => $chassis_lookup->{$fitting}->manufacturer_name,
+                                    ]
+                                );
+                            }
                         }
                     }else{
                         $errors[] = $wpdb->last_error;
@@ -708,8 +754,55 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     }else{
                         $errors[] = 'Could not deactivate listing: ' . $id;
                     }
+
+                    // Delete fittings
+                    $df = $wpdb->delete(
+                        $fittings_table,
+                        [
+                            'listing_id' => $id
+                        ]
+                    );
                 }else{
                     $errors[] = 'Could not find listing for SKU: ' . $sku_to_deactivate;
+                }
+            }
+        }
+
+        // Even if we are leaving the listings, still update the fitting info
+        if(!empty($to_leave)){
+            foreach($to_leave as $sku_to_change_fitting){
+                $s = $wpdb->prepare("SELECT l.id 
+                    FROM {$listings_table} l 
+                    INNER JOIN {$skus_table} s ON s.listing_id = l.id
+                    WHERE s.sku = %s
+                    AND l.type = %s", $sku_to_change_fitting, 'wheel');
+                $id = $wpdb->get_row($s, ARRAY_A)['id'];
+                if($id!==null){
+                    // Delete fittings
+                    $df = $wpdb->delete(
+                        $fittings_table,
+                        [
+                            'listing_id' => $id
+                        ]
+                    );
+                    // Now create the fittings
+                    $fittings = $listings->{$post_lookup[$sku_to_change_fitting]['id']};
+                    if(!is_null($fittings)){
+                        foreach($fittings as $fitting){
+                            $di = $wpdb->insert(
+                                $fittings_table,
+                                [
+                                    'listing_id' => $id,
+                                    'chassis_id' => $fitting,
+                                    'chassis_name' => $chassis_lookup->{$fitting}->chassis_name,
+                                    'manufacturer_id' => $chassis_lookup->{$fitting}->manufacturer_id,
+                                    'manufacturer_name' => $chassis_lookup->{$fitting}->manufacturer_name,
+                                ]
+                            );
+                        }
+                    }
+                }else{
+                    $errors[] = 'Could not find listing for SKU: ' . $sku_to_change_fitting;
                 }
             }
         }
@@ -781,7 +874,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     'qty' => $result['qty'],
                     'l_id' => $result['l_id'],
                     'post_id' => $result['post_id'],
-                    'id' => $result['id']
+                    'id' => $result['id'],
+                    'type' => ucwords($type)
                 ];
             }
         }
@@ -1017,6 +1111,26 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_test_item()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $items = explode(',', filter_var($_REQUEST['items'], FILTER_SANITIZE_STRING));
+        $type = filter_var($_REQUEST['type'], FILTER_SANITIZE_STRING);
+        if(!empty($items)){
+            if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres', $items)){
+                $status = 'success';
+            }else{
+                $status = 'error';
+            }
+        }else{
+            $status = 'error';
+        }
+        echo json_encode([
+            'status' => $status,
+        ]);
+        die();
+    }
+
     public function fbf_ebay_packages_event_log()
     {
         global $wpdb;
@@ -1242,10 +1356,281 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'full_log_url' => get_admin_url() . 'admin.php?page=' . $this->plugin_name . '-tyres&listing_id=' . $r['id']
         ];
 
+        if($r['type']==='wheel'){
+            $result['fitting_info'] = $this->get_fitting_info($r['id']);
+        }
+
         echo json_encode([
             'status' => 'success',
             'result' => $result
         ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_compatibility()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $category_tree_id = 3;
+        $max_levels = 4;
+        $category_id = 179679;
+        $values = [];
+        $level = null;
+        $selectLimit = null;
+        $label = null;
+        $name = null;
+        $selected = null;
+        $data = json_decode(stripslashes($_REQUEST['data']));
+        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+
+        if(property_exists($data, 'next_level')){
+            $level = $data->next_level;
+
+            switch($level){
+                case '2':
+                    $compatibility_property = 'Model';
+                    $filter = 'Car%20Make:' . urlencode($data->level_1->selections[0]);
+                    $selectLimit = 1;
+                    $label = 'Select ' . $selectLimit . ' model';
+                    $name = 'Model';
+                    break;
+                case '3':
+                    $compatibility_property = 'Variant';
+                    $filter = 'Car%20Make:' . urlencode($data->level_1->selections[0]) . ',Model:' . urlencode($data->level_2->selections[0]);
+                    $selectLimit = 1;
+                    $label = 'Select ' . $selectLimit . ' variant';
+                    $name = 'Variant';
+                    break;
+                case '4':
+                    $compatibility_property = 'Cars%20Year';
+                    $filter = 'Car%20Make:' . urlencode($data->level_1->selections[0]) . ',Model:' . urlencode($data->level_2->selections[0]) . ',Variant:' . urlencode($data->level_3->selections[0]);
+                    $selectLimit = false;
+                    $label = 'Select ' . $selectLimit . ' years';
+                    $name = 'Cars Year';
+                    $selected = $this->get_current_compatibility($chassis_id, $data->level_1->selections[0], $data->level_2->selections[0], $data->level_3->selections[0]);
+                    break;
+                default:
+                    break;
+            }
+
+            require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+            $auth = new Fbf_Ebay_Packages_Api_Auth();
+            $token = $auth->get_valid_token();
+
+            $resp = $this->api('https://api.ebay.com/commerce/taxonomy/v1/category_tree/' . $category_tree_id . '/get_compatibility_property_values?category_id=' . $category_id . '&compatibility_property=' . $compatibility_property . '&filter=' . $filter, 'GET', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+
+            if($resp['status']==='success'&&$resp['response_code']===200){
+                $r = $resp['response'];
+                $values = json_decode($r)->compatibilityPropertyValues;
+            }
+
+        }else{
+            // must be the first level
+            require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+            $auth = new Fbf_Ebay_Packages_Api_Auth();
+            $token = $auth->get_valid_token();
+
+            if($token['status']==='success'){
+                $makes = $this->api('https://api.ebay.com/commerce/taxonomy/v1/category_tree/' . $category_tree_id . '/get_compatibility_property_values?category_id=' . $category_id . '&compatibility_property=Car%20Make', 'GET', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+
+                if($makes['status']==='success'&&$makes['response_code']===200){
+                    $r = $makes['response'];
+                    $values = json_decode($r)->compatibilityPropertyValues;
+                    $level = 1;
+                    $selectLimit = 1;
+                    $label = 'Select ' . $selectLimit . ' vehicle manufacturer';
+                    $name = 'Car Make';
+                }
+            }
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'values' => $values,
+            'selected' => $selected,
+            'level' => $level,
+            'select_limit' => $selectLimit,
+            'label' => $label,
+            'name' => $name,
+            'max_levels' => $max_levels
+        ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_confirm_compatibility()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        global $wpdb;
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $data = json_decode(stripslashes($_REQUEST['data']));
+        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+
+        $payloads = [];
+
+        $years = $data->level_4->selections;
+
+        foreach($years as $year){
+            $comp = [];
+            foreach($data as $level_key => $level_value){
+                if(is_object($level_value)){
+                    if($level_value->name!=='Cars Year'){
+                        $comp[] = [
+                            'name' => $level_value->name,
+                            'value' => $level_value->selections[0]
+                        ];
+                    }else{
+                        $comp[] = [
+                            'name' => $level_value->name,
+                            'value' => $year
+                        ];
+                    }
+                }
+            }
+            $payloads[] = $comp;
+        }
+
+        $count = 0;
+        foreach($payloads as $payload){
+            $payload_s = serialize($payload);
+            $i = $wpdb->insert(
+                $compatibility_table,
+                [
+                    'chassis_id' => $chassis_id,
+                    'payload' => $payload_s
+                ]
+            );
+            $count++;
+        }
+
+
+
+
+        if($count!==0){
+            if($count===count($payloads)){
+                $status = 'success';
+                $error = 'none';
+            }else{
+                $status = 'error';
+                $error = 'Compatibility inserts mismatch';
+            }
+        }else{
+            $status = 'error';
+            $error = 'No inserts';
+        }
+
+        echo json_encode([
+            'status' => $status,
+            'error' => $error,
+            'chassis_id' => $chassis_id
+        ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_compatibility_list()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        global $wpdb;
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $chassis_id = filter_var($_REQUEST['id'], FILTER_SANITIZE_STRING);
+        $q = $wpdb->prepare("SELECT *
+            FROM {$compatibility_table}
+            WHERE chassis_id = %s", $chassis_id);
+        $r = $wpdb->get_results($q, ARRAY_A);
+        $list_items = [];
+
+        if($r!==false&&!empty($r)){
+            foreach($r as $result){
+                $payload = unserialize($result['payload']);
+                $name = implode(', ', array_column($payload, 'value'));
+                $list_items[] = [
+                    'id' => $result['id'],
+                    'name' => $name
+                ];
+            }
+
+            echo json_encode([
+                'status' => 'success',
+                'list_items' => $list_items
+            ]);
+        }else if(empty($r)){
+            echo json_encode([
+                'status' => 'success',
+                'list_items' => $list_items
+            ]);
+        }else{
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'there was and error finding compatibility items for chassis'
+            ]);
+        }
+        die();
+    }
+
+    public function fbf_ebay_packages_compatibility_delete()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        global $wpdb;
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $id = filter_var($_REQUEST['id'], FILTER_SANITIZE_STRING);
+        $q = $wpdb->prepare("SELECT chassis_id
+            FROM {$compatibility_table}
+            WHERE id = %s", $id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            $chassis_id = $r['chassis_id'];
+
+            $d = $wpdb->delete(
+                $compatibility_table,
+                [
+                    'id' => $id
+                ]
+            );
+
+            if($d!==false&&!empty($d)){
+                echo json_encode([
+                    'status' => 'success',
+                    'chassis_id' => $chassis_id
+                ]);
+            }else{
+                echo json_encode([
+                    'status' => 'error',
+                    'error' => 'nothing was deleted'
+                ]);
+            }
+        }else{
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'could not get chassis id'
+            ]);
+        }
+
+        die();
+    }
+
+    public function fbf_ebay_packages_compatibility_delete_all()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        global $wpdb;
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $id = filter_var($_REQUEST['id'], FILTER_SANITIZE_STRING);
+
+        $d = $wpdb->delete(
+            $compatibility_table,
+            [
+                'chassis_id' => $id
+            ]
+        );
+
+        if($d!==false&&!empty($d)){
+            echo json_encode([
+                'status' => 'success',
+                'chassis_id' => $id
+            ]);
+        }else{
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'delete failed'
+            ]);
+        }
         die();
     }
 
@@ -1422,6 +1807,23 @@ class Fbf_Ebay_Packages_Admin_Ajax
         return $info;
     }
 
+    private function get_fitting_info($id)
+    {
+        global $wpdb;
+        $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
+        $fittings = [];
+        $q = $wpdb->prepare("SELECT *
+            FROM {$fittings_table}
+            WHERE listing_id = %s", $id);
+        $r = $wpdb->get_results($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            foreach($r as $result){
+                $fittings[] = sprintf('%s - %s', $result['manufacturer_name'], $result['chassis_name']);
+            }
+        }
+        return $fittings;
+    }
+
     private function log($msg, $id)
     {
         global $wpdb;
@@ -1433,5 +1835,94 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 'log' => $msg
             ]
         );
+    }
+
+    private function api($url, $method, $headers, $body=null)
+    {
+        $curl = curl_init();
+        $resp = [];
+
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_ENCODING, '');
+        curl_setopt($curl, CURLOPT_MAXREDIRS, 20);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 0);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION,
+            function($curl, $header) use (&$headers)
+            {
+                $len = strlen($header);
+                $header = explode(':', $header, 2);
+                if (count($header) < 2) // ignore invalid headers
+                    return $len;
+                $headers[strtolower(trim($header[0]))][] = trim($header[1]);
+                return $len;
+            }
+        );
+
+        if(!is_null($body)){
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
+        }
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            $resp['status'] = 'error';
+            $resp['errors'] = curl_error($curl);
+        }else{
+            $resp['status'] = 'success';
+            $resp['response'] = $response;
+
+            // Clean up headers (strip out token)
+            foreach($headers as $i => $header){
+                if(!is_array($header)){
+                    if(strpos($header, 'Authorization')!==false){
+                        unset($headers[$i]);
+                    }
+                }
+            }
+
+            $resp['response_headers'] = $headers;
+            $resp['response_code'] = curl_getinfo($curl)['http_code'];
+        }
+
+        curl_close($curl);
+        return $resp;
+    }
+
+    private function get_current_compatibility($chassis_id, $make, $model, $variant)
+    {
+        global $wpdb;
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $current_selections = [];
+
+        $q = $wpdb->prepare("SELECT *
+            FROM {$compatibility_table}
+            WHERE chassis_id = %s", $chassis_id);
+        $r = $wpdb->get_results($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            foreach($r as $result){
+                $payload = unserialize($result['payload']);
+                $make_key = array_search('Car Make', array_column($payload, 'name'));
+                $model_key = array_search('Model', array_column($payload, 'name'));
+                $variant_key = array_search('Variant', array_column($payload, 'name'));
+                $year_key = array_search('Cars Year', array_column($payload, 'name'));
+                $payload_make = $payload[$make_key]['value'];
+                $payload_model = $payload[$model_key]['value'];
+                $payload_variant = $payload[$variant_key]['value'];
+                $payload_year = $payload[$year_key]['value'];
+
+                if($payload_make===$make && $payload_model===$model && $payload_variant===$variant){
+                    $current_selections[] = $payload_year;
+                }
+            }
+        }
+
+
+
+        return $current_selections;
     }
 }

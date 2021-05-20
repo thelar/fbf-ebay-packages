@@ -9,12 +9,16 @@ class Fbf_Ebay_Packages_List_Item
 {
     private $plugin_name;
     private $version;
-    private $use_test_image = false; // switch to false to use actual thumbnails
+    private $use_test_image = true; // switch to false to use actual thumbnails
     private $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
     private $buffer = 4;
     public $status = [];
     public $logs = [];
-    private $description = 'This listing is for 4 brand new tyres in the size and style specified in the listing title<br/>
+    private $tyre_description = 'This listing is for 4 brand new tyres in the size and style specified in the listing title<br/>
+    We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV<br/>
+    Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered<br/>
+    Any questions, please feel free to ask.  Thanks';
+    private $wheel_description = 'This listing is for 4 brand new wheels in the size and style specified in the listing title<br/>
     We are one of the country’s leading suppliers of All Terrain and Mud Terrain Tyres to suit 4x4 and SUV<br/>
     Delivery is through a 3rd party carrier.  We advise not booking tyre fitting until the tyres have been delivered<br/>
     Any questions, please feel free to ask.  Thanks';
@@ -33,7 +37,7 @@ class Fbf_Ebay_Packages_List_Item
         $inv_item_created = false;
 
         if($token['status']==='success'){
-            $payload = $this->item_payload($product, $qty);
+            $payload = $this->item_payload($product, $qty, $result->type);
 
             // Only create the item if the image exists
             if(isset($payload['product']['imageUrls'])){
@@ -83,6 +87,22 @@ class Fbf_Ebay_Packages_List_Item
                 ]);
             }
 
+            //Handle the compatibility
+            if($inv_item_created){
+                if($compatibilty_payload = $this->compatibility_payload($result->id)){
+                    if(!$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
+                        $create_or_update_compatibility = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/'.$sku.'/product_compatibility', 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], $compatibilty_payload);
+                        if($create_or_update_compatibility['status']==='success' && (
+                            $create_or_update_compatibility['response_code']===200 ||
+                            $create_or_update_compatibility['response_code']===201 ||
+                            $create_or_update_compatibility['response_code']===204)
+                        ){
+                            $this->save_update_listing_compatibility($compatibilty_payload, $result->id);
+                        }
+                    }
+                }
+            }
+
             //Create or update the offer
             $publish_offer_id = null;
             $offer_status = null;
@@ -97,7 +117,7 @@ class Fbf_Ebay_Packages_List_Item
 
                     if ($new_update_required) {
                         // Update the offer
-                        $offer_payload = $this->offer_payload($product, $sku, $qty);
+                        $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type);
                         $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
 
                         if ($offer_update['status']==='success'&&$offer_update['response_code'] === 204) {
@@ -128,7 +148,7 @@ class Fbf_Ebay_Packages_List_Item
                     }
                 }else{
                     // Doesn't exist - create the offer
-                    $offer_payload = $this->offer_payload($product, $sku, $qty);
+                    $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type);
                     $offer_create = $this->api('https://api.ebay.com/sell/inventory/v1/offer', 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
                     if($offer_create['status']==='success'&&$offer_create['response_code']===201){
                         $offer_id = json_decode($offer_create['response']);
@@ -375,7 +395,7 @@ class Fbf_Ebay_Packages_List_Item
         return $result;
     }
 
-    private function item_payload(WC_Product $product, $qty){
+    private function item_payload(WC_Product $product, $qty, $type){
         $item = [];
         $brand_terms = get_the_terms($product->get_id(), 'pa_brand-name');
 
@@ -407,12 +427,19 @@ class Fbf_Ebay_Packages_List_Item
                 'value' => $product->get_weight()
             ]
         ];
+        if($type==='tyre'){
+            $aspects = $this->get_tyre_aspects($product, $qty);
+            $description = $this->tyre_description;
+        }else if($type==='wheel'){
+            $aspects = $this->get_wheel_aspects($product, $qty);
+            $description = $this->wheel_description;
+        }
         $item['product'] = [
             'title' => sprintf('%s x %s', $qty, $product->get_title()),
-            'description' => $this->description,
+            'description' => $description,
             'brand' => $brand_name,
             'mpn' => $product->get_sku(),
-            'aspects' => $this->get_tyre_aspects($product, $qty)
+            'aspects' => $aspects
         ];
         // Image
         if($this->use_test_image){
@@ -431,7 +458,7 @@ class Fbf_Ebay_Packages_List_Item
         return $item;
     }
 
-    private function offer_payload(WC_Product $product, $sku, $qty)
+    private function offer_payload(WC_Product $product, $sku, $qty, $type)
     {
         $offer = [];
         if(is_a($product, 'WC_Product_Variable')){
@@ -446,8 +473,14 @@ class Fbf_Ebay_Packages_List_Item
         $offer['marketplaceId'] = 'EBAY_GB';
         $offer['format'] = 'FIXED_PRICE';
         $offer['availableQuantity'] = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
-        $offer['categoryId'] = '179680';
-        $offer['listingDescription'] = $this->description;
+        if($type==='tyre'){
+            $offer['categoryId'] = '179680';
+            $description = $this->tyre_description;
+        }else if($type==='wheel'){
+            $offer['categoryId'] = '179679';
+            $description = $this->wheel_description;
+        }
+        $offer['listingDescription'] = $description;
         $offer['listingPolicies'] = [
             'fulfillmentPolicyId' => '163248243010',
             'paymentPolicyId' => '191152500010',
@@ -466,6 +499,68 @@ class Fbf_Ebay_Packages_List_Item
         $offer['merchantLocationKey'] = 'STRAT';
 
         return $offer;
+    }
+
+    private function compatibility_payload($id)
+    {
+        global $wpdb;
+        $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $compatibility = [];
+        $q = $wpdb->prepare("SELECT *
+            FROM {$fittings_table} f
+            LEFT JOIN {$compatibility_table} c
+            ON f.chassis_id = c.chassis_id
+            WHERE f.listing_id = %s", $id);
+        $r = $wpdb->get_results($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            foreach($r as $result){
+                $payload = unserialize($result['payload']);
+                $props = [
+                    'compatibilityProperties' => $payload
+                ];
+                $compatibility[] = $props;
+            }
+        }
+        if(empty($compatibility)){
+            return false;
+        }else{
+            return json_encode([
+                'compatibleProducts' => $compatibility
+            ]);
+        }
+    }
+
+    private function is_listing_compatibility_same($payload, $id)
+    {
+        global $wpdb;
+        $listing_compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_listing_compatibility';
+        $q = $wpdb->prepare("SELECT *
+            FROM {$listing_compatibility_table}
+            WHERE listing_id = %s", $id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r!==false&&!empty($r)){
+            $saved_payload = json_decode($r['payload']);
+            $payload = json_decode($payload);
+            if($saved_payload==$payload){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function save_update_listing_compatibility($payload, $id)
+    {
+        global $wpdb;
+        $listing_compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_listing_compatibility';
+        $i = $wpdb->replace(
+            $listing_compatibility_table,
+            [
+                'listing_id' => $id,
+                'payload' => $payload
+            ]
+        );
+        return $i;
     }
 
     private function get_tyre_aspects(WC_Product $product, $qty = 1)
@@ -632,6 +727,130 @@ class Fbf_Ebay_Packages_List_Item
         return $aspects;
     }
 
+    private function get_wheel_aspects(WC_Product $product, $qty = 1)
+    {
+        $aspects = [];
+
+        // MPN
+        $aspects['Manufacturer Part Number'] = [
+            $product->get_sku()
+        ];
+
+        // Brand
+        $brand_terms = get_the_terms($product->get_id(), 'pa_brand-name');
+        if(!empty($brand_terms)){
+            $brand_term = $brand_terms[0];
+            $brand_name = $brand_term->name;
+            $aspects['Brand'] = [
+                $brand_name
+            ];
+        }
+
+        //new wheel stuff here
+        // Rim Diameter
+        $wheel_rim_diameters = get_the_terms($product->get_id(), 'pa_wheel-size');
+        if(!empty($wheel_rim_diameters)){
+            $wheel_rim_diameter = $wheel_rim_diameters[0];
+            $wheel_rim_diameter_name = rtrim(html_entity_decode($wheel_rim_diameter->name), '"');
+            $aspects['Rim Diameter'] = [
+                $wheel_rim_diameter_name
+            ];
+        }
+
+        // Rim Material
+        $wheel_rim_materials = get_the_terms($product->get_id(), 'product_cat');
+        if(!empty($wheel_rim_materials)){
+            $wheel_rim_material = $wheel_rim_materials[0];
+            $wheel_rim_material_name = $wheel_rim_material->name;
+            if($wheel_rim_material_name=='Alloy Wheel'){
+                $aspects['Rim Material'] = [
+                    'Metal Alloy'
+                ];
+            }else if($wheel_rim_material_name=='Steel Wheel'){
+                $aspects['Rim Material'] = [
+                    'Steel'
+                ];
+            }
+        }
+
+        // Offset
+        $wheel_offsets = get_the_terms($product->get_id(), 'pa_wheel-offset');
+        if(!empty($wheel_offsets)){
+            $wheel_offset = $wheel_offsets[0];
+            $wheel_offset_name = $wheel_offset->name;
+            $aspects['Offset'] = [
+                $wheel_offset_name
+            ];
+        }
+
+        // Rim Width
+        $wheel_rim_widths = get_the_terms($product->get_id(), 'pa_wheel-width');
+        if(!empty($wheel_rim_widths)){
+            $wheel_rim_width = $wheel_rim_widths[0];
+            $wheel_rim_width_name = rtrim(html_entity_decode($wheel_rim_width->name), '"');
+            $aspects['Rim Width'] = [
+                $wheel_rim_width_name
+            ];
+        }
+
+        // Number of Studs & Stud Diameter
+        $wheel_pcds = get_the_terms($product->get_id(), 'pa_wheel-pcd');
+        if(!empty($wheel_pcds)) {
+            $wheel_pcd = $wheel_pcds[0];
+            $wheel_studs_diameter = explode('/', $wheel_pcd->name);
+            $wheel_studs_name = $wheel_studs_diameter[0];
+            $aspects['Number of Studs'] = [
+                $wheel_studs_name
+            ];
+            $wheel_diameter_name = $wheel_studs_diameter[1];
+            $aspects['Stud Diameter'] = [
+                $wheel_diameter_name
+            ];
+        }
+
+        // Type
+        $aspects['Type'] = [
+            'Wheel Rim'
+        ];
+
+        // Rim Structure
+        $aspects['Rim Structure'] = [
+            'One Piece'
+        ];
+
+        // Unit Quantity
+        $aspects['Unit Quantity'] = [
+            $qty
+        ];
+
+        // Custom Bundle
+        $aspects['Custom Bundle'] = [
+            'Yes'
+        ];
+
+        // Bundle Description
+        $aspects['Bundle Description'] = [
+            'Bundle of ' . $qty . ' wheels'
+        ];
+
+        // Modified Item
+        $aspects['Modified Item'] = [
+            'No'
+        ];
+
+        // Country/Region of Manufacture
+        $aspects['Country/Region of Manufacture'] = [
+            'China'
+        ];
+
+        // Unit Type
+        $aspects['Unit Type'] = [
+            'Unit'
+        ];
+
+        return $aspects;
+    }
+
     private function generate_sku(WC_Product $product, $qty)
     {
         $sku = $product->get_sku();
@@ -645,7 +864,7 @@ class Fbf_Ebay_Packages_List_Item
             if($product_cat==='Tyre'){
                 $sku_prefix = 'tt.q' . $qty . '.';
             }else if($product_cat==='Steel Wheel'||$product_cat==='Alloy Wheel'){
-                $sku_prefix = 'tw.1' . $qty . '.';
+                $sku_prefix = 'tw.q' . $qty . '.';
             }
         }
         return $sku_prefix . $sku;

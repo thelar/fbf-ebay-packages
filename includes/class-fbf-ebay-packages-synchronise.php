@@ -19,7 +19,7 @@ class Fbf_Ebay_Packages_Synchronise
         $this->version = $version;
     }
 
-    public function run($type)
+    public function run($type, $items)
     {
         global $wpdb;
         $resp = [];
@@ -29,13 +29,23 @@ class Fbf_Ebay_Packages_Synchronise
 
         //List items that need listing (any listings that are of the correct type and are 'active'), this will also handle updating already listed items
         //TODO: refactor here to allow for different pack sizes meaning that one listing could potentially have several ebay listings!
-        $q = $wpdb->prepare("SELECT *
-            FROM {$listing_table} l
-            INNER JOIN {$skus_table} s
+        if(empty($items)){
+            $q = $wpdb->prepare("SELECT *
+                FROM {$listing_table} l
+                INNER JOIN {$skus_table} s
+                    ON s.listing_id = l.id
+                WHERE l.status = %s
+                AND l.type = %s", 'active', $type);
+        }else{
+            $q = sprintf("SELECT *
+                FROM {$listing_table} l
+                INNER JOIN {$skus_table} s
                 ON s.listing_id = l.id
-            WHERE l.status = %s
-            AND l.type = %s", 'active', $type);
+                WHERE l.status = '%s'
+                AND s.sku IN (%s)", 'active', "'" . implode("','" ,$items) . "'");
+        }
         $results = $wpdb->get_results( $q );
+
 
         if($results!==false){
             $updates = [];

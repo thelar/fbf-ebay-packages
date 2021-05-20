@@ -182,6 +182,7 @@ class Fbf_Ebay_Packages {
         /* Load the JavaScript needed for the settings screen. */
         $this->loader->add_action("admin_footer-{$plugin_admin->page_id()}", $plugin_admin, 'meta_footer_scripts'); // Tyres
         $this->loader->add_action("admin_footer-{$plugin_admin->wheel_page_id()}", $plugin_admin, 'meta_footer_scripts_wheels'); // Wheels
+        $this->loader->add_action("admin_footer-{$plugin_admin->compatibility_page_id()}", $plugin_admin, 'meta_footer_scripts_compatibility'); // Compatibility
 
         $this->loader->add_filter('acf/fields/relationship/query', $plugin_admin, 'acf_relationship', 10, 3);
         $this->loader->add_filter('acf/fields/relationship/result', $plugin_admin, 'acf_relationship_result', 10, 4);
@@ -223,6 +224,20 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_log_detail', $plugin_admin_ajax, 'fbf_ebay_packages_log_detail' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_detail_log_response', $plugin_admin_ajax, 'fbf_ebay_packages_detail_log_response' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_detail_log_response', $plugin_admin_ajax, 'fbf_ebay_packages_detail_log_response' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_test_item', $plugin_admin_ajax, 'fbf_ebay_packages_test_item' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_test_item', $plugin_admin_ajax, 'fbf_ebay_packages_test_item' );
+
+        // Compatibility
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_confirm_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_confirm_compatibility' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_confirm_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_confirm_compatibility' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility_list', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_list' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_compatibility_list', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_list' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility_delete', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_compatibility_delete', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility_delete_all', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete_all' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_compatibility_delete_all', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete_all' );
 	}
 
 	/**

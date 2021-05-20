@@ -47,6 +47,8 @@ class Fbf_Ebay_Packages_Activator {
         $table_name4 = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
         $table_name5 = $wpdb->prefix . 'fbf_ebay_packages_offers';
         $table_name6 = $wpdb->prefix . 'fbf_ebay_packages_fittings';
+        $table_name7 = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        $table_name8 = $wpdb->prefix . 'fbf_ebay_packages_listing_compatibility';
 
         $charset_collate = $wpdb->get_charset_collate();
 
@@ -120,9 +122,28 @@ class Fbf_Ebay_Packages_Activator {
         ) $charset_collate;";
         dbDelta($sql6);
 
+        $sql7 = "CREATE TABLE IF NOT EXISTS `$table_name7` (
+            `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+            `chassis_id` SMALLINT UNSIGNED,
+            `payload` mediumtext NOT NULL,
+            PRIMARY KEY (`id`),
+            KEY `chassis_id` (`chassis_id`)
+        ) $charset_collate;";
+        dbDelta($sql7);
+
+        $sql8 = "CREATE TABLE IF NOT EXISTS `$table_name8` (
+            `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+            `listing_id` mediumint(9) NOT NULL,
+            `payload` mediumtext NOT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `listing_id` (`listing_id`)
+        ) $charset_collate;";
+        dbDelta($sql8);
+
         $wpdb->query("ALTER TABLE $table_name2 ADD FOREIGN KEY (`listing_id`) REFERENCES  $table_name(`id`) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
         $wpdb->query("ALTER TABLE $table_name3 ADD FOREIGN KEY (`listing_id`) REFERENCES  $table_name(`id`) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
         $wpdb->query("ALTER TABLE $table_name6 ADD FOREIGN KEY (`listing_id`) REFERENCES  $table_name(`id`) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
+        $wpdb->query("ALTER TABLE $table_name8 ADD FOREIGN KEY (`listing_id`) REFERENCES  $table_name(`id`) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
 
         add_option('fbf_ebay_packages_db_version', FBF_EBAY_PACKAGES_DB_VERSION);
 

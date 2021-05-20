@@ -93,7 +93,8 @@ class Fbf_Ebay_Packages_Admin {
         // Enqueue scripts for meta
         $tyre_page_hook_id = $this->page_id();
         $wheel_page_hook_id = $this->wheel_page_id();
-        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id ){
+        $compatibility_page_hook_id = $this->compatibility_page_id();
+        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id || $hook_suffix == $compatibility_page_hook_id ){
             wp_enqueue_style( 'thickbox' );
             wp_enqueue_style( $this->plugin_name . '-datatables', plugin_dir_url( __FILE__ ) . 'css/datatables.min.css', array(), $this->version, 'all' );
         }
@@ -125,7 +126,8 @@ class Fbf_Ebay_Packages_Admin {
         // Enqueue scripts for meta
         $tyre_page_hook_id = $this->page_id();
         $wheel_page_hook_id = $this->wheel_page_id();
-        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id){
+        $compatibility_page_hook_id = $this->compatibility_page_id();
+        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id || $hook_suffix == $compatibility_page_hook_id ){
             wp_enqueue_script( 'common' );
             wp_enqueue_script( 'wp-lists' );
             wp_enqueue_script( 'postbox' );
@@ -188,14 +190,14 @@ class Fbf_Ebay_Packages_Admin {
         return $cleaned;
     }
 
-    public static function synchronise($via, $type)
+    public static function synchronise($via, $type, $items=null, $test_item_type=null)
     {
         global $wpdb;
         $table = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
 
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-synchronise.php';
         $sync = new Fbf_Ebay_Packages_Synchronise(FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
-        $sync_result = $sync->run('tyre');
+        $sync_result = $sync->run('tyre', $items);
 
         //$q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
 
@@ -267,6 +269,14 @@ class Fbf_Ebay_Packages_Admin {
             $this->plugin_name . '-wheels',
             [$this, 'wheels']
         );
+        $this->wheels_submenu = add_submenu_page(
+            $this->plugin_name,
+            __('Compatibility', 'fbf-ebay'),
+            __('Compatibility', 'fbf-ebay'),
+            'manage_woocommerce',
+            $this->plugin_name . '-compatibility',
+            [$this, 'compatibility']
+        );
     }
 
     /**
@@ -325,6 +335,7 @@ class Fbf_Ebay_Packages_Admin {
         global $hook_suffix;
         $tyre_page_hook_id = $this->page_id();
         $wheel_page_hook_id = $this->wheel_page_id();
+        $compatibility_page_hook_id = $this->compatibility_page_id();
 
         if($hook_suffix===$tyre_page_hook_id){
             if(!isset($_REQUEST['listing_id'])){
@@ -389,11 +400,36 @@ class Fbf_Ebay_Packages_Admin {
                 'normal',                 /* Context */
                 'default'                 /* Priority */
             );
+            $meta_create = add_meta_box(
+                'wheel-create-listings',                  /* Meta Box ID */
+                'Create Listings',               /* Title */
+                [$this, 'wheel_create_listings'],  /* Function Callback */
+                $wheel_page_hook_id,               /* Screen: Our Settings Page */
+                'normal',                 /* Context */
+                'default'                 /* Priority */
+            );
             $meta_wheels = add_meta_box(
                 'wheel-listings',                  /* Meta Box ID */
                 'eBay Wheel Listings',               /* Title */
                 [$this, 'wheel_listings_meta_box'],  /* Function Callback */
                 $wheel_page_hook_id,               /* Screen: Our Settings Page */
+                'normal',                 /* Context */
+                'default'                 /* Priority */
+            );
+            $meta_schedule = add_meta_box(
+                'wheel-schedule',
+                'eBay Synchronisation',
+                [$this, 'wheel_schedule_sync_meta_box'],
+                $wheel_page_hook_id,
+                'normal',
+                'default'
+            );
+        }else if($hook_suffix===$compatibility_page_hook_id){
+            $compatibility = add_meta_box(
+                'compatibility',                  /* Meta Box ID */
+                'Chassis Compatibility',               /* Title */
+                [$this, 'compatibility_meta_box'],  /* Function Callback */
+                $compatibility_page_hook_id,               /* Screen: Our Settings Page */
                 'normal',                 /* Context */
                 'default'                 /* Priority */
             );
@@ -507,7 +543,6 @@ class Fbf_Ebay_Packages_Admin {
                         </div><!-- #post-body -->
                         <br class="clear">
                     </div><!-- #poststuff -->
-                    <?php submit_button( __( 'Create Wheel Listings', 'text-domain'), 'primary', 'submit', false, ['id' => 'wheel-create-listings', 'style' => 'float:left'] ); ?>
                 </form>
             </div><!-- .fx-settings-meta-box-wrap -->
         </div>
@@ -518,6 +553,57 @@ class Fbf_Ebay_Packages_Admin {
                     Close
                 </button>
                 <button id="fbf-ebay-packages-wheels-confirm-listing" role="button" type="button" class="button button-primary" disabled>
+                    Confirm
+                </button>
+            </div>
+        </div>
+        <?php
+    }
+
+    public function compatibility()
+    {
+        global $hook_suffix;
+
+        /**
+         * The class responsible for API auth.
+         */
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+        $auth = new Fbf_Ebay_Packages_Api_Auth();
+        $token = $auth->get_valid_token();
+        if($token['status']==='error'){
+            $this->errors[] = $token['errors'];
+        }
+
+        $msg = sprintf('<p>%s</p>', $token['status']==='error'?$this->get_errors():'eBay Access Token is valid');
+        printf('<div class="notice notice-%s is-dismissible">%s</div>', $token['status'], $msg);
+
+        /* enable add_meta_boxes function in this page. */
+        do_action( 'add_meta_boxes', $hook_suffix, [] ); // Not entirely sure why we need an empty array here!
+        ?>
+        <div class="wrap">
+            <h2>Compatibility</h2>
+            <?php settings_errors(); ?>
+            <div class="compatibility-meta-box-wrap">
+                <form id="compatibility-select-form" method="post" action="options.php">
+                    <div id="poststuff">
+                        <div id="post-body" class="metabox-holder columns-1">
+                            <div id="postbox-container-2" class="postbox-container">
+                                <?php do_meta_boxes( $hook_suffix, 'normal', null ); ?>
+                                <!-- #normal-sortables -->
+                            </div><!-- #postbox-container-2 -->
+                        </div><!-- #post-body -->
+                        <br class="clear">
+                    </div><!-- #poststuff -->
+                </form>
+            </div><!-- .fx-settings-meta-box-wrap -->
+        </div>
+        <div id="compatibility-thickbox" style="display:none;">
+            <div class="tb-modal-content" data-compatibility="{}"></div>
+            <div class="tb-modal-footer" style="margin-bottom: 1em;">
+                <button role="button" type="button" class="button button-secondary" onclick="tb_remove();">
+                    Close
+                </button>
+                <button id="fbf-ebay-packages-compatibility-confirm-listing" role="button" type="button" class="button button-primary" disabled>
                     Confirm
                 </button>
             </div>
@@ -565,6 +651,38 @@ class Fbf_Ebay_Packages_Admin {
      * @since 0.1.0
      */
     public function meta_footer_scripts_wheels(){
+        if(!empty($this->wheels_submenu)){
+            $page_hook_id = $this->wheel_page_id();
+            ?>
+            <script type="text/javascript">
+                //<![CDATA[
+                jQuery(document).ready( function($) {
+                    // toggle
+                    $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+                    postboxes.add_postbox_toggles( '<?php echo $page_hook_id; ?>' );
+                    // display spinner
+                    $('#fx-smb-form').submit( function(){
+                        $('#publishing-action .spinner').css('display','inline');
+                    });
+                    // confirm before reset
+                    $('#delete-action .submitdelete').on('click', function() {
+                        return confirm('Are you sure want to do this?');
+                    });
+                });
+                //]]>
+            </script>
+            <?php
+        }
+    }
+
+    /**
+     * Footer Script Needed for Meta Box:
+     * - Meta Box Toggle.
+     * - Spinner for Saving Option.
+     * - Reset Settings Confirmation
+     * @since 0.1.0
+     */
+    public function meta_footer_scripts_compatibility(){
         if(!empty($this->wheels_submenu)){
             $page_hook_id = $this->wheel_page_id();
             ?>
@@ -673,6 +791,15 @@ class Fbf_Ebay_Packages_Admin {
         <?php
     }
 
+    public function wheel_create_listings()
+    {
+        ?>
+        <p>When you have selected and saved your Brand, Manufacturers and Chassis above, click Create Listings below to continue...</p>
+        <?php submit_button( __( 'Create Wheel Listings', 'text-domain'), 'primary', 'submit', false, ['id' => 'wheel-create-listings', 'style' => 'float:left'] ); ?>
+        <br class="clear"/>
+        <?php
+    }
+
     public function wheel_listings_meta_box()
     {
         ?>
@@ -771,6 +898,72 @@ class Fbf_Ebay_Packages_Admin {
         <?php
     }
 
+    public function wheel_schedule_sync_meta_box()
+    {
+        $hourly_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+        $schedule = wp_get_schedule($hourly_hook);
+        $next_schedule = wp_next_scheduled($hourly_hook);
+        $date = new DateTime();
+        $timezone = new DateTimeZone("Europe/London");
+        $date->setTimezone($timezone);
+        $date->setTimestamp(absint($next_schedule));
+        $next = $date->format('g:iA - jS F Y') . "\n";
+        $synchronisations_to_show = 5;
+        ?>
+        <p>Upcoming scheduled synchronisation: <strong><?=$next?></strong> <em>&lt;<?=$schedule?>&gt;</em></p>
+
+        <h2>Previous <?=$synchronisations_to_show?> events:</h2>
+        <table id="fbf_ep_event_log_table" class="display">
+            <thead>
+            <tr>
+                <th>Date/time</th>
+                <th>Hook</th>
+                <th>Execution time</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Date/time</th>
+                <th>Hook</th>
+                <th>Execution time</th>
+            </tr>
+            </tfoot>
+        </table>
+        <input type="text" placeholder="Test SKU's" id="fbf_ebay_packages_skus" name="fbf_ebay_packages_skus" style="margin-top: 1em;"/>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_test_skus" style="margin-top: 1em;" type="button">Test Wheel</button>
+        <!--<button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise" style="margin-top: 1em;" type="button">Synchronise with eBay</button>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_clean" style="margin-top: 1em;" type="button">Clean eBay</button>-->
+        <span class="spinner" style="margin-top: 1.2em;"></span>
+        <br class="clear"/>
+        <?php
+    }
+
+    public function compatibility_meta_box()
+    {
+        global $wpdb;
+        $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
+        $q = "SELECT *
+            FROM {$fittings_table}
+            GROUP BY (chassis_id)
+            ORDER by manufacturer_name ASC, chassis_name ASC";
+        $r = $wpdb->get_results($q, ARRAY_A);
+
+        if($r!==false&&!empty($r)){
+            ?>
+            <p>Please complete the Compatibility for each chassis below, this ensures that Wheels are linked to the correct Vehicles on eBay:</p>
+            <?php
+            foreach($r as $result){
+                $this->compatibility_selector($result);
+            }
+        }else{
+            ?>
+            <p>There are no chassis to manage - nothing to see here.</p>
+            <?php
+        }
+    }
+
     public function tyre_listing_log_detail()
     {
         ?>
@@ -800,12 +993,39 @@ class Fbf_Ebay_Packages_Admin {
         <?php
     }
 
+    private function compatibility_selector($result)
+    {
+        global $wpdb;
+        $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
+        echo '<hr/>';
+        printf('<p><strong>%s - %s</strong> - <a href="#" data-chassis-id="%s" data-chassis-name="%1$s - %2$s" class="add-compatibility">Add</a> <a href="#" data-chassis-id="%3$s" data-chassis-name="%1$s - %2$s" class="tb_compat_delete_all">Remove all</a></p>', $result['manufacturer_name'], $result['chassis_name'], $result['chassis_id']);
+
+        // Get existing compatibility
+        $q = $wpdb->prepare("SELECT *
+            FROM {$compatibility_table}
+            WHERE chassis_id = %s", $result['chassis_id']);
+        $r = $wpdb->get_results($q, ARRAY_A);
+        printf('<ul id="tb_compat_chassis_%s" data-id="%1$s">', $result['chassis_id']);
+        if($r!==false&&!empty($r)){
+            foreach($r as $result){
+                $payload = unserialize($result['payload']);
+                $values = array_column($payload, 'value');
+                printf('<li style="display: inline-block; margin-right: 0.5em;">%s<a class="tb_compat_delete dashicons dashicons-no-alt" data-name="%1$s" data-id="%s" href="#"></a></li>', implode(', ', $values), $result['id']);
+            }
+        }
+        echo '</ul>';
+    }
+
     public function page_id(){
         return 'ebay-packages_page_fbf-ebay-packages-tyres';
     }
 
     public function wheel_page_id(){
         return 'ebay-packages_page_fbf-ebay-packages-wheels';
+    }
+
+    public function compatibility_page_id(){
+        return 'ebay-packages_page_fbf-ebay-packages-compatibility';
     }
 
     public function acf_relationship_result($text, $post, $field, $post_id)

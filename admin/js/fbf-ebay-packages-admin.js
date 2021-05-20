@@ -177,10 +177,10 @@
 			minimumInputLength: 3 // the minimum of symbols to input before perform a search
 		});
 
-		let $table = $('#example');
-		let type = $table.attr('data-type');
 
 		// datatable
+		let $table = $('#example');
+		let type = $table.attr('data-type');
 		let table = $table.DataTable({
 			serverSide: true,
 			processing: true,
@@ -227,6 +227,27 @@
 					}
 				}
 			],
+		});
+
+		// Add event listener for opening and closing details
+		$('#example tbody').on('click', 'td.details-control a', function () {
+			var tr = $(this).closest('tr');
+			var row = table.row( tr );
+			var $icon = $(this);
+			console.log($icon);
+
+			if( row.child.isShown() ) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass('shown');
+				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}else{
+				// Open this row
+				row.child(format(row.data())).show();
+				tr.addClass('shown');
+				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+			}
+			return false;
 		});
 
 		let log = $('#fbf_ep_event_log_table').DataTable({
@@ -619,24 +640,50 @@
 			return false;
 		});
 
-		// Add event listener for opening and closing details
-		$('#example tbody').on('click', 'td.details-control a', function () {
-			var tr = $(this).closest('tr');
-			var row = table.row( tr );
-			var $icon = $(this);
-			console.log($icon);
+		$('#fbf_ebay_packages_test_skus').bind('click', function(){
+			console.log('testing skus');
+			let $loader = $(this).parent().find('.spinner');
+			$loader.addClass('is-active');
 
-			if( row.child.isShown() ) {
-				// This row is already open - close it
-				row.child.hide();
-				tr.removeClass('shown');
-				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
-			}else{
-				// Open this row
-				row.child(format(row.data())).show();
-				tr.addClass('shown');
-				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
-			}
+			let data = {
+				action: 'fbf_ebay_packages_test_item',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				items: $('#fbf_ebay_packages_skus').val(),
+				type: 'wheel'
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					if(response.status==='success'){
+						$loader.removeClass('is-active');
+						if(response.status==='success'){
+							console.log('synchronised');
+							table.ajax.reload();
+							log.ajax.reload();
+						}
+					}
+				}
+			});
+			return false;
+		});
+
+		// add compatibility
+		$('.add-compatibility').bind('click', function(){
+			console.log('add compatibility' + ' ' + $(this).attr('data-chassis-id'));
+			let thickbox_id = 'compatibility-thickbox';
+			let $content = $('.tb-modal-content');
+			let $confirm = $('#fbf-ebay-packages-compatibility-confirm-listing');
+			$content.empty();
+			$content.attr('data-compatibility', '{}');
+			$content.attr('data-chassis-id', $(this).attr('data-chassis-id'));
+			$confirm.prop('disabled', true);
+			let url = '#TB_inline?&width=600&height=auto&inlineId=' + thickbox_id;
+			tb_show('Add compatibility for ' + $(this).attr('data-chassis-name'), url);
+			populate_compatibility();
 			return false;
 		});
 
@@ -662,9 +709,78 @@
 			return false;
 		});
 
+		$('#fbf-ebay-packages-compatibility-confirm-listing').on('click', function(){
+			let $content = $('.tb-modal-content');
+			let data = {
+				action: 'fbf_ebay_packages_confirm_compatibility',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				data: $content.attr('data-compatibility'),
+				chassis_id: $content.attr('data-chassis-id'),
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log('response');
+					if(response.status==='success'){
+						// Close the thickbox
+						tb_remove();
+						let $list = $('#tb_compat_chassis_'+response.chassis_id);
+						$list.empty();
+						populate_compatibility_list($list);
+					}else{
+						alert('Error: '+response.error);
+					}
+				}
+			});
+			return false;
+		});
+
+		$('.tb_compat_delete').bind('click', function(){
+			delete_compatibility($(this));
+			return false;
+		});
+
+		$('.tb_compat_delete_all').bind('click', function(){
+			let id = $(this).attr('data-chassis-id');
+			let name = $(this).attr('data-chassis-name');
+			let cnf = confirm('Are you sure you want to delete all compatibility for chassis: '+name);
+			if(cnf){
+				let data = {
+					action: 'fbf_ebay_packages_compatibility_delete_all',
+					ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+					id: id
+				};
+				$.ajax({
+					// eslint-disable-next-line no-undef
+					url: fbf_ebay_packages_admin.ajax_url,
+					type: 'POST',
+					data: data,
+					dataType: 'json',
+					success: function (response) {
+						if(response.status==='success'){
+							let $list = $('#tb_compat_chassis_'+response.chassis_id);
+							$list.empty();
+							populate_compatibility_list($list);
+						}else{
+							alert('Error: '+response.error);
+						}
+					}
+				});
+			}
+
+			return false;
+		});
+
 		populate_chassis();
 
-		function format (d){
+		function format(d){
+			console.log('format');
+			console.log(d);
+
 			let data = {
 				action: 'fbf_ebay_packages_listing_info',
 				id: d.id
@@ -700,6 +816,18 @@
 							'<td>Deactivated:</td>' +
 							'<td>'+response.result.info.deactivated_count+' times</td>' +
 							'</tr>';
+					}
+					if(response.result.fitting_info){
+						html+='' +
+							'<tr>' +
+							'<td colspan="2"><strong>'+d.type+' fits:</strong></td>' +
+							'</tr>';
+						$.each(response.result.fitting_info, function(key, item){
+							html+='' +
+								'<tr>' +
+								'<td colspan="2">'+item+'</td>' +
+								'</tr>';
+						});
 					}
 					if(response.result.inv_info.sku!==null){
 						html+='' +
@@ -831,7 +959,7 @@
 				'</table>';
 		}
 
-		function format2 (d){
+		function format2(d){
 			let data = {
 				action: 'fbf_ebay_packages_detail_log_response',
 				id: d.id
@@ -914,6 +1042,183 @@
 					}
 				}
 			});
+		}
+
+		function populate_compatibility(){
+			let $content = $('.tb-modal-content');
+
+			let data = {
+				action: 'fbf_ebay_packages_compatibility',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				data: $content.attr('data-compatibility'),
+				chassis_id: $content.attr('data-chassis-id'),
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log(response);
+
+					if(response.status==='success'){
+						// remove unwanted levels
+						$('.tb_compatibility_wrapper').each(function(e_key, e_value){
+							let level = $(this).attr('data-level');
+							if(level >= response.level){
+								$(this).remove();
+							}
+						});
+
+						let $wrapper = $('<div class="tb_compatibility_wrapper" id="tb_compat_wrap_'+response.level+'" style="margin-top: 1em;" data-level="'+response.level+'"></div>');
+
+						if(response.values.length){
+							$content.append($wrapper);
+							let $label = $('<label for="tb_compat_select_'+response.level+'">'+response.label+'</label>');
+							$wrapper.append($label);
+							let multiple = '';
+							if(response.select_limit===false){
+								multiple = 'multiple="multiple"';
+							}
+							let $select = $('<select id="tb_compat_select_'+response.level+'" style="width: 100%;" '+multiple+'></select>');
+							$wrapper.append($select);
+							$.each(response.values, function(key, value){
+								let $option;
+								if(response.selected!==null && response.selected.includes(value.value)) {
+									$option = '<option value="' + value.value + '" disabled>' + value.value + '</option>';
+								}else{
+									$option = '<option value="' + value.value + '">' + value.value + '</option>';
+								}
+								$select.append($option);
+							});
+							// Multi-select - so add checkbox for all
+							if(response.select_limit===false){
+								let $select_all = $('<div style="margin-top: 0.5em;"><input type="checkbox" id="tb_compat_select_all_'+response.level+'" data-id="'+response.level+'"/> <label for="tb_compat_select_all_'+response.level+'">Select All</label></div>');
+								$wrapper.append($select_all);
+
+								$('#tb_compat_select_all_'+response.level).bind('click', function(){
+									let $options = $select.find('option');
+									if($(this).is(':checked') ){
+										$options.each(function(o_key, o_val){
+											$(o_val).prop('selected', true);
+										});
+									}else{
+										$options.each(function(o_key, o_val){
+											$(o_val).prop('selected', false);
+										});
+									}
+									$select.trigger('change');
+								});
+							}
+							$select.val('').change();
+							$select.select2();
+							$select.bind('change', function(){
+								compatability_select($content, response.level, response.name, response.max_levels, $select.select2('data'));
+							});
+						}
+					}
+				}
+			});
+
+			function compatability_select($content, level, name, max, values){
+				console.log('compatibility select');
+				let selections = [];
+				let $confirm = $('#fbf-ebay-packages-compatibility-confirm-listing');
+				$.each(values, function(key, value){
+					selections.push(value.text);
+				});
+				let data = JSON.parse($content.attr('data-compatibility'));
+				data['level_'+level] = {
+					selections: selections,
+					level: level,
+					name: name
+				};
+				data['next_level'] = level + 1;
+
+				if(level >= max){
+					if(values.length){
+						console.log('last level and selections exist');
+						$confirm.prop('disabled', false);
+					}else{
+						console.log('last level and no selections');
+						$confirm.prop('disabled', true);
+					}
+				}else{
+					console.log('not last level');
+					$confirm.prop('disabled', true)
+				}
+
+				for (const [key, value] of Object.entries(data)) {
+					if(value.level > level){
+						delete data[key];
+					}
+				}
+				$content.attr('data-compatibility', JSON.stringify(data));
+				populate_compatibility();
+			}
+		}
+
+		function populate_compatibility_list($list){
+			let id = $list.attr('data-id');
+			let data = {
+				action: 'fbf_ebay_packages_compatibility_list',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				id: id
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					if(response.status==='success'){
+						$.each(response.list_items, function(key, value){
+							let $li = $('<li style="display: inline-block; margin-right: 0.5em;">'+value.name+'<a class="tb_compat_delete dashicons dashicons-no-alt" data-name="'+value.name+'" data-id="'+value.id+'" href="#"></a></li>');
+							$li.find('.tb_compat_delete').bind('click', function(){
+								delete_compatibility($(this));
+								return false;
+							});
+							$list.append($li);
+						});
+					}else{
+						alert('Error: '+response.error);
+					}
+				}
+			});
+		}
+
+		function delete_compatibility($elem){
+			console.log($elem);
+			let name = $elem.attr('data-name');
+			let id = $elem.attr('data-id');
+			console.log(name);
+			let conf = confirm('Please confirm that you wish to remove compatibility with: '+name);
+
+			if(conf){
+				let data = {
+					action: 'fbf_ebay_packages_compatibility_delete',
+					ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+					id: id
+				};
+				$.ajax({
+					// eslint-disable-next-line no-undef
+					url: fbf_ebay_packages_admin.ajax_url,
+					type: 'POST',
+					data: data,
+					dataType: 'json',
+					success: function (response) {
+						if(response.status==='success'){
+							let $list = $('#tb_compat_chassis_'+response.chassis_id);
+							$list.empty();
+							populate_compatibility_list($list);
+						}else{
+							alert('Error: '+response.error);
+						}
+					}
+				});
+			}
 		}
 	});
 
