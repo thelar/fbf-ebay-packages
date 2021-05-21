@@ -98,7 +98,25 @@ class Fbf_Ebay_Packages_List_Item
                             $create_or_update_compatibility['response_code']===204)
                         ){
                             $this->save_update_listing_compatibility($compatibilty_payload, $result->id);
+                            $this->logs[] = $this->log($result->id, 'product_compat', [
+                                'status' => 'success',
+                                'action' => 'created',
+                                'response' => $create_or_update_compatibility,
+                            ]);
+                        }else{
+                            $this->logs[] = $this->log($result->id, 'product_compat', [
+                                'status' => 'error',
+                                'action' => 'none required',
+                                'response' => $create_or_update_compatibility,
+                                'payload' => $compatibilty_payload
+                            ]);
                         }
+                    }else{
+                        $this->logs[] = $this->log($result->id, 'product_compat', [
+                            'status' => 'success',
+                            'action' => 'none required',
+                            'response' => json_decode('')
+                        ]);
                     }
                 }
             }

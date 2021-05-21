@@ -1100,7 +1100,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
     public function fbf_ebay_packages_synchronise()
     {
-        if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres')){
+        if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres and wheels')){
             $status = 'success';
         }else{
             $status = 'error';
@@ -1117,7 +1117,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $items = explode(',', filter_var($_REQUEST['items'], FILTER_SANITIZE_STRING));
         $type = filter_var($_REQUEST['type'], FILTER_SANITIZE_STRING);
         if(!empty($items)){
-            if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres', $items)){
+            if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'wheels', $items)){
                 $status = 'success';
             }else{
                 $status = 'error';

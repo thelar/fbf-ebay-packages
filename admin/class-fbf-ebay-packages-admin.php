@@ -163,7 +163,7 @@ class Fbf_Ebay_Packages_Admin {
             }else{
                 $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
             }
-            $i = self::synchronise($hook, 'tyres');
+            $i = self::synchronise($hook, 'tyres and wheels');
             // TODO: handle times when maybe the logging fails
         }
     }
@@ -197,7 +197,7 @@ class Fbf_Ebay_Packages_Admin {
 
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-synchronise.php';
         $sync = new Fbf_Ebay_Packages_Synchronise(FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
-        $sync_result = $sync->run('tyre', $items);
+        $sync_result = $sync->run(['tyre', 'wheel'], $items);
 
         //$q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
 
