@@ -460,7 +460,11 @@ class Fbf_Ebay_Packages_List_Item
                 $title = str_replace('Steel', 'Steel Wheels', $title);
             }else if(strpos($title, 'ET')!==false){
                 $pos = strpos($title, 'ET');
-                $title = substr_replace($title, ' Steel Wheels', $pos - 1, 0);
+                if(get_term_by('id', $product->get_category_ids()[0], 'product_cat')->name=='Steel Wheel'){
+                    $title = substr_replace($title, ' Steel Wheels', $pos - 1, 0);
+                }else if(get_term_by('id', $product->get_category_ids()[0], 'product_cat')->name=='Alloy Wheel'){
+                    $title = substr_replace($title, ' Alloy Wheels', $pos - 1, 0);
+                }
             }
         }
         $item['product'] = [
