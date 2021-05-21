@@ -1139,11 +1139,10 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $synchronisations_to_show = 5;
         $table = $wpdb->prefix . 'fbf_ebay_packages_scheduled_event_log';
         $timezone = new DateTimeZone("Europe/London");
-        $q = $wpdb->prepare("SELECT hook, log, UNIX_TIMESTAMP(created) AS d
+        $q = "SELECT hook, log, UNIX_TIMESTAMP(created) AS d
             FROM {$table}
-            WHERE type = %s
             ORDER BY d DESC
-            LIMIT {$synchronisations_to_show}", 'tyres');
+            LIMIT {$synchronisations_to_show}";
         $results = $wpdb->get_results($q, ARRAY_A);
         if($results!==false){
             foreach($results as $result){
