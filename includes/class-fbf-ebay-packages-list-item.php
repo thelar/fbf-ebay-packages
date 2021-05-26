@@ -46,7 +46,7 @@ class Fbf_Ebay_Packages_List_Item
                 $curr_qty = $result->qty;
 
                 // If there is a change of name or a change of quantity OR if the inventory item has not yet been created:
-                if($curr_name!=$product->get_title() || $curr_qty!=$product->get_stock_quantity() || $result->inventory_sku===null){
+                //if($curr_name!=$product->get_title() || $curr_qty!=$product->get_stock_quantity() || $result->inventory_sku===null){
 
                     //Create or update inventory item
                     $create_or_update_inv = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $sku, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
@@ -67,7 +67,7 @@ class Fbf_Ebay_Packages_List_Item
                             'payload' => $payload
                         ]);
                     }
-                }else{
+                /*}else{
                     // Here if no update required
                     $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                         'status' => 'success',
@@ -75,7 +75,7 @@ class Fbf_Ebay_Packages_List_Item
                         'response' => json_decode('')
                     ]);
                     $inv_item_created = true;
-                }
+                }*/
             }else{
                 $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                     'status' => 'error',
@@ -879,9 +879,9 @@ class Fbf_Ebay_Packages_List_Item
         ];
 
         // Country/Region of Manufacture
-        $aspects['Country/Region of Manufacture'] = [
+        /*$aspects['Country/Region of Manufacture'] = [
             'China'
-        ];
+        ];*/
 
         // Unit Type
         $aspects['Unit Type'] = [
