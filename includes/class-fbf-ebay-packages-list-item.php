@@ -87,10 +87,12 @@ class Fbf_Ebay_Packages_List_Item
                 ]);
             }
 
+            $inv_item_created = true;
+
             //Handle the compatibility
             if($inv_item_created){
                 if($compatibilty_payload = $this->compatibility_payload($result->id)){
-                    if(!$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
+                    if($compatibilty_payload && !$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
                         $create_or_update_compatibility = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/'.$sku.'/product_compatibility', 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], $compatibilty_payload);
                         if($create_or_update_compatibility['status']==='success' && (
                             $create_or_update_compatibility['response_code']===200 ||
@@ -559,7 +561,9 @@ class Fbf_Ebay_Packages_List_Item
                 $props = [
                     'compatibilityProperties' => $payload
                 ];
-                $compatibility[] = $props;
+                if($payload!==false){
+                    $compatibility[] = $props;
+                }
             }
         }
         if(empty($compatibility)){
