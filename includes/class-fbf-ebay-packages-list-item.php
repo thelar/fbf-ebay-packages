@@ -148,7 +148,8 @@ class Fbf_Ebay_Packages_List_Item
                             $this->logs[] = $this->log($result->id, 'update_offer', [
                                 'status' => 'success',
                                 'action' => 'updated',
-                                'response' => $offer_update
+                                'response' => $offer_update,
+                                'payload' => $offer_payload
                             ]);
 
                         } else {
