@@ -87,10 +87,10 @@ class Fbf_Ebay_Packages_List_Item
                 ]);
             }
 
-            $inv_item_created = true;
+            //$inv_item_created = true;
 
             //Handle the compatibility
-            if($inv_item_created){
+            if(isset($inv_item_created) && $inv_item_created===true){
                 if($compatibilty_payload = $this->compatibility_payload($result->id)){
                     if($compatibilty_payload && !$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
                         $create_or_update_compatibility = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/'.$sku.'/product_compatibility', 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], $compatibilty_payload);
@@ -126,21 +126,21 @@ class Fbf_Ebay_Packages_List_Item
             //Create or update the offer
             $publish_offer_id = null;
             $offer_status = null;
-            if($inv_item_created){
+            if(isset($inv_item_created) && $inv_item_created===true){
                 //First see if there is already an Offer ID
                 if(!is_null($result->offer_id)){
                     // Exists - do we need to update it?
                     $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
 
                     // Force an update
-                    //$new_update_required = true;
+                    $new_update_required = true;
 
                     if ($new_update_required) {
                         // Update the offer
                         $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type);
                         $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
 
-                        if ($offer_update['status']==='success'&&$offer_update['response_code'] === 204) {
+                        if ($offer_update['status']==='success'&&($offer_update['response_code'] === 200||$offer_update['response_code'] === 204)) {
 
                             // Update the offer here
                             $this->insert_or_update_offer($result->offer_id, $offer_payload);
