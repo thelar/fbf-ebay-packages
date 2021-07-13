@@ -527,7 +527,7 @@ class Fbf_Ebay_Packages_List_Item
             //'fulfillmentPolicyId' => '163248243010',
             'fulfillmentPolicyId' => '197048873010',
             'paymentPolicyId' => '191152500010',
-            'returnPolicyId' => '163248142010'
+            'returnPolicyId' => '75920337010'
         ];
 
 
