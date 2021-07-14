@@ -37,8 +37,6 @@ class Fbf_Ebay_Packages_List_Item
         $token = $auth->get_valid_token();
         $inv_item_created = false;
 
-
-
         if($token['status']==='success'){
             $payload = $this->item_payload($product, $qty, $result->type);
 
@@ -140,7 +138,7 @@ class Fbf_Ebay_Packages_List_Item
                     $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
 
                     // Force an update
-                    $new_update_required = true;
+                    //$new_update_required = true;
 
                     if ($new_update_required) {
                         // Update the offer
