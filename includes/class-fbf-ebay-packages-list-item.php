@@ -36,6 +36,8 @@ class Fbf_Ebay_Packages_List_Item
         $token = $auth->get_valid_token();
         $inv_item_created = false;
 
+        $t = $this->get_html_listing($qty, $product, $result->listing_id);
+
         if($token['status']==='success'){
             $payload = $this->item_payload($product, $qty, $result->type);
 
@@ -1003,8 +1005,8 @@ class Fbf_Ebay_Packages_List_Item
         // Append the host(domain name, ip) to the URL.
         $url.= $_SERVER['HTTP_HOST'];
         $template = $url . '/ebay_template?product_id=' . $product_id . '&qty=' . $qty;
-        if($p->listing_id){
-            $template.= '&listing_id=' . $p->listing_id;
+        if($r->listing_id){
+            $template.= '&listing_id=' . $r->listing_id;
         }
         $html = file_get_contents($template);
         if(!empty($html)){
