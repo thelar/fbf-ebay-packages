@@ -36,7 +36,7 @@ class Fbf_Ebay_Packages_List_Item
         $token = $auth->get_valid_token();
         $inv_item_created = false;
 
-        $t = $this->get_html_listing($qty, $product, $result->listing_id);
+
 
         if($token['status']==='success'){
             $payload = $this->item_payload($product, $qty, $result->type);
