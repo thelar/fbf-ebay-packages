@@ -133,11 +133,11 @@ class Fbf_Ebay_Packages_List_Item
                     $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
 
                     // Force an update
-                    //$new_update_required = true;
+                    $new_update_required = true;
 
                     if ($new_update_required) {
                         // Update the offer
-                        $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type);
+                        $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type, $result->listing_id);
                         $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
 
                         if ($offer_update['status']==='success'&&($offer_update['response_code'] === 200||$offer_update['response_code'] === 204)) {
@@ -169,7 +169,7 @@ class Fbf_Ebay_Packages_List_Item
                     }
                 }else{
                     // Doesn't exist - create the offer
-                    $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type);
+                    $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type, $result->listing_id);
                     $offer_create = $this->api('https://api.ebay.com/sell/inventory/v1/offer', 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
                     if($offer_create['status']==='success'&&$offer_create['response_code']===201){
                         $offer_id = json_decode($offer_create['response']);
@@ -209,6 +209,11 @@ class Fbf_Ebay_Packages_List_Item
                 $this->update_listing_id($listing_id, $result->id);
                 /*$this->status['publish_offer_status'] = 'success';
                 $this->status['publish_offer_response'] = $publish_response;*/
+
+
+                // On publishing we need to re-save
+
+
 
                 $this->logs[] = $this->log($result->id, 'publish_offer', [
                     'status' => 'success',
@@ -500,7 +505,7 @@ class Fbf_Ebay_Packages_List_Item
         return $item;
     }
 
-    private function offer_payload(WC_Product $product, $sku, $qty, $type)
+    private function offer_payload(WC_Product $product, $sku, $qty, $type, $listing_id)
     {
         $offer = [];
         if(is_a($product, 'WC_Product_Variable')){
@@ -508,6 +513,17 @@ class Fbf_Ebay_Packages_List_Item
         }else{
             $reg_price = $product->get_regular_price();
         }
+
+        if($this->get_html_listing($qty, $product->get_id(), $listing_id)){
+            $listing_description = $this->get_html_listing($qty, $product->get_id(), $listing_id);
+        }else{
+            if($type==='tyre'){
+                $listing_description = $this->tyre_description;
+            }else if($type==='wheel'){
+                $listing_description = $this->wheel_description;
+            }
+        }
+
         $vat = ($reg_price/100) * 20;
         //$reg_price = round(($reg_price + $vat) * $qty, 2);
         $reg_price = number_format(($reg_price + $vat) * $qty, 2, '.', '');
@@ -522,7 +538,7 @@ class Fbf_Ebay_Packages_List_Item
             $offer['categoryId'] = '179679';
             $description = $this->wheel_description;
         }
-        $offer['listingDescription'] = $description;
+        $offer['listingDescription'] = $listing_description;
         $offer['listingPolicies'] = [
             //'fulfillmentPolicyId' => '163248243010',
             'fulfillmentPolicyId' => '197048873010',
@@ -969,5 +985,25 @@ class Fbf_Ebay_Packages_List_Item
 
         curl_close($curl);
         return $resp;
+    }
+
+    private function get_html_listing($qty, $product_id, $listing_id)
+    {
+        if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+            $url = "https://";
+        else
+            $url = "http://";
+        // Append the host(domain name, ip) to the URL.
+        $url.= $_SERVER['HTTP_HOST'];
+        $template = $url . '/ebay_template?product_id=' . $product_id . '&qty=' . $qty;
+        if(!is_null($listing_id)){
+            $template.= '&listing_id=' . $listing_id;
+        }
+        $html = file_get_contents($template);
+        if(!empty($html)){
+            return $html;
+        }else{
+            return false;
+        }
     }
 }
