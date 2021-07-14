@@ -22,7 +22,7 @@ class Fbf_Ebay_Packages_List_Item
     We are one of the country’s leading suppliers of Load Rated Steel and Alloy wheels to suit 4x4 and SUV.
     Delivery is through a 3rd party carrier. We advise not booking tyre fitting until the wheels have been delivered
     Any questions, please feel free to ask. Thanks';
-    private $log_everything = false;
+    private bool $log_everything = false;
 
     public function __construct($plugin_name, $version)
     {
@@ -70,7 +70,7 @@ class Fbf_Ebay_Packages_List_Item
                     }
                 }else{
                     // Here if no update required
-                    if($this->log_everything) { // Don't bother to log if log_everything is false
+                    if($this->log_everything===true) { // Don't bother to log if log_everything is false
                         $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                             'status' => 'success',
                             'action' => 'none required',
@@ -117,7 +117,7 @@ class Fbf_Ebay_Packages_List_Item
                             ]);
                         }
                     }else{
-                        if($this->log_everything){ // Don't bother to log if log_everything is false
+                        if($this->log_everything===true){ // Don't bother to log if log_everything is false
                             $this->logs[] = $this->log($result->id, 'product_compat', [
                                 'status' => 'success',
                                 'action' => 'none required',
@@ -166,7 +166,7 @@ class Fbf_Ebay_Packages_List_Item
                             ]);
                         }
                     }else{
-                        if($this->log_everything){ // Don't bother to log if log_everything is false
+                        if($this->log_everything===true){ // Don't bother to log if log_everything is false
                             $this->logs[] = $this->log($result->id, 'update_offer', [
                                 'status' => 'success',
                                 'action' => 'none required'
