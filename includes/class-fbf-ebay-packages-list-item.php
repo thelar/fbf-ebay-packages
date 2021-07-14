@@ -989,6 +989,13 @@ class Fbf_Ebay_Packages_List_Item
 
     private function get_html_listing($qty, $product_id, $listing_id)
     {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $p = $wpdb->prepare("SELECT listing_id
+            FROM {$table}
+            WHERE id=%s", $listing_id);
+        $r = $wpdb->get_row($p);
+
         if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
             $url = "https://";
         else
@@ -996,8 +1003,8 @@ class Fbf_Ebay_Packages_List_Item
         // Append the host(domain name, ip) to the URL.
         $url.= $_SERVER['HTTP_HOST'];
         $template = $url . '/ebay_template?product_id=' . $product_id . '&qty=' . $qty;
-        if(!is_null($listing_id)){
-            $template.= '&listing_id=' . $listing_id;
+        if($p->listing_id){
+            $template.= '&listing_id=' . $p->listing_id;
         }
         $html = file_get_contents($template);
         if(!empty($html)){
