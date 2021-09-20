@@ -76,7 +76,17 @@ class Fbf_Ebay_Packages_Synchronise
 
                     require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-item.php';
                     $ebay = new Fbf_Ebay_Packages_List_Item($this->plugin_name, $this->version);
-                    $item = $ebay->list_item($product, $result, $this->packs[0]); // TODO: refactor this block when we allow for multiple packs
+
+                    //If it's a tyre just list as 1x
+                    $cat = get_term_by('id', $product->get_category_ids()[0], 'product_cat')->name;
+
+                    if($cat === 'Tyre'){
+                        $lq = 1;
+                    }else{
+                        $lq = $this->packs[0];
+                    }
+
+                    $item = $ebay->list_item($product, $result, $lq); // TODO: refactor this block when we allow for multiple packs
                     $this->log_ids = array_merge($this->log_ids, $item->logs);
                     $this->synch_items[] = $item;
                     $count++;
