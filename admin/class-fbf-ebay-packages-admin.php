@@ -168,10 +168,10 @@ class Fbf_Ebay_Packages_Admin {
         }
     }
 
-    public static function clean(){
+    public static function clean($sync_type, $product_type){
         global $wpdb;
         $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
-        $l = $wpdb->get_results("SELECT * FROM {$table}", ARRAY_A);
+        $l = $wpdb->get_results("SELECT * FROM {$table} WHERE type = '" . $product_type . "'", ARRAY_A);
         $cleaned = [];
 
         if(!empty($l)){

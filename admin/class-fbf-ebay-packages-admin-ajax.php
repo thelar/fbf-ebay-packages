@@ -1093,7 +1093,13 @@ class Fbf_Ebay_Packages_Admin_Ajax
     }
 
     public function fbf_ebay_packages_clean(){
-        $resp = Fbf_Ebay_Packages_Admin::clean('manual', 'tyres');
+        $product_type = filter_var($_POST['product_type'], FILTER_SANITIZE_STRING);
+        if(!empty($product_type)){
+            $resp = Fbf_Ebay_Packages_Admin::clean('manual', $product_type);
+        }else{
+            $resp=[];
+        }
+
         echo json_encode($resp);
         die();
     }
