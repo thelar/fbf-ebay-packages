@@ -163,7 +163,7 @@ class Fbf_Ebay_Packages_Admin {
             }else{
                 $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
             }
-            // $i = self::synchronise($hook, 'tyres and wheels');
+            $i = self::synchronise($hook, 'tyres and wheels');
             // TODO: handle times when maybe the logging fails
         }
     }
