@@ -525,8 +525,14 @@ class Fbf_Ebay_Packages_List_Item
         }else{
             if($type==='tyre'){
                 $listing_description = $this->tyre_description;
+                if(floor(($product->get_stock_quantity() - $this->buffer) / $qty) > 4){
+                    $limitPerBuyer = 4;
+                }else{
+                    $limitPerBuyer = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
+                }
             }else if($type==='wheel'){
                 $listing_description = $this->wheel_description;
+                $limitPerBuyer = 1;
             }
         }
 
@@ -559,7 +565,7 @@ class Fbf_Ebay_Packages_List_Item
                 'value' => $reg_price
             ]
         ];
-        $offer['quantityLimitPerBuyer'] = 1;
+        $offer['quantityLimitPerBuyer'] = $limitPerBuyer;
         $offer['includeCatalogProductDetails'] = true;
         $offer['merchantLocationKey'] = 'STRAT';
 
