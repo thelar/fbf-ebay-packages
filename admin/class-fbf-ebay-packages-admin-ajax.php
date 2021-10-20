@@ -384,9 +384,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
                         $all_chassis = [];
                         $i = 0;
                         foreach($data as $chassis){
-                            if(strpos(strtolower($chassis['name']), 'hidden')===false){
-                                $ds = DateTime::createFromFormat(DATE_ISO8601, $chassis['year_start']);
-                                $de = DateTime::createFromFormat(DATE_ISO8601, $chassis['year_end']);
+                            if(strpos(strtolower($chassis['generation']['start_date']), 'hidden')===false){
+                                $ds = DateTime::createFromFormat('Y-m-d', $chassis['generation']['start_date']);
+                                $de = DateTime::createFromFormat('Y', $chassis['generation']['end_date']);
                                 if($ds){
                                     $data[$i]['ds'] = $ds->format('Y');
                                 }
@@ -401,15 +401,15 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
                         if(!empty($data)){
                             usort($data, function($a, $b){
-                                return [$a['name'], $b['ds']] <=> [$b['name'], $a['ds']];
+                                return [$a['chassis']['display_name'], $b['ds']] <=> [$b['chassis']['display_name'], $a['ds']];
                             });
                         }
 
                         foreach($data as $chassis){
                             $all_chassis[] = [
-                                'name' => $chassis['name'] . ' ' . $chassis['ds'] . ' - ' . $chassis['de'],
-                                'ID' => $chassis['id'],
-                                'selected' => in_array($chassis['id'], $all_manufacturer_saved_chassis)?'selected':''
+                                'name' => $chassis['chassis']['display_name'],
+                                'ID' => $chassis['chassis']['id'],
+                                'selected' => in_array($chassis['chassis']['id'], $all_manufacturer_saved_chassis)?'selected':''
                             ];
                         }
 
@@ -495,8 +495,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     $wheel_data = $api->get_wheels($manu['id']);
                     $skus_ids = [];
                     if(!is_wp_error($wheel_data)&&!array_key_exists('error', $wheel_data)){
-                        foreach($wheel_data['data'] as $wheel){
-                            $product_id = wc_get_product_id_by_sku($wheel['ean']);
+                        foreach($wheel_data['results'] as $wheel){
+                            $product_id = wc_get_product_id_by_sku($wheel['product_code']);
                             if($product_id){
                                 $product = wc_get_product($product_id);
                                 if($product->is_in_stock()){

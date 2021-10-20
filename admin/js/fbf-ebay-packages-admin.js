@@ -1017,7 +1017,7 @@
 							// Only create it if it's not already in the ids array
 							if(!ids.includes(value.ID)){
 								let $wrap = $('<div class="wheel-chassis-select-wrap" id="wheel-chassis-wrap-'+value.ID+'" style="margin-bottom: 1em;"><label for="wheel-chassis-select-'+value.ID+'">'+value.name+':</label></div>');
-								let $select = $('<select class="wheel-chassis-select" data-id="'+value.ID+'" id="wheel-chassis-select-"'+value.ID+' multiple style="width: 99%; max-width: 25em;"></select>');
+								let $select = $(`<select class="wheel-chassis-select" data-id="${value.ID}" id="wheel-chassis-select-${value.ID}" multiple style="width: 99%; max-width: 25em;"></select>`);
 								$.each(value.chassis, function(c_key, c_value){
 									let option = '<option value="'+c_value.ID+'" '+c_value.selected+'>'+c_value.name+'</option>';
 									$select.append(option);
