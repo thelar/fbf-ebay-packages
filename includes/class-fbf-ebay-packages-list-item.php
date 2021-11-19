@@ -52,7 +52,7 @@ class Fbf_Ebay_Packages_List_Item
                     //Create or update inventory item
                     $create_or_update_inv = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $sku, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
 
-                    if($create_or_update_inv['status']==='success'&&$create_or_update_inv['response_code']===204){
+                    if($create_or_update_inv['status']==='success'&&($create_or_update_inv['response_code']===204||$create_or_update_inv['response_code']===200)){
                         $this->update_listing($product, $sku, $result->id);
                         $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                             'status' => 'success',
@@ -342,11 +342,13 @@ class Fbf_Ebay_Packages_List_Item
                             'prod_price' => $product_price
                         ];*/
                         return true;
+                    }else{
+                        return false;
                     }
                 }
             }
         }
-        return false;
+        return true;
     }
 
     private function insert_or_update_offer($offer_id, $payload)
