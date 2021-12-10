@@ -312,11 +312,17 @@ class Fbf_Ebay_Packages_List_Item
         global $wpdb;
         $offer_table = $wpdb->prefix . 'fbf_ebay_packages_offers';
 
-        if(is_a( $product, 'WC_Product_Variable' )){
-            $product_price = (float)$product->get_variation_regular_price() * $qty;
+        $ebay_price = get_post_meta($product->get_id(), '_ebay_price', true);
+        if($ebay_price > 0){
+            $product_price = $ebay_price;
         }else{
-            $product_price = (float)$product->get_regular_price() * $qty;
+            if(is_a( $product, 'WC_Product_Variable' )){
+                $product_price = (float)$product->get_variation_regular_price() * $qty;
+            }else{
+                $product_price = (float)$product->get_regular_price() * $qty;
+            }
         }
+
         $vat = ($product_price/100) * 20;
         $product_price = round($product_price + $vat, 2);
 
