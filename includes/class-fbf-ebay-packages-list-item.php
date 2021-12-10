@@ -516,10 +516,15 @@ class Fbf_Ebay_Packages_List_Item
     private function offer_payload(WC_Product $product, $sku, $qty, $type, $listing_id)
     {
         $offer = [];
-        if(is_a($product, 'WC_Product_Variable')){
-            $reg_price = $product->get_variation_regular_price();
+        $ebay_price = get_post_meta($product->get_id(), '_ebay_price', true);
+        if($ebay_price > 0){
+            $reg_price = $ebay_price;
         }else{
-            $reg_price = $product->get_regular_price();
+            if(is_a($product, 'WC_Product_Variable')){
+                $reg_price = $product->get_variation_regular_price();
+            }else{
+                $reg_price = $product->get_regular_price();
+            }
         }
 
         if($this->get_html_listing($qty, $product->get_id(), $listing_id)){
