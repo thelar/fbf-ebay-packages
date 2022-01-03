@@ -452,16 +452,35 @@ class Fbf_Ebay_Packages_Admin {
         $linked = $product->get_meta('_fbf_ebay_packages_linked', true);
         $tyre = wc_get_product($linked['tyre']);
         $wheel = wc_get_product($linked['wheel']);
+        $orig_price = $product->get_regular_price();
+        $orig_stock = $product->get_stock_quantity();
+        $info = null;
         if($tyre!==false && $wheel!==false){
             $percentage = $product->get_meta('_fbf_ebay_packages_percentage', true);
             $qty = $product->get_meta('_fbf_ebay_packages_qty', true);
             $stock = min($tyre->get_stock_quantity(), $wheel->get_stock_quantity());
-            $product->set_stock_quantity(floor($stock/$qty)); // E.g. if the package qty is 4 - stock level for package is the minimum stock divided by 4
-            $price = ($tyre->get_price() * $qty) + ($wheel->get_price() * $qty);
-            $price = $price + (($price/100) * $percentage);
+            if(!empty($qty)){
+                $set_stock = floor($stock/$qty); // E.g. if the package qty is 4 - stock level for package is the minimum stock divided by 4
+                $price = ($tyre->get_price() * $qty) + ($wheel->get_price() * $qty);
+            }else{
+                $set_stock = $stock;
+                $price = (float) $tyre->get_price() + (float) $wheel->get_price();
+            }
+            $product->set_stock_quantity($set_stock);
+            if(!empty($percentage)){
+                $price = $price + (($price/100) * $percentage);
+            }
             $product->set_regular_price($price);
             $product->save();
+
+            $info = [
+                'orig_price' => $orig_price,
+                'set_price' => $price,
+                'orig_stock' => $orig_stock,
+                'set_stock' => $set_stock
+            ];
         }
+        return $info;
     }
 
     public function tyres()
