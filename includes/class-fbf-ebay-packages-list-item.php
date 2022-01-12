@@ -41,13 +41,13 @@ class Fbf_Ebay_Packages_List_Item
             $payload = $this->item_payload($product, $qty, $result->type);
 
             // Only create the item if the image exists
-            /*if(isset($payload['product']['imageUrls'])){*/
+            if(isset($payload['product']['imageUrls'])){
                 $sku = $this->generate_sku($product, $qty);
                 $curr_name = $result->name;
                 $curr_qty = $result->qty;
 
                 // If there is a change of name or a change of quantity OR if the inventory item has not yet been created:
-                if($curr_name!=$product->get_title() || $curr_qty!=$product->get_stock_quantity() || $result->inventory_sku===null){
+                /*if($curr_name!=$product->get_title() || $curr_qty!=$product->get_stock_quantity() || $result->inventory_sku===null){*/
 
                     //Create or update inventory item
                     $create_or_update_inv = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $sku, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
@@ -68,7 +68,7 @@ class Fbf_Ebay_Packages_List_Item
                             'payload' => $payload
                         ]);
                     }
-                }else{
+                /*}else{
                     // Here if no update required
                     if($this->log_everything===true) { // Don't bother to log if log_everything is false
                         $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
@@ -78,8 +78,8 @@ class Fbf_Ebay_Packages_List_Item
                         ]);
                     }
                     $inv_item_created = true;
-                }
-            /*}else{
+                }*/
+            }else{
                 $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                     'status' => 'error',
                     'action' => 'none required',
@@ -88,7 +88,7 @@ class Fbf_Ebay_Packages_List_Item
                     ],
                     'payload' => $payload
                 ]);
-            }*/
+            }
 
             //$inv_item_created = true;
 
