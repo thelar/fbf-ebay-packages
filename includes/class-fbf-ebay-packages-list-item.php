@@ -511,14 +511,53 @@ class Fbf_Ebay_Packages_List_Item
                 $this->test_image
             ];
         }else{
+            $gal_images = [];
             if(has_post_thumbnail($product->get_id())){
-                $image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'full')[0];
-                $item['product']['imageUrls'] = [
+                $main_image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0];
+                /*$item['product']['imageUrls'] = [
                     $image
-                ];
+                ];*/
+            }
+            if(!empty(get_post_meta($product->get_id(), '_product_image_gallery', true))){
+                $normal_image_gal = explode(',', get_post_meta($product->get_id(), '_product_image_gallery', true));
+
+                if(!empty($normal_image_gal)){
+                    foreach($normal_image_gal as $attach_id){
+                        $gal_images[] = wp_get_attachment_image_src($attach_id, 'full');
+                    }
+                }
+            }
+            if(!empty(get_post_meta($product->get_id(), '_product_image_gallery', true))){
+                $ebay_image_gal = get_post_meta($product->get_id(), '_fbf_ebay_images', true);
+
+                if(!empty($ebay_image_gal)){
+                    foreach($ebay_image_gal as $k => $attach_id){
+                        if($k===0){
+                            $main_image = wp_get_attachment_image_src($attach_id, 'fbf-1950-1950')[0];
+                        }else{
+                            $gal_images[] = wp_get_attachment_image_src($attach_id, 'full');
+                        }
+                    }
+                }
+            }
+            // Set image
+            $item['product']['imageUrls'] = [
+                $main_image
+            ];
+            if(!empty($gal_images)){
+                $a = [];
+                foreach($gal_images as $gk => $gi){
+                    $pi = pathinfo($gi[0]);
+                    $index = substr($pi['filename'], strrpos($pi['filename'], '_') + 1);
+                    $key = 'image_' . $index;
+                    $a[$key] = $pi['dirname'] . '/' . $pi['filename'] . '-1950x1950' . '.' . $pi['extension'];
+                }
+                ksort($a);
+                foreach($a as $image){
+                    $item['product']['imageUrls'][] = $image;
+                }
             }
         }
-
         return $item;
     }
 
