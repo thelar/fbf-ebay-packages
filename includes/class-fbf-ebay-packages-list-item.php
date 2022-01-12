@@ -41,7 +41,7 @@ class Fbf_Ebay_Packages_List_Item
             $payload = $this->item_payload($product, $qty, $result->type);
 
             // Only create the item if the image exists
-            if(isset($payload['product']['imageUrls'])){
+            /*if(isset($payload['product']['imageUrls'])){*/
                 $sku = $this->generate_sku($product, $qty);
                 $curr_name = $result->name;
                 $curr_qty = $result->qty;
@@ -79,7 +79,7 @@ class Fbf_Ebay_Packages_List_Item
                     }
                     $inv_item_created = true;
                 }
-            }else{
+            /*}else{
                 $this->logs[] = $this->log($result->id, 'create_or_update_inv', [
                     'status' => 'error',
                     'action' => 'none required',
@@ -88,7 +88,7 @@ class Fbf_Ebay_Packages_List_Item
                     ],
                     'payload' => $payload
                 ]);
-            }
+            }*/
 
             //$inv_item_created = true;
 
