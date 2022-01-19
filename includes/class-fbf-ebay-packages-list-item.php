@@ -55,7 +55,7 @@ class Fbf_Ebay_Packages_List_Item
 
                 $headers = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-                wp_mail('kevin@code-mill.co.uk', 'Import stage report: ' . $stage, $email, $headers);
+                wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
 
                 // If there is a change of name or a change of quantity OR if the inventory item has not yet been created:
                 /*if($curr_name!=$product->get_title() || $curr_qty!=$product->get_stock_quantity() || $result->inventory_sku===null){*/
