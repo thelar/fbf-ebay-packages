@@ -46,11 +46,6 @@ class Fbf_Ebay_Packages_List_Item
                 $curr_name = $result->name;
                 $curr_qty = $result->qty;
 
-
-                ob_start();
-                echo '<pre>';
-                echo '</pre>';
-
                 ob_start();
                 print('<pre>');
                 print_r($payload);
