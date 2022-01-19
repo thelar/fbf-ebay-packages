@@ -524,7 +524,11 @@ class Fbf_Ebay_Packages_List_Item
             ];
         }else{
             $gal_images = [];
+
+            ob_start();
+
             if(has_post_thumbnail($product->get_id())){
+                echo 'Here' . '<br/>';
                 $main_image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0];
                 /*$item['product']['imageUrls'] = [
                     $image
@@ -557,7 +561,7 @@ class Fbf_Ebay_Packages_List_Item
                 $main_image
             ];
 
-            ob_start();
+
             echo 'Main image:' . $main_image;
             print('<pre>');
             print_r($item['product']['imageUrls']);
