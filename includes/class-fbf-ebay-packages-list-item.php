@@ -50,7 +50,8 @@ class Fbf_Ebay_Packages_List_Item
                 print('<pre>');
                 print_r($payload);
                 print('</pre>');
-                echo $product->get_title();
+                echo $product->get_title() . '<br/>';
+                echo wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0];
                 $email = ob_get_clean();
 
                 $headers = "MIME-Version: 1.0\r\n";
