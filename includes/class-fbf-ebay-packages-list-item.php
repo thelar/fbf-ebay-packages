@@ -591,7 +591,7 @@ class Fbf_Ebay_Packages_List_Item
 
             $headers = "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-            wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
+            //wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
         }
         return $item;
     }
