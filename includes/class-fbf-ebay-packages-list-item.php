@@ -558,7 +558,7 @@ class Fbf_Ebay_Packages_List_Item
             ];
 
             ob_start();
-            echo $main_image;
+            echo 'Main image:' . $main_image;
             print('<pre>');
             print_r($item['product']['imageUrls']);
             print('</pre>');
