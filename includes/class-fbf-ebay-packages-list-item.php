@@ -530,6 +530,7 @@ class Fbf_Ebay_Packages_List_Item
             if(has_post_thumbnail($product->get_id())){
                 echo 'Here' . '<br/>';
                 $main_image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0];
+                echo wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950') . '<br/>';
                 /*$item['product']['imageUrls'] = [
                     $image
                 ];*/
@@ -556,11 +557,11 @@ class Fbf_Ebay_Packages_List_Item
                     }
                 }
             }
+
             // Set image
             $item['product']['imageUrls'] = [
                 $main_image
             ];
-
 
             echo 'Main image:' . $main_image;
             print('<pre>');
@@ -591,7 +592,7 @@ class Fbf_Ebay_Packages_List_Item
 
             $headers = "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-            //wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
+            wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
         }
         return $item;
     }
