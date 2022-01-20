@@ -525,14 +525,14 @@ class Fbf_Ebay_Packages_List_Item
         }else{
             $gal_images = [];
 
-            ob_start();
+            //ob_start();
 
             if(has_post_thumbnail($product->get_id())){
-                echo 'Here' . '<br/>';
+                //echo 'Here' . '<br/>';
                 $main_image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0];
-                echo '<pre>';
+                /*echo '<pre>';
                 print_r(wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0]);
-                echo '</pre>';
+                echo '</pre>';*/
                 $item['product']['imageUrls'] = [
                     $main_image
                 ];
@@ -565,10 +565,10 @@ class Fbf_Ebay_Packages_List_Item
                 $main_image
             ];
 
-            echo 'Main image:' . $main_image;
+            /*echo 'Main image:' . $main_image;
             print('<pre>');
             print_r($item['product']['imageUrls']);
-            print('</pre>');
+            print('</pre>');*/
 
 
             if(!empty($gal_images)){
@@ -586,15 +586,15 @@ class Fbf_Ebay_Packages_List_Item
             }
 
 
-            print('<pre>');
+            /*print('<pre>');
             print_r($item['product']['imageUrls']);
             print('</pre>');
 
-            $email = ob_get_clean();
+            $email = ob_get_clean();*/
 
             $headers = "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-            wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
+            //wp_mail('kevin@code-mill.co.uk', 'Ebay test', $email, $headers);
         }
         return $item;
     }
