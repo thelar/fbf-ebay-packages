@@ -533,9 +533,9 @@ class Fbf_Ebay_Packages_List_Item
                 echo '<pre>';
                 print_r(wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0]);
                 echo '</pre>';
-                /*$item['product']['imageUrls'] = [
-                    $image
-                ];*/
+                $item['product']['imageUrls'] = [
+                    $main_image
+                ];
             }
             if(!empty(get_post_meta($product->get_id(), '_product_image_gallery', true))){
                 $normal_image_gal = explode(',', get_post_meta($product->get_id(), '_product_image_gallery', true));
