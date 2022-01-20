@@ -530,7 +530,9 @@ class Fbf_Ebay_Packages_List_Item
             if(has_post_thumbnail($product->get_id())){
                 echo 'Here' . '<br/>';
                 $main_image = wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950')[0];
-                echo wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950') . '<br/>';
+                echo '<pre>';
+                print_r(wp_get_attachment_image_src(get_post_thumbnail_id($product->get_id()), 'fbf-1950-1950'));
+                echo '</pre>';
                 /*$item['product']['imageUrls'] = [
                     $image
                 ];*/
