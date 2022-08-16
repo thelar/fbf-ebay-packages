@@ -1458,7 +1458,7 @@ class Fbf_Ebay_Packages_Admin {
                         array(
                             'param' => 'post_type',
                             'operator' => '==',
-                            'value' => 'post',
+                            'value' => 'ebay',
                         ),
                     ),
                 ),
@@ -1530,7 +1530,7 @@ class Fbf_Ebay_Packages_Admin {
                         array(
                             'param' => 'post_type',
                             'operator' => '==',
-                            'value' => 'post',
+                            'value' => 'ebay',
                         ),
                     ),
                 ),
