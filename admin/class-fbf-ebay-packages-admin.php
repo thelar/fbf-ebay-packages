@@ -1288,7 +1288,6 @@ class Fbf_Ebay_Packages_Admin {
     public function setup_options()
     {
         if( function_exists('acf_add_local_field_group') ):
-
             acf_add_local_field_group(array(
                 'key' => 'group_601413ae313d1',
                 'title' => 'eBay meta',
