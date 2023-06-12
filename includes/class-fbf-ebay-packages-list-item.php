@@ -753,9 +753,15 @@ class Fbf_Ebay_Packages_List_Item
         if(!empty($aspect_ratios)){
             $aspect_ratio = $aspect_ratios[0];
             $aspect_ratio_name = $aspect_ratio->name;
-            $aspects['Aspect Ratio'] = [
-                $aspect_ratio_name
-            ];
+            if($aspect_ratio_name=='-'){
+                $aspects['Aspect Ratio'] = [
+                    '0'
+                ];
+            }else{
+                $aspects['Aspect Ratio'] = [
+                    $aspect_ratio_name
+                ];
+            }
         }
 
         // Tyre Width
