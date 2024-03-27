@@ -1117,6 +1117,15 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_schedule()
+    {
+        $next = wp_next_scheduled( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK );
+        echo json_encode([
+            'next' => $next,
+        ]);
+        die();
+    }
+
     public function fbf_ebay_packages_test_item()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');

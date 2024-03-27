@@ -641,6 +641,24 @@
 			return false;
 		});
 
+		$('#fbf_ebay_packages_schedule').bind('click', function(){
+			let data = {
+				action: 'fbf_ebay_packages_schedule',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			}
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log(response.next);
+				}
+			});
+			return false;
+		});
+
 		$('#fbf_ebay_packages_test_skus').bind('click', function(){
 			console.log('testing skus');
 			let $loader = $(this).parent().find('.spinner');

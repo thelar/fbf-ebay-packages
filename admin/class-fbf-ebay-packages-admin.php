@@ -913,6 +913,7 @@ class Fbf_Ebay_Packages_Admin {
             </tfoot>
         </table>
         <button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise" style="margin-top: 1em;" type="button">Synchronise with eBay</button>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_schedule" style="margin-top: 1em;" type="button">Re-schedule</button>
         <!--<button role="button" class="button button-primary" id="fbf_ebay_packages_clean" style="margin-top: 1em;" type="button">Clean eBay</button>-->
         <span class="spinner" style="margin-top: 1.2em;"></span>
         <br class="clear"/>
