@@ -595,7 +595,7 @@
 			if(conf===true){
 				let data = {
 					action: 'fbf_ebay_packages_clean',
-					product_type: 'tyres',
+					product_type: 'tyre',
 					ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
 				};
 
