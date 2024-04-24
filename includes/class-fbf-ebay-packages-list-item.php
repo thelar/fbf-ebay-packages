@@ -162,6 +162,9 @@ class Fbf_Ebay_Packages_List_Item
                             // Update the offer here
                             $this->insert_or_update_offer($result->offer_id, $offer_payload);
 
+                            // Unset the listingDescription in $offer_payload so we don't include it in the log
+                            unset($offer_payload['listingDescription']);
+
                             $this->logs[] = $this->log($result->id, 'update_offer', [
                                 'status' => 'success',
                                 'action' => 'updated',
@@ -170,6 +173,9 @@ class Fbf_Ebay_Packages_List_Item
                             ]);
 
                         } else {
+                            // Unset the listingDescription in $offer_payload so we don't include it in the log
+                            unset($offer_payload['listingDescription']);
+
                             $this->logs[] = $this->log($result->id, 'update_offer', [
                                 'status' => 'error',
                                 'action' => 'none required',
@@ -189,6 +195,7 @@ class Fbf_Ebay_Packages_List_Item
                     // Doesn't exist - create the offer
                     $offer_payload = $this->offer_payload($product, $sku, $qty, $result->type, $result->listing_id);
                     $offer_create = $this->api('https://api.ebay.com/sell/inventory/v1/offer', 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
+
                     if($offer_create['status']==='success'&&$offer_create['response_code']===201){
                         $offer_id = json_decode($offer_create['response']);
 
@@ -206,6 +213,9 @@ class Fbf_Ebay_Packages_List_Item
                             'response' => $offer_create
                         ]);
                     }else{
+                        // Unset the listingDescription in $offer_payload so we don't include it in the log
+                        unset($offer_payload['listingDescription']);
+
                         $this->logs[] = $this->log($result->id, 'create_offer', [
                             'status' => 'error',
                             'action' => 'none required',
