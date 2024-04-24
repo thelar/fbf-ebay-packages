@@ -1172,7 +1172,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 $log = unserialize($result['log']);
                 $time = $log['end'] - $log['start'];
                 $data[] = [
-                    $date->format('g:i:s A'),
+                    $date->format('g:i:s A - jS M Y'),
                     $result['hook'],
                     $time,
                 ];
