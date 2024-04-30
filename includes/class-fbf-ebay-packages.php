@@ -134,7 +134,10 @@ class Fbf_Ebay_Packages {
          */
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-cron.php';
 
-
+        /**
+         * The class responsible for syncing orders
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-order-sync.php';
     }
 
 	/**
@@ -165,6 +168,8 @@ class Fbf_Ebay_Packages {
 
 		$plugin_admin = new Fbf_Ebay_Packages_Admin( $this->get_plugin_name(), $this->get_version() );
 		$plugin_admin_ajax = new Fbf_Ebay_Packages_Admin_Ajax($this->get_plugin_name(), $this->get_version());
+
+        $plugin_api = new Fbf_Ebay_Packages_Order_Sync($this->get_plugin_name(), $this->get_version());
 
         $this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu_page' );
 
