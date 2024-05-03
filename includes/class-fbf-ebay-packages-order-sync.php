@@ -88,7 +88,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
                     $order = $this->create_order($order);
                 }else{
                     // Woo Order does exist, check status here
-                    $woo_order = wc_get_order($woo_order_id);
+                    $woo_order = wc_get_order($woo_order_id[0]);
 
                     // If the Woo Order is Complete - update the eBay Order setting the status to completed and updating the order with the Tracking Information
                 }
@@ -102,13 +102,14 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
         $woo_order = wc_create_order();
 
         // Add the eBay order number as meta
-        update_post_meta($woo_order->get_id(), '_ebay_order_number', $order->orderId);
+        $ebay_id = $order->orderId;
+        update_post_meta($woo_order->get_id(), '_ebay_order_number', $ebay_id);
 
         // Contact details
         $names = explode(' ', $order->buyer->buyerRegistrationAddress->fullName);
         $lastname = array_pop($names);
         $firstname = implode(' ', $names);
-        $address = array(
+        $address = [
             'first_name' => $firstname,
             'last_name'  => $lastname,
             'company'    => $order->buyer->buyerRegistrationAddress->companyName,
@@ -120,7 +121,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
             'state'      => $order->buyer->buyerRegistrationAddress->contactAddress->stateOrProvince,
             'postcode'   => $order->buyer->buyerRegistrationAddress->contactAddress->postalCode,
             'country'    => $order->buyer->buyerRegistrationAddress->contactAddress->countryCode,
-        );
+        ];
         $woo_order->set_address( $address, 'billing' );
         $woo_order->set_address( $address, 'shipping' );
 
@@ -144,6 +145,34 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
             $line_item->save();
         }
         $woo_order->calculate_totals();
+
+        // Set the status
+        $woo_order->set_status('processing');
+
+        // Shipping
+        if($shipping_zones = WC_Shipping_Zones::get_zones()){
+            if($zone = array_values($shipping_zones)[array_search('UK', array_column($shipping_zones, 'zone_name'))]){
+                foreach($zone['shipping_methods'] as $mk => $method){
+                    if($method->id==='free_shipping'){
+                        $shipping = new WC_Order_Item_Shipping();
+                        $shipping->set_method_title( 'Free shipping' );
+                        $shipping->set_method_id( 'free_shipping:' . $method->get_instance_id() ); // set an existing Shipping method ID
+                        $shipping->set_total( 0 ); // optional
+                        $woo_order->add_item($shipping);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Payment
+        $woo_order->set_payment_method('cod');
+        $woo_order->set_payment_method_title( 'eBay order' );
+
+        // Add Note
+        $woo_order->add_order_note('eBay order number: ' . $ebay_id, false);
+
+        // Save
         $woo_order->save();
     }
 
