@@ -105,6 +105,15 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
         $ebay_id = $order->orderId;
         update_post_meta($woo_order->get_id(), '_ebay_order_number', $ebay_id);
 
+        $line_items = [];
+        foreach($order->lineItems as $lineItem){
+            $line_items[] = [
+                'id' => $lineItem->lineItemId,
+                'qty' => $lineItem->quantity,
+            ];
+        }
+        update_post_meta($woo_order->get_id(), '_ebay_order_line_items', $line_items);
+
         // Contact details
         $names = explode(' ', $order->buyer->buyerRegistrationAddress->fullName);
         $lastname = array_pop($names);

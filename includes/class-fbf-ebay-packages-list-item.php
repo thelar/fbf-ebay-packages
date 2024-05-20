@@ -310,6 +310,28 @@ class Fbf_Ebay_Packages_List_Item
         return $clean;
     }
 
+    public function fulfill_order($fulfillment_info, $ebay_order_num)
+    {
+        $a = 1;
+        $woo_order_num = (string) $fulfillment_info->orderNo;
+        $woo_lines = get_post_meta($woo_order_num, '_ebay_order_line_items', true);
+        $lines = [];
+        foreach($woo_lines as $woo_line){
+            $lines[] = [
+                'lineItemId' => $woo_line['id'],
+                'quantity' => $woo_line['qty'],
+            ];
+        }
+        $payload = [
+            'lineItems' => $lines,
+            'shippedDate' => DateTime::createFromFormat('d/m/Y H:i:s', (string)$fulfillment_info->deliveries->deliveryDate)->format('c'),
+        ];
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+        $auth = new Fbf_Ebay_Packages_Api_Auth();
+        $token = $auth->get_valid_token();
+        $fulfillment = $this->api(sprintf('https://api.ebay.com/sell/fulfillment/v1/order/%s/shipping_fulfillment', $ebay_order_num), 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
+    }
+
     private function log($id, $ebay_action, $log)
     {
         global $wpdb;
