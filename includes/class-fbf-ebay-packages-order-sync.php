@@ -146,6 +146,14 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
         foreach($order->lineItems as $lineItem){
             $qty = $lineItem->quantity;
             $sku_a = explode('.', $lineItem->sku);
+
+            // Handle
+            if(in_array('q4', $sku_a)===true){
+                $qty = 4;
+            }else if(in_array('q1', $sku_a)){
+                $qty = 1;
+            }
+
             $sku = $sku_a[array_key_last($sku_a)];
             $id = wc_get_product_id_by_sku($sku);
             $item_id = $woo_order->add_product(wc_get_product($id), $qty);
