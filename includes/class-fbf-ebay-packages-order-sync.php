@@ -149,9 +149,9 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
 
             // Handle
             if(in_array('q4', $sku_a)===true){
-                $qty = 4;
+                $qty = 4 * $lineItem->quantity;;
             }else if(in_array('q1', $sku_a)){
-                $qty = 1;
+                $qty = 1 * $lineItem->quantity;
             }
 
             $sku = $sku_a[array_key_last($sku_a)];
