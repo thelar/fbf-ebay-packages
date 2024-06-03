@@ -118,6 +118,10 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
         $names = explode(' ', $order->buyer->buyerRegistrationAddress->fullName);
         $lastname = array_pop($names);
         $firstname = implode(' ', $names);
+        $billing_names = explode(' ', $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->fullName);
+        $billing_lastname = $lastname = array_pop($billing_names);
+        $billing_firstname = implode(' ', $billing_names);
+
         $address = [
             'first_name' => $firstname,
             'last_name'  => $lastname,
@@ -131,8 +135,18 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
             'postcode'   => $order->buyer->buyerRegistrationAddress->contactAddress->postalCode,
             'country'    => $order->buyer->buyerRegistrationAddress->contactAddress->countryCode,
         ];
+        $shipping_address = [
+            'first_name' => $billing_firstname,
+            'last_name' => $billing_lastname,
+            'address_1' => $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->contactAddress->addressLine1,
+            'address_2' => $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->contactAddress->addressLine2,
+            'city' => $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->contactAddress->city,
+            'state' => $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->contactAddress->stateOrProvince,
+            'postcode' => $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->contactAddress->postalCode,
+            'country' => $order->fulfillmentStartInstructions[0]->shippingStep->shipTo->contactAddress->countryCode,
+        ];
         $woo_order->set_address( $address, 'billing' );
-        $woo_order->set_address( $address, 'shipping' );
+        $woo_order->set_address( $shipping_address, 'shipping' );
 
         // Taxes
         $calculate_taxes_for = array(
