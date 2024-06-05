@@ -277,6 +277,14 @@ class Fbf_Ebay_Packages_Admin {
             $this->plugin_name . '-compatibility',
             [$this, 'compatibility']
         );
+        $this->wheels_submenu = add_submenu_page(
+            $this->plugin_name,
+            __('Packages', 'fbf-ebay'),
+            __('Packages', 'fbf-ebay'),
+            'manage_woocommerce',
+            $this->plugin_name . '-packages',
+            [$this, 'packages']
+        );
     }
 
     /**
@@ -336,6 +344,7 @@ class Fbf_Ebay_Packages_Admin {
         $tyre_page_hook_id = $this->page_id();
         $wheel_page_hook_id = $this->wheel_page_id();
         $compatibility_page_hook_id = $this->compatibility_page_id();
+        $packages_page_hook_id = $this->packages_page_id();
 
         if($hook_suffix===$tyre_page_hook_id){
             if(!isset($_REQUEST['listing_id'])){
@@ -432,6 +441,15 @@ class Fbf_Ebay_Packages_Admin {
                 $compatibility_page_hook_id,               /* Screen: Our Settings Page */
                 'normal',                 /* Context */
                 'default'                 /* Priority */
+            );
+        }else if($hook_suffix===$packages_page_hook_id){
+            $add_package = add_meta_box(
+                'package-create-listing',
+                'Create Package',
+                [$this, 'packages_create_package'],
+                $packages_page_hook_id,
+                'normal',
+                'default'
             );
         }
     }
@@ -630,6 +648,12 @@ class Fbf_Ebay_Packages_Admin {
             </div>
         </div>
         <?php
+    }
+
+    public function packages()
+    {
+        global $hook_suffix;
+        echo $hook_suffix;
     }
 
     /**
@@ -1045,6 +1069,10 @@ class Fbf_Ebay_Packages_Admin {
 
     public function wheel_page_id(){
         return 'ebay-packages_page_fbf-ebay-packages-wheels';
+    }
+
+    public function packages_page_id(){
+        return 'ebay-packages_page_fbf-ebay-packages-packages';
     }
 
     public function compatibility_page_id(){
