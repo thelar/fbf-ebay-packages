@@ -1131,6 +1131,15 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_unschedule()
+    {
+        $a = 1;
+        $b = 2;
+
+        Fbf_Ebay_Packages_Cron::unschedule();
+        die();
+    }
+
     public function fbf_ebay_packages_test_item()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
