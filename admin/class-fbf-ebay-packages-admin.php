@@ -45,6 +45,8 @@ class Fbf_Ebay_Packages_Admin {
     private $errors = [];
     public $tyres_submenu;
     public $wheels_submenu;
+    public $compatibility_submenu;
+    public $packages_submenu;
 
 
 	/**
@@ -94,7 +96,8 @@ class Fbf_Ebay_Packages_Admin {
         $tyre_page_hook_id = $this->page_id();
         $wheel_page_hook_id = $this->wheel_page_id();
         $compatibility_page_hook_id = $this->compatibility_page_id();
-        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id || $hook_suffix == $compatibility_page_hook_id ){
+        $packages_page_hook_id = $this->packages_page_id();
+        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id || $hook_suffix == $compatibility_page_hook_id || $hook_suffix == $packages_page_hook_id ){
             wp_enqueue_style( 'thickbox' );
             wp_enqueue_style( $this->plugin_name . '-datatables', plugin_dir_url( __FILE__ ) . 'css/datatables.min.css', array(), $this->version, 'all' );
         }
@@ -127,7 +130,8 @@ class Fbf_Ebay_Packages_Admin {
         $tyre_page_hook_id = $this->page_id();
         $wheel_page_hook_id = $this->wheel_page_id();
         $compatibility_page_hook_id = $this->compatibility_page_id();
-        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id || $hook_suffix == $compatibility_page_hook_id ){
+        $packages_page_hook_id = $this->packages_page_id();
+        if ( $hook_suffix == $tyre_page_hook_id || $hook_suffix == $wheel_page_hook_id || $hook_suffix == $compatibility_page_hook_id || $hook_suffix == $packages_page_hook_id ){
             wp_enqueue_script( 'common' );
             wp_enqueue_script( 'wp-lists' );
             wp_enqueue_script( 'postbox' );
@@ -269,7 +273,7 @@ class Fbf_Ebay_Packages_Admin {
             $this->plugin_name . '-wheels',
             [$this, 'wheels']
         );
-        $this->wheels_submenu = add_submenu_page(
+        $this->compatibility_submenu = add_submenu_page(
             $this->plugin_name,
             __('Compatibility', 'fbf-ebay'),
             __('Compatibility', 'fbf-ebay'),
@@ -277,7 +281,7 @@ class Fbf_Ebay_Packages_Admin {
             $this->plugin_name . '-compatibility',
             [$this, 'compatibility']
         );
-        $this->wheels_submenu = add_submenu_page(
+        $this->packages_submenu = add_submenu_page(
             $this->plugin_name,
             __('Packages', 'fbf-ebay'),
             __('Packages', 'fbf-ebay'),
@@ -443,10 +447,26 @@ class Fbf_Ebay_Packages_Admin {
                 'default'                 /* Priority */
             );
         }else if($hook_suffix===$packages_page_hook_id){
-            $add_package = add_meta_box(
+            $meta_add_package = add_meta_box(
                 'package-create-listing',
                 'Create Package',
-                [$this, 'packages_create_package'],
+                [$this, 'packages_create_package_meta_box'],
+                $packages_page_hook_id,
+                'normal',
+                'default'
+            );
+            $meta_packages = add_meta_box(
+                'package-listings',
+                'eBay Package Listings',
+                [$this, 'packages_package_listings_meta_box'],
+                $packages_page_hook_id,
+                'normal',
+                'default'
+            );
+            $meta_schedule = add_meta_box(
+                'package-schedule',
+                'eBay Synchronisation',
+                [$this, 'package_schedule_sync_meta_box'],
                 $packages_page_hook_id,
                 'normal',
                 'default'
@@ -653,7 +673,42 @@ class Fbf_Ebay_Packages_Admin {
     public function packages()
     {
         global $hook_suffix;
-        echo $hook_suffix;
+
+        /**
+         * The class responsible for API auth.
+         */
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+        $auth = new Fbf_Ebay_Packages_Api_Auth();
+        $token = $auth->get_valid_token();
+        if($token['status']==='error'){
+            $this->errors[] = $token['errors'];
+        }
+
+        $msg = sprintf('<p>%s</p>', $token['status']==='error'?$this->get_errors():'eBay Access Token is valid');
+        printf('<div class="notice notice-%s is-dismissible">%s</div>', $token['status'], $msg);
+
+        /* enable add_meta_boxes function in this page. */
+        do_action( 'add_meta_boxes', $hook_suffix, [] ); // Not entirely sure why we need an empty array here!
+
+        ?>
+        <div class="wrap">
+            <h2 id="fbf-ebay-packages-packages-title">Packages</h2>
+            <?php settings_errors(); ?>
+            <div class="wheel-meta-box-wrap">
+                <form id="wheel-select-form" method="post" action="options.php">
+                    <div id="poststuff">
+                        <div id="post-body" class="metabox-holder columns-1">
+                            <div id="postbox-container-2" class="postbox-container">
+                                <?php do_meta_boxes( $hook_suffix, 'normal', null ); ?>
+                                <!-- #normal-sortables -->
+                            </div><!-- #postbox-container-2 -->
+                        </div><!-- #post-body -->
+                        <br class="clear">
+                    </div><!-- #poststuff -->
+                </form>
+            </div><!-- .fx-settings-meta-box-wrap -->
+        </div>
+        <?php
     }
 
     /**
@@ -728,8 +783,40 @@ class Fbf_Ebay_Packages_Admin {
      * @since 0.1.0
      */
     public function meta_footer_scripts_compatibility(){
-        if(!empty($this->wheels_submenu)){
-            $page_hook_id = $this->wheel_page_id();
+        if(!empty($this->compatibility_submenu)){
+            $page_hook_id = $this->compatibility_page_id();
+            ?>
+            <script type="text/javascript">
+                //<![CDATA[
+                jQuery(document).ready( function($) {
+                    // toggle
+                    $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+                    postboxes.add_postbox_toggles( '<?php echo $page_hook_id; ?>' );
+                    // display spinner
+                    $('#fx-smb-form').submit( function(){
+                        $('#publishing-action .spinner').css('display','inline');
+                    });
+                    // confirm before reset
+                    $('#delete-action .submitdelete').on('click', function() {
+                        return confirm('Are you sure want to do this?');
+                    });
+                });
+                //]]>
+            </script>
+            <?php
+        }
+    }
+
+    /**
+     * Footer Script Needed for Meta Box:
+     * - Meta Box Toggle.
+     * - Spinner for Saving Option.
+     * - Reset Settings Confirmation
+     * @since 0.1.0
+     */
+    public function meta_footer_scripts_packages(){
+        if(!empty($this->packages_submenu)){
+            $page_hook_id = $this->packages_page_id();
             ?>
             <script type="text/javascript">
                 //<![CDATA[
@@ -985,6 +1072,58 @@ class Fbf_Ebay_Packages_Admin {
         <span class="spinner" style="margin-top: 1.2em;"></span>
         <br class="clear"/>
         <?php
+    }
+
+    public function package_schedule_sync_meta_box()
+    {
+        $hourly_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+        $schedule = wp_get_schedule($hourly_hook);
+        $next_schedule = wp_next_scheduled($hourly_hook);
+        $date = new DateTime();
+        $timezone = new DateTimeZone("Europe/London");
+        $date->setTimezone($timezone);
+        $date->setTimestamp(absint($next_schedule));
+        $next = $date->format('g:iA - jS F Y') . "\n";
+        $synchronisations_to_show = 5;
+        ?>
+        <p>Upcoming scheduled synchronisation: <strong><?=$next?></strong> <em>&lt;<?=$schedule?>&gt;</em></p>
+
+        <h2>Previous <?=$synchronisations_to_show?> events:</h2>
+        <table id="fbf_ep_event_log_table" class="display">
+            <thead>
+            <tr>
+                <th>Date/time</th>
+                <th>Hook</th>
+                <th>Execution time</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Date/time</th>
+                <th>Hook</th>
+                <th>Execution time</th>
+            </tr>
+            </tfoot>
+        </table>
+        <input type="text" placeholder="Test SKU's" id="fbf_ebay_packages_skus" name="fbf_ebay_packages_skus" style="margin-top: 1em;"/>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_test_skus" style="margin-top: 1em;" type="button">Test Wheel</button>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise" style="margin-top: 1em;" type="button">Synchronise with eBay</button>
+        <!--<button role="button" class="button button-primary" id="fbf_ebay_packages_clean" style="margin-top: 1em;" type="button">Clean eBay</button>-->
+        <span class="spinner" style="margin-top: 1.2em;"></span>
+        <br class="clear"/>
+        <?php
+    }
+
+    public function packages_create_package_meta_box()
+    {
+        echo 'package creator here';
+    }
+
+    public function packages_package_listings_meta_box()
+    {
+        echo 'package listings here';
     }
 
     public function compatibility_meta_box()

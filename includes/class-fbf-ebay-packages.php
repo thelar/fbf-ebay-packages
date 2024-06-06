@@ -188,6 +188,7 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action("admin_footer-{$plugin_admin->page_id()}", $plugin_admin, 'meta_footer_scripts'); // Tyres
         $this->loader->add_action("admin_footer-{$plugin_admin->wheel_page_id()}", $plugin_admin, 'meta_footer_scripts_wheels'); // Wheels
         $this->loader->add_action("admin_footer-{$plugin_admin->compatibility_page_id()}", $plugin_admin, 'meta_footer_scripts_compatibility'); // Compatibility
+        $this->loader->add_action("admin_footer-{$plugin_admin->packages_page_id()}", $plugin_admin, 'meta_footer_scripts_packages'); // Packages
 
         $this->loader->add_filter('acf/fields/relationship/query', $plugin_admin, 'acf_relationship', 10, 3);
         $this->loader->add_filter('acf/fields/relationship/result', $plugin_admin, 'acf_relationship_result', 10, 4);
