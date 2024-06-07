@@ -1107,18 +1107,21 @@ class Fbf_Ebay_Packages_Admin {
             </tr>
             </tfoot>
         </table>
-        <input type="text" placeholder="Test SKU's" id="fbf_ebay_packages_skus" name="fbf_ebay_packages_skus" style="margin-top: 1em;"/>
-        <button role="button" class="button button-primary" id="fbf_ebay_packages_test_skus" style="margin-top: 1em;" type="button">Test Wheel</button>
-        <button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise" style="margin-top: 1em;" type="button">Synchronise with eBay</button>
-        <!--<button role="button" class="button button-primary" id="fbf_ebay_packages_clean" style="margin-top: 1em;" type="button">Clean eBay</button>-->
-        <span class="spinner" style="margin-top: 1.2em;"></span>
         <br class="clear"/>
         <?php
     }
 
     public function packages_create_package_meta_box()
     {
-        echo 'package creator here';
+        ?>
+        <p>
+            <label for="basic-text">Use the fields below to create a Package:</label>
+            <select id="package_chassis" name="package_chassis[]" style="width: 99%; max-width: 25em;">
+                <option value="1">Chassis 1</option>
+                <option value="2">Chassis 2</option>
+            </select>
+        </p>
+        <?php
     }
 
     public function packages_package_listings_meta_box()
@@ -1210,12 +1213,12 @@ class Fbf_Ebay_Packages_Admin {
         return 'ebay-packages_page_fbf-ebay-packages-wheels';
     }
 
-    public function packages_page_id(){
-        return 'ebay-packages_page_fbf-ebay-packages-packages';
-    }
-
     public function compatibility_page_id(){
         return 'ebay-packages_page_fbf-ebay-packages-compatibility';
+    }
+
+    public function packages_page_id(){
+        return 'ebay-packages_page_fbf-ebay-packages-packages';
     }
 
     public function acf_relationship_result($text, $post, $field, $post_id)

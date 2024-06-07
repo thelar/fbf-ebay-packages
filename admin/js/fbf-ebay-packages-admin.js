@@ -176,6 +176,9 @@
 			},
 			minimumInputLength: 3 // the minimum of symbols to input before perform a search
 		});
+		$('#package_chassis').select2({
+			minimumInputLength: 2
+		});
 
 
 		// datatable

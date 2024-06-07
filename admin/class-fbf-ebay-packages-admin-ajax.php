@@ -432,6 +432,14 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_get_package_chassis()
+    {
+        global $wpdb;
+        $data = [];
+        echo json_encode($data);
+        die();
+    }
+
     public function fbf_ebay_packages_save_chassis()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');

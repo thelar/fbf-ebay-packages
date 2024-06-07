@@ -236,6 +236,8 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_detail_log_response', $plugin_admin_ajax, 'fbf_ebay_packages_detail_log_response' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_test_item', $plugin_admin_ajax, 'fbf_ebay_packages_test_item' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_test_item', $plugin_admin_ajax, 'fbf_ebay_packages_test_item' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_package_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_chassis' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_package_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_chassis' );
 
         // Compatibility
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility' );
