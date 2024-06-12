@@ -177,9 +177,44 @@
 			minimumInputLength: 3 // the minimum of symbols to input before perform a search
 		});
 		$('#package_chassis').select2({
-			minimumInputLength: 2
-		});
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log(params);
+					return {
+						q: params.term, // search query
+						action: 'fbf_ebay_packages_get_package_chassis', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
 
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+							options.push( { id: text[0], text: text[1]  } );
+						});
+
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			placeholder: 'Select chassis...'
+		}).on('select2:selecting', function(e) {
+			// Here if user selects a chassis
+			console.log('Selecting: ' , e.params.args.data);
+			$('#package_wheel').attr('data-chassis_id', e.params.args.data.id);
+			$('#package_wheel').attr('data-chassis_name', e.params.args.data.text);
+			$('#package_wheel').prop('disabled', false);
+			package_wheel_select2_init();
+		});
+		package_wheel_select2_init();
 
 		// datatable
 		let $table = $('#example');
@@ -1298,6 +1333,47 @@
 					}
 				}
 			},
+		});
+	}
+
+	function package_wheel_select2_init(){
+		if($('#package_wheel').hasClass('select2-hidden-accessible')){
+			console.log('package_wheel has select2 - destroy it');
+			$('#package_wheel').select2('destroy');
+			$('#package_wheel').val('');
+		}
+		$('#package_wheel').select2({
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log('params');
+					console.log(params);
+					return {
+						q: params.term, // search query
+						chassis_id: $('#package_wheel').attr('data-chassis_id'),
+						chassis_name: $('#package_wheel').attr('data-chassis_name'),
+						action: 'fbf_ebay_packages_get_package_wheel', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
+
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+							options.push( { id: text[0], text: text[1]  } );
+						});
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			placeholder: 'Select wheel...'
 		});
 	}
 

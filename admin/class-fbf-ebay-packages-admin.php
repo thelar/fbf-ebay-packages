@@ -1114,12 +1114,14 @@ class Fbf_Ebay_Packages_Admin {
     public function packages_create_package_meta_box()
     {
         ?>
+        <h3>Use the fields below to create a Package</h3>
         <p>
-            <label for="basic-text">Use the fields below to create a Package:</label>
-            <select id="package_chassis" name="package_chassis[]" style="width: 99%; max-width: 25em;">
-                <option value="1">Chassis 1</option>
-                <option value="2">Chassis 2</option>
-            </select>
+            <label for="basic-text">Choose the Chassis for the Package:</label>
+            <select id="package_chassis" name="package_chassis" style="width: 99%; max-width: 25em;"></select>
+        </p>
+        <p>
+            <label for="basic-text">Choose the Wheel for the Package:</label>
+            <select id="package_wheel" name="package_wheel" style="width: 99%; max-width: 25em;" disabled></select>
         </p>
         <?php
     }

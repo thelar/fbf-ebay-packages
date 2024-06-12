@@ -434,8 +434,66 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
     public function fbf_ebay_packages_get_package_chassis()
     {
-        global $wpdb;
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $query = strtolower(filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING));
         $data = [];
+        global $wpdb;
+        $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
+        if(!empty($query)){
+            $q = $wpdb->prepare("SELECT *
+                    FROM {$fittings_table}
+                    WHERE LOWER(chassis_name) LIKE %s
+                    GROUP BY chassis_id
+                    ORDER BY chassis_name", '%' . $wpdb->esc_like($query) . '%');
+        }else{
+            $q = $wpdb->prepare("SELECT *
+                    FROM {$fittings_table}
+                    GROUP BY chassis_id
+                    ORDER BY chassis_name");
+        }
+        $r = $wpdb->get_results($q);
+        if($r){
+            foreach($r as $chassis){
+                $data[] = [
+                    $chassis->chassis_id,
+                    $chassis->chassis_name,
+                ];
+            }
+        }
+        echo json_encode($data);
+        die();
+    }
+
+    public function fbf_ebay_packages_get_package_wheel()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $query = strtolower(filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING));
+        global $wpdb;
+        $selected_chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+        $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
+        $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $data = [];
+
+        $q = "SELECT {$listings_table}.name, {$listings_table}.post_id, {$listings_table}.inventory_sku
+            FROM {$fittings_table}
+            INNER JOIN {$listings_table}
+            ON {$fittings_table}.listing_id = {$listings_table}.id
+            WHERE {$fittings_table}.chassis_id = %s
+            AND {$listings_table}.type = 'wheel'
+            AND {$listings_table}.status = 'active'";
+        if(!empty($query)){
+            $q.= sprintf(" AND LOWER({$listings_table}.name) LIKE '%s'", '%' . $query . '%');
+        }
+        $q = $wpdb->prepare($q, $selected_chassis_id);
+        $r = $wpdb->get_results($q);
+        if($r){
+            foreach($r as $wheel){
+                $data[] = [
+                    $wheel->post_id,
+                    $wheel->name,
+                ];
+            }
+        }
         echo json_encode($data);
         die();
     }
