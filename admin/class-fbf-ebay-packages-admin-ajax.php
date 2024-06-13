@@ -467,7 +467,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
     public function fbf_ebay_packages_get_package_wheel()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
-        $query = strtolower(filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING));
+        $query = htmlentities(stripslashes(htmlspecialchars_decode(filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING)))); // Messing about with quotation marks
         global $wpdb;
         $selected_chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
         $fittings_table = $wpdb->prefix . 'fbf_ebay_packages_fittings';
@@ -490,8 +490,189 @@ class Fbf_Ebay_Packages_Admin_Ajax
             foreach($r as $wheel){
                 $data[] = [
                     $wheel->post_id,
-                    $wheel->name,
+                    html_entity_decode($wheel->name), // decode html entities before returning
                 ];
+            }
+        }
+        echo json_encode($data);
+        die();
+    }
+
+    public function fbf_ebay_packages_get_package_tyre()
+    {
+        global $post, $wpdb;
+        $data = [];
+        $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+        $wheel_id = filter_var($_REQUEST['wheel_id'], FILTER_SANITIZE_STRING);
+        $wheel = wc_get_product($wheel_id);
+        $sku = $wheel->get_sku();
+        $query = htmlentities(stripslashes(htmlspecialchars_decode(filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING)))); // Messing about with quotation marks
+
+        include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        if (is_plugin_active('fbf-wheel-search/fbf-wheel-search.php')) {
+            require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
+            $api = new \Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
+            $boughto_wheel = $api->get_wheel_by_sku($sku);
+
+            if($boughto_wheel['status']==='success'){
+                $boughto_wheel_id = $boughto_wheel['client_wheel_product_id'];
+                $tyre_sizes = $api->tyre_sizes($chassis_id, $boughto_wheel_id);
+
+                if(!empty($tyre_sizes['tyre_sizes'])) {
+                    foreach ($tyre_sizes['tyre_sizes'] as $tyre) {
+                        $profiles = [];
+                        $sections = [];
+                        if ($tyre['profile'] > 500 && preg_match('/50$/', $tyre['profile'])) {
+                            $new_profile = substr_replace($tyre['profile'], '.', strlen($tyre['profile']) - 2, 0);
+                            $profiles[] = $new_profile;
+                            $profiles[] = substr($new_profile, 0, -1);
+                        } else {
+                            $profiles[] = $tyre['profile'];
+                            if ($tyre['profile'] === 0) {
+                                $profiles[] = '6430'; // local and staging
+                                $profiles[] = '3954'; // production
+                            }
+                        }
+                        if ($tyre['section'] > 500 && preg_match('/50$/', $tyre['section'])) {
+                            $new_section = substr_replace($tyre['section'], '.', strlen($tyre['section']) - 2, 0);
+                            $sections[] = $new_section;
+                            $sections[] = substr($new_section, 0, -1);
+                        } else {
+                            $sections[] = $tyre['section'];
+                        }
+
+                        if (str_contains($tyre['comment'], 'IDEAL')) {
+                            $type = 'IDEAL';
+                            $modification = '';
+                        } else if (str_contains($tyre['comment'], 'SPECIALIST')) {
+                            $type = 'SPECIALIST';
+                            $modification = trim(str_replace('SPECIALIST, ', '', $tyre['comment']));
+                        } else {
+                            $type = 'ALTERNATIVE';
+                            $modification = '';
+                        }
+
+                        if($type!=='SPECIALIST'){ // OMIT specialist for eBay
+                            $searches[$type][] = [
+                                'profiles' => $profiles,
+                                'rim' => $tyre['rim_size'],
+                                'section' => $sections,
+                                'modification' => $modification,
+                            ];
+                        }
+                    }
+
+                    if(!empty($searches)) {
+                        foreach ($searches as $search_key => $search) {
+                            $tyre_count = 0;
+                            foreach ($search as $size_key => $size) {
+
+                                $args = [
+                                    'post_type' => 'product',
+                                    'posts_per_page' => -1,
+                                    'post_status' => 'publish',
+                                    'tax_query' => [
+                                        'relation' => 'AND',
+                                        [
+                                            'taxonomy' => 'pa_tyre-width',
+                                            'field' => 'slug',
+                                            'terms' => $size['section']
+                                        ],
+                                        [
+                                            'taxonomy' => 'pa_tyre-profile',
+                                            'field' => 'slug',
+                                            'terms' => $size['profiles']
+                                        ],
+                                        [
+                                            'taxonomy' => 'pa_tyre-size',
+                                            'field' => 'slug',
+                                            'terms' => $size['rim']
+                                        ],
+                                        [
+                                            'taxonomy' => 'product_cat',
+                                            'field' => 'slug',
+                                            'terms' => 'package',
+                                            'operator' => 'NOT IN'
+                                        ]
+                                    ],
+                                    'meta_query' => [
+                                        'relation' => 'OR',
+                                        [
+                                            'key' => '_stock_status',
+                                            'value' => 'instock',
+                                            'compare' => '=',
+                                        ]
+                                    ]
+                                ];
+
+                                $rel_tyres = new \WP_Query($args);
+                                if ($rel_tyres->have_posts()) {
+                                    $prices = [];
+                                    while ($rel_tyres->have_posts()) {
+                                        $rel_tyres->the_post();
+                                        $searches[$search_key][$size_key]['tyres'][] = [
+                                            'id' => $post->ID,
+                                            'title' => get_the_title($post->ID),
+                                        ];
+                                        $tyre_count++;
+                                    }
+                                }
+                            }
+                            $searches[$search_key]['tyre_count'] = $tyre_count;
+                        }
+
+                        $ideal = [];
+                        $alternative = [];
+                        foreach($searches as $search_key => $search){
+                            if($search['tyre_count'] > 0){
+                                foreach($search as $size){
+                                    if(isset($size['tyres'])){
+                                        foreach($size['tyres'] as $tyre){
+                                            $q = $wpdb->prepare("SELECT * FROM {$listings_table} WHERE post_id = %s", $tyre['id']);
+                                            $r = $wpdb->get_row($q);
+                                            if($r){
+                                                if(!empty($query)){
+                                                    if(str_contains(strtolower($tyre['title']), $query)){
+                                                        if($search_key==='IDEAL'){
+                                                            $ideal[] = [
+                                                                $tyre['id'],
+                                                                $tyre['title'] . ' (' . $search_key . ')'
+                                                            ];
+                                                        }else{
+                                                            $alternative[] = [
+                                                                $tyre['id'],
+                                                                $tyre['title'] . ' (' . $search_key . ')'
+                                                            ];
+                                                        }
+                                                    }
+                                                }else{
+                                                    if($search_key==='IDEAL'){
+                                                        $ideal[] = [
+                                                            $tyre['id'],
+                                                            $tyre['title'] . ' (' . $search_key . ')'
+                                                        ];
+                                                    }else{
+                                                        $alternative[] = [
+                                                            $tyre['id'],
+                                                            $tyre['title'] . ' (' . $search_key . ')'
+                                                        ];
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if(count($ideal)){
+                            $data = $ideal;
+                        }else{
+                            $data = $alternative;
+                        }
+                    }
+                }
             }
         }
         echo json_encode($data);

@@ -212,9 +212,12 @@
 			$('#package_wheel').attr('data-chassis_id', e.params.args.data.id);
 			$('#package_wheel').attr('data-chassis_name', e.params.args.data.text);
 			$('#package_wheel').prop('disabled', false);
+			$('#package_tyre').prop('disabled', true);
 			package_wheel_select2_init();
+			package_tyre_select2_init();
 		});
 		package_wheel_select2_init();
+		package_tyre_select2_init();
 
 		// datatable
 		let $table = $('#example');
@@ -1364,6 +1367,8 @@
 
 						// data is the array of arrays, and each of them contains ID and the Label of the option
 						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+
+							console.log(text[1]);
 							options.push( { id: text[0], text: text[1]  } );
 						});
 					}
@@ -1374,6 +1379,55 @@
 				cache: true
 			},
 			placeholder: 'Select wheel...'
+		}).on('select2:selecting', function(e) {
+			// Here if user selects a tyre
+			console.log('Selecting tyre: ' , e.params.args.data);
+			$('#package_tyre').attr('data-wheel_id', e.params.args.data.id);
+			$('#package_tyre').prop('disabled', false);
+			package_tyre_select2_init();
+		});
+	}
+
+	function package_tyre_select2_init(){
+		if($('#package_tyre').hasClass('select2-hidden-accessible')){
+			console.log('package_tyre has select2 - destroy it');
+			$('#package_tyre').select2('destroy');
+			$('#package_tyre').val('');
+		}
+		$('#package_tyre').select2({
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log('params');
+					console.log(params);
+					return {
+						q: params.term, // search query
+						chassis_id: $('#package_wheel').attr('data-chassis_id'),
+						wheel_id: $('#package_tyre').attr('data-wheel_id'),
+						action: 'fbf_ebay_packages_get_package_tyre', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
+
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+
+							console.log(text[1]);
+							options.push( { id: text[0], text: text[1]  } );
+						});
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			placeholder: 'Select tyre...'
 		});
 	}
 

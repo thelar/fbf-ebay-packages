@@ -240,6 +240,8 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_package_chassis', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_chassis' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_package_wheel', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_wheel' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_package_wheel', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_wheel' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_package_tyre', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_tyre' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_package_tyre', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_tyre' );
 
         // Compatibility
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility' );

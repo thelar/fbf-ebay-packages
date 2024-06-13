@@ -1116,12 +1116,24 @@ class Fbf_Ebay_Packages_Admin {
         ?>
         <h3>Use the fields below to create a Package</h3>
         <p>
-            <label for="basic-text">Choose the Chassis for the Package:</label>
+            <label for="package_chassis">Choose the Chassis for the Package eBay Listing:</label>
             <select id="package_chassis" name="package_chassis" style="width: 99%; max-width: 25em;"></select>
         </p>
         <p>
-            <label for="basic-text">Choose the Wheel for the Package:</label>
+            <label for="package_wheel">Choose the Wheel for the Package:</label>
             <select id="package_wheel" name="package_wheel" style="width: 99%; max-width: 25em;" disabled></select>
+        </p>
+        <p>
+            <label for="package_tyre">Choose the Tyre for the Package:</label>
+            <select id="package_tyre" name="package_tyre" style="width: 99%; max-width: 25em;" disabled></select>
+        </p>
+        <p>
+            <label for="package_name">Enter the Title of the Package:</label>
+            <input type="text" id="package_name" name="package_name" style="display: block; width: 99%;"/>
+        </p>
+        <p>
+            <label for="package_desc">Enter the Description of the Package:</label>
+            <textarea id="package_desc" name="package_desc" placeholder="Enter the description" style="display: block; width: 99%;"></textarea>
         </p>
         <?php
     }
