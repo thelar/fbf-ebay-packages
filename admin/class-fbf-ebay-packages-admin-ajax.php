@@ -489,8 +489,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
         if($r){
             foreach($r as $wheel){
                 $data[] = [
-                    '(' . $wheel->inventory_sku . ') ' . $wheel->post_id,
-                    html_entity_decode($wheel->name), // decode html entities before returning
+                    $wheel->post_id,
+                    '(' . $wheel->inventory_sku . ') ' . html_entity_decode($wheel->name), // decode html entities before returning
                 ];
             }
         }
