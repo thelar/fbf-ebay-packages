@@ -691,6 +691,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
         $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
         $wheel_id = filter_var($_REQUEST['wheel_id'], FILTER_SANITIZE_STRING);
+        $low_nut_bolt_stock = true;
         $data = [];
 
         include_once(ABSPATH . 'wp-admin/includes/plugin.php');
@@ -705,6 +706,55 @@ class Fbf_Ebay_Packages_Admin_Ajax
             $sku = $wheel_product->get_sku();
             $index = array_search($sku, array_column($all_wheel_data, 'product_code'));
             $wheel_data = $all_wheel_data[$index];
+
+
+            if (!empty($wheel_data) && !empty($chassis_data)) {
+                //We can gather the bits of data for the wheel nut skus:
+                $nut_or_bolt = null;
+                if($chassis_data['chassis']['wheel_fasteners']=='Lug nuts'){
+                    $nut_or_bolt = 'nut';
+                }else if($chassis_data['chassis']['wheel_fasteners']=='Lug bolts'){
+                    $nut_or_bolt = 'bolt';
+                }
+                $sku = sprintf($chassis_data['chassis']['thread_size'] . $nut_or_bolt . $chassis_data['chassis']['head_size'] . '%1$s', $wheel_data['seat_type'] == 'flat' ? 'FLAT' : '');
+                $nuts = [
+                    'title' => 'Wheel nuts for your wheel and vehicle:',
+                    'text' => sprintf('Display Accessories whose SKU\'s begin with: <strong>' . $chassis_data['chassis']['thread_size'] . $nut_or_bolt . $chassis_data['chassis']['head_size'] . '%1$s' . '</strong>', $wheel_data['seat_type'] == 'flat' ? 'FLAT' : ''),
+                    'item' => [
+                        'nutBolt_thread_type' => $chassis_data['chassis']['thread_size'],
+                        'nut_or_bolt' => $nut_or_bolt,
+                        'nut_bolt_hex' => $chassis_data['chassis']['head_size'],
+                        'family_tags' => isset($wheel_data['family']['tags'][0])?:'',
+                        'seat_type' => $wheel_data['seat_type'],
+                        'sku' => $sku
+                    ],
+                ];
+
+                // If there is a low stock level of nuts and bolts
+                if($low_nut_bolt_stock){
+                    $base_sku = $chassis_data['chassis']['thread_size'] . $nut_or_bolt . '%s';
+                    if($wheel_data['seat_type'] == 'flat'){
+                        $base_sku.= 'FLAT';
+                    }
+                    $sku = [
+                        'base' =>  $base_sku,
+                        'value' => $chassis_data['chassis']['head_size'],
+                        'variance' => 5,
+                        'above_below' => 'both'
+                    ];
+                }
+                $ajax = new \App\Ajax();
+                if ($items = $ajax->get_upsell_items(($chassis_id !== 'undefined' ? $chassis_id : ''), $sku, 1)) {
+                    $nuts['items'] = $items;
+                    foreach($items as $item){
+                        $data[] = [
+                            $item['id'],
+                            $item['title']
+                        ];
+                    }
+                }
+            }
+
         }
 
         echo json_encode($data);
