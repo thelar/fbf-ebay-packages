@@ -486,12 +486,19 @@ class Fbf_Ebay_Packages_Admin_Ajax
         }
         $q = $wpdb->prepare($q, $selected_chassis_id);
         $r = $wpdb->get_results($q);
+
+        // remove duplicates here
+        $wheel_ids = array_column($r, 'post_id');
+        $wheel_ids = $this->remove_duplicates($selected_chassis_id, $wheel_ids);
+
         if($r){
             foreach($r as $wheel){
-                $data[] = [
-                    $wheel->post_id,
-                    '(' . $wheel->inventory_sku . ') ' . html_entity_decode($wheel->name), // decode html entities before returning
-                ];
+                if(in_array($wheel->post_id, $wheel_ids)){
+                    $data[] = [
+                        $wheel->post_id,
+                        '(' . $wheel->inventory_sku . ') ' . html_entity_decode($wheel->name), // decode html entities before returning
+                    ];
+                }
             }
         }
         echo json_encode($data);
@@ -2199,5 +2206,127 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
 
         return $current_selections;
+    }
+
+    private function remove_duplicates($chassis_id, $wheel_ids = [])
+    {
+        include_once(ABSPATH.'wp-admin/includes/plugin.php');
+        if(is_plugin_active('fbf-wheel-search/fbf-wheel-search.php')) {
+            require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
+            $api = new \Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
+            $wheel_data = $api->get_wheels($chassis_id);
+
+            $centre_bore = $wheel_data['chassis']['center_bore'];
+
+            if(!is_null($centre_bore)){
+                $centre_bore = number_format((float) $centre_bore, 2, '.', '');
+            }
+
+            $filtered = [];
+            $centre_bore_values = [];
+            $centre_bore_remove_ids = [];
+            $name_groups = [];
+            $i = 0;
+
+            foreach ($wheel_ids as $item) {
+                if(has_term('alloy-wheel', 'product_cat', $item)){
+                    $item_a = [];
+                    $product = wc_get_product($item);
+                    $prod_title = $product->get_title();
+                    $et_pos = strpos($prod_title, 'ET', 2);
+                    $title = substr($prod_title, 0, $et_pos + 2);
+                    $et = substr($prod_title, $et_pos + 2);
+                    $et_a = explode(' ', $et);
+                    $et_val = $et_a[0];
+                    unset($et_a[0]);
+                    $colour = implode(' ', $et_a);
+                    $item_a['et'] = $et_val;
+                    $item_a['index'] = $i;
+                    $title = $title . ' ' . $colour;
+                    $filtered[$title][] = $item_a;
+                }
+
+                if(has_term('steel-wheel', 'product_cat', $item)){
+                    $centre_bore_values[$item] = [
+                        'id' => $item,
+                        'centre_bore' => get_the_terms($item, 'pa_centre-bore') ? number_format((float) get_the_terms($item, 'pa_centre-bore')[0]->name, 2, '.', '') : '',
+                        'title' => get_the_title($item),
+                        'pcd' => get_the_terms($item, 'pa_wheel-pcd')[0]->name,
+                        'load-rating' => get_the_terms($item, 'pa_wheel-load-rating')[0]->name
+                    ];
+                }
+
+                $i++;
+            }
+
+            foreach ($centre_bore_values as $ci => $centre_bore_value){
+                $name_groups[$centre_bore_value['title']][$ci] = $centre_bore_value;
+            }
+
+            foreach($name_groups as $ni => $name_group){
+                if(count($name_group) > 1){
+                    $col = array_column( $name_group, 'centre_bore' );
+                    array_multisort( $col, SORT_ASC, $name_group );
+                    $ids_to_remove = array_column( $name_group, 'id' );
+
+                    foreach($name_group as $gi => $gv){
+                        if((float) $gv['centre_bore'] >= (float) $centre_bore){
+                            $p = wc_get_product($gv['id']);
+                            if($p->get_stock_quantity() > 0){
+                                if (isset($wheel_load_rating)) {
+                                    $wheel_load_rating = $gv['load-rating'];
+                                }
+                                unset($ids_to_remove[$gi]);
+                                break;
+                            }
+                        }
+                    }
+
+                    $remove_items = [];
+                    foreach($ids_to_remove as $id_to_remove){
+                        $remove_item = $name_group[array_search($id_to_remove, array_column($name_group, 'id'))];
+                        if(isset($wheel_load_rating) && $remove_item['load-rating'] != $wheel_load_rating){
+                            $remove_items[] = $remove_item['id'];
+                        }
+                    }
+                    foreach($remove_items as $ri){
+                        if(array_search($ri, $ids_to_remove)!==false){
+                            unset($ids_to_remove[array_search($ri, $ids_to_remove)]);
+                        }
+                    }
+
+                    if(count($ids_to_remove)){
+                        foreach($ids_to_remove as $id_to_remove){
+                            array_push($centre_bore_remove_ids, $id_to_remove);
+                        }
+                    }
+                }
+            }
+
+            if (!empty($filtered)) {
+                foreach ($filtered as $group) {
+                    //Order the group so that the lowest ET is first
+                    array_multisort(array_column($group, 'et'), SORT_ASC, $group);
+
+                    $i = 0;
+                    foreach ($group as $group_item) {
+                        //Only keep the first wheel in the group! (one with the lowest ET)
+                        if ($i > 0) {
+                            unset($wheel_ids[$group_item['index']]);
+                        }
+                        $i++;
+                    }
+                }
+            }
+
+            if(!empty($centre_bore_remove_ids)){
+                foreach($centre_bore_remove_ids as $cb_id){
+                    if(array_search($cb_id, $wheel_ids)!==false){
+                        unset($wheel_ids[array_search($cb_id, $wheel_ids)]);
+                    }
+                }
+            }
+        }
+        return $wheel_ids;
     }
 }
