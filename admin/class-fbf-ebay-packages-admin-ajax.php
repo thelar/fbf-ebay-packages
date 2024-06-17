@@ -686,6 +686,31 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_get_package_nut_bolt()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+        $wheel_id = filter_var($_REQUEST['wheel_id'], FILTER_SANITIZE_STRING);
+        $data = [];
+
+        include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        if(is_plugin_active('fbf-wheel-search/fbf-wheel-search.php')){
+            require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
+            $api = new \Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
+            $chassis_data = $api->get_chassis_detail($chassis_id);
+
+            //Retrieve the wheel data
+            $all_wheel_data = $api->get_wheels($chassis_id)['results'];
+            $wheel_product = wc_get_product($wheel_id);
+            $sku = $wheel_product->get_sku();
+            $index = array_search($sku, array_column($all_wheel_data, 'product_code'));
+            $wheel_data = $all_wheel_data[$index];
+        }
+
+        echo json_encode($data);
+        die();
+    }
+
     public function fbf_ebay_packages_save_chassis()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');

@@ -215,9 +215,11 @@
 			$('#package_tyre').prop('disabled', true);
 			package_wheel_select2_init();
 			package_tyre_select2_init();
+			package_nut_bolt_select2_init();
 		});
 		package_wheel_select2_init();
 		package_tyre_select2_init();
+		package_nut_bolt_select2_init();
 
 		// datatable
 		let $table = $('#example');
@@ -1428,6 +1430,52 @@
 				cache: true
 			},
 			placeholder: 'Select tyre...'
+		}).on('select2:selecting', function(e) {
+			$('#package_nut_bolt').prop('disabled', false);
+			package_nut_bolt_select2_init();
+		});
+	}
+
+	function package_nut_bolt_select2_init(){
+		if($('#package_nut_bolt').hasClass('select2-hidden-accessible')){
+			console.log('package_nut_bolt has select2 - destroy it');
+			$('#package_nut_bolt').select2('destroy');
+			$('#package_nut_bolt').val('');
+		}
+		$('#package_nut_bolt').select2({
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log('params');
+					console.log(params);
+					return {
+						q: params.term, // search query
+						chassis_id: $('#package_wheel').attr('data-chassis_id'),
+						wheel_id: $('#package_tyre').attr('data-wheel_id'),
+						action: 'fbf_ebay_packages_get_package_nut_bolt', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
+
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+
+							console.log(text[1]);
+							options.push( { id: text[0], text: text[1]  } );
+						});
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			placeholder: 'Select nut/bolt...'
 		});
 	}
 

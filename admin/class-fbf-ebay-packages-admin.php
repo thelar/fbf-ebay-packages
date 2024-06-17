@@ -1128,6 +1128,10 @@ class Fbf_Ebay_Packages_Admin {
             <select id="package_tyre" name="package_tyre" style="width: 99%; max-width: 25em;" disabled></select>
         </p>
         <p>
+            <label for="package_nut_bolt">Choose the Nut/Bolt for the Package:</label>
+            <select id="package_nut_bolt" name="package_nut_bolt" style="width: 99%; max-width: 25em;" disabled></select>
+        </p>
+        <p>
             <label for="package_name">Enter the Title of the Package:</label>
             <input type="text" id="package_name" name="package_name" style="display: block; width: 99%;"/>
         </p>
