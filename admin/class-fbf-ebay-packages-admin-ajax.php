@@ -494,10 +494,12 @@ class Fbf_Ebay_Packages_Admin_Ajax
         if($r){
             foreach($r as $wheel){
                 if(in_array($wheel->post_id, $wheel_ids)){
-                    $data[] = [
-                        $wheel->post_id,
-                        '(' . $wheel->inventory_sku . ') ' . html_entity_decode($wheel->name), // decode html entities before returning
-                    ];
+                    if(!in_array($wheel->post_id, array_column($data, 0))){
+                        $data[] = [
+                            $wheel->post_id,
+                            '(' . $wheel->inventory_sku . ') ' . html_entity_decode($wheel->name), // decode html entities before returning
+                        ];
+                    }
                 }
             }
         }
@@ -1142,6 +1144,59 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_package_create_listing()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+
+        // Firstly store the package post ids in the package_post_ids table
+        global $wpdb;
+        $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
+        $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+        $wheel_id = filter_var($_REQUEST['wheel_id'], FILTER_SANITIZE_STRING);
+        $tyre_id = filter_var($_REQUEST['tyre_id'], FILTER_SANITIZE_STRING);
+        $nut_bolt_id = filter_var($_REQUEST['nut_bolt_id'], FILTER_SANITIZE_STRING);
+        $package_name = filter_var($_REQUEST['package_name'], FILTER_SANITIZE_STRING);
+
+        // Get the products
+        $wheel_stock = get_post_meta($wheel_id, '_stock', true);
+        $tyre_stock = get_post_meta($tyre_id, '_stock', true);
+
+        $package_ids = [
+            'chassis_id' => $chassis_id,
+            'wheel_id' => $wheel_id,
+            'tyre_id' => $tyre_id,
+            'nut_bolt_id' => $nut_bolt_id,
+        ];
+
+        $i = $wpdb->insert($post_ids_table, [
+            'post_ids' => serialize($package_ids)
+        ]);
+
+
+        if($i){
+            $pid = $wpdb->insert_id;
+            // Now create the entry in the listings table - using $i as the value in post_id instead of an actual product, this will serve as a lookup
+            $i2 = $wpdb->insert($listings_table, [
+                'name' => $package_name,
+                'post_id' => $pid,
+                'status' => 'active',
+                'type' => 'package',
+                'qty' => min($tyre_stock, $wheel_stock),
+            ]);
+
+            if($i2){
+                $u = $wpdb->update($post_ids_table, [
+                    'listing_id' => $wpdb->insert_id
+                ], [
+                    'id' => $pid
+                ]);
+            }
+        }
+
+        die();
+    }
+
     public function fbf_ebay_packages_tyre_table()
     {
         global $wpdb;
@@ -1218,6 +1273,58 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_packages_table()
+    {
+        global $wpdb;
+        $draw = $_REQUEST['draw'];
+        $type = 'package';
+        $start = absint($_REQUEST['start']);
+        $length = absint($_REQUEST['length']);
+
+        $s = 'FROM wp_fbf_ebay_packages_listings l
+            WHERE l.status = %s
+            AND l.type = %s';
+        if(isset($_REQUEST['order'][0]['column'])) {
+            $dir = $_REQUEST['order'][0]['dir'];
+            if ($_REQUEST['order'][0]['column'] === '0') {
+                $s .= '
+                ORDER BY l.name ' . strtoupper($dir);
+            }
+        }
+        $s1 = 'SELECT count(*) as count
+        ' . $s;
+
+        $main_q = $wpdb->prepare("{$s1}", 'active', $type);
+        $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
+
+        $s2 = 'SELECT *, l.listing_id as l_id
+        ' . $s;
+        $paginated_q = $wpdb->prepare("{$s2}
+            LIMIT {$length}
+            OFFSET {$start}", 'active', $type);
+        $results = $wpdb->get_results($paginated_q, ARRAY_A);
+        if($results!==false){
+            foreach($results as $result){
+                $data[] = [
+                    'DT_RowId' => sprintf('row_%s', $result['id']),
+                    'DT_RowClass' => 'dataTable_listing',
+                    'DT_RowData' => [
+                        'pKey' => $result['id']
+                    ],
+                    'name' => $result['name']
+                ];
+            }
+        }
+
+        echo json_encode([
+            'draw' => $draw,
+            'recordsTotal' => $count,
+            'recordsFiltered' => $count,
+            'data' => $data
+        ]);
+        die();
+    }
+
     public function fbf_ebay_packages_list_tyres()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
@@ -1229,7 +1336,6 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $post_skus = [];
         $post_lookup = [];
         $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
-        $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
 
         // Errors
         $status = 'success';

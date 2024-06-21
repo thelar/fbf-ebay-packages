@@ -213,6 +213,8 @@
 			$('#package_wheel').attr('data-chassis_name', e.params.args.data.text);
 			$('#package_wheel').prop('disabled', false);
 			$('#package_tyre').prop('disabled', true);
+			$('#package_nut_bolt').prop('disabled', true);
+			$('#fbf_ebay_packages_create_package').prop('disabled', true);
 			package_wheel_select2_init();
 			package_tyre_select2_init();
 			package_nut_bolt_select2_init();
@@ -342,6 +344,29 @@
 				}
 			]
 		});
+
+		let $packages = $('#dt_packages');
+
+		let packages = $packages.DataTable({
+			serverSide: true,
+			processing: true,
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: {
+					//action: 'fbf_ebay_packages_ebay_listing'
+					action: 'fbf_ebay_packages_packages_table'
+				}
+			},
+			oLanguage: {
+				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			},
+			columns: [
+				{ data: 'name' }
+			]
+		});
+
+
 
 		// tyre select form submit
 		$('#tyre-brand-select-form').on('submit', function(){
@@ -765,6 +790,36 @@
 			let url = '#TB_inline?&width=600&height=auto&inlineId=' + thickbox_id;
 			tb_show('Add compatibility for ' + $(this).attr('data-chassis-name'), url);
 			populate_compatibility();
+			return false;
+		});
+
+		$('#fbf_ebay_packages_create_package').bind('click', function(){
+			console.log('create package');
+			let $loader = $(this).parent().find('.spinner');
+			$loader.addClass('is-active');
+			let selected_chassis = $('#package_chassis').select2('data')[0].text;
+			console.log('selected chassis');
+			console.log(selected_chassis);
+
+			let data = {
+				action: 'fbf_ebay_packages_package_create_listing',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+				chassis_id: $('#package_chassis').select2('data')[0].id,
+				wheel_id: $('#package_wheel').select2('data')[0].id,
+				tyre_id: $('#package_tyre').select2('data')[0].id,
+				nut_bolt_id: $('#package_nut_bolt').select2('data')[0].id,
+				package_name: $('#package_name').val(),
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log(response);
+				},
+			});
 			return false;
 		});
 
@@ -1386,7 +1441,9 @@
 			console.log('Selecting tyre: ' , e.params.args.data);
 			$('#package_tyre').attr('data-wheel_id', e.params.args.data.id);
 			$('#package_tyre').prop('disabled', false);
+			$('#fbf_ebay_packages_create_package').prop('disabled', true);
 			package_tyre_select2_init();
+			package_nut_bolt_select2_init();
 		});
 	}
 
@@ -1433,6 +1490,7 @@
 		}).on('select2:selecting', function(e) {
 			$('#package_nut_bolt').prop('disabled', false);
 			package_nut_bolt_select2_init();
+			check_package_vals();
 		});
 	}
 
@@ -1476,7 +1534,24 @@
 				cache: true
 			},
 			placeholder: 'Select nut/bolt...'
+		}).on('select2:select', function(e) {
+			check_package_vals();
 		});
+	}
+
+	function check_package_vals(){
+		console.log('checking package form vals');
+		let chassis = $('#package_chassis').val();
+		let wheel = $('#package_wheel').val();
+		let tyre = $('#package_tyre').val();
+		let nut_bolt = $('#package_nut_bolt').val();
+
+
+		if(!chassis || !wheel|| !tyre || !nut_bolt){
+			$('#fbf_ebay_packages_create_package').prop('disabled', true);
+		}else{
+			$('#fbf_ebay_packages_create_package').prop('disabled', false);
+		}
 	}
 
 })( jQuery );

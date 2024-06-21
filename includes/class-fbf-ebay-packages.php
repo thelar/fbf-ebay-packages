@@ -218,6 +218,8 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_list_tyres', $plugin_admin_ajax, 'fbf_ebay_packages_list_tyres' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_tyre_table', $plugin_admin_ajax, 'fbf_ebay_packages_tyre_table' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_tyre_table', $plugin_admin_ajax, 'fbf_ebay_packages_tyre_table' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_packages_table', $plugin_admin_ajax, 'fbf_ebay_packages_packages_table' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_packages_table', $plugin_admin_ajax, 'fbf_ebay_packages_packages_table' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_event_log', $plugin_admin_ajax, 'fbf_ebay_packages_event_log' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_event_log', $plugin_admin_ajax, 'fbf_ebay_packages_event_log' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_synchronise', $plugin_admin_ajax, 'fbf_ebay_packages_synchronise' );
@@ -256,6 +258,10 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_compatibility_delete', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility_delete_all', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete_all' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_compatibility_delete_all', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility_delete_all' );
+
+        // Packages
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_package_create_listing', $plugin_admin_ajax, 'fbf_ebay_packages_package_create_listing' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_package_create_listing', $plugin_admin_ajax, 'fbf_ebay_packages_package_create_listing' );
 	}
 
 	/**

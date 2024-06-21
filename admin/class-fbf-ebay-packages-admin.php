@@ -1139,12 +1139,31 @@ class Fbf_Ebay_Packages_Admin {
             <label for="package_desc">Enter the Description of the Package:</label>
             <textarea id="package_desc" name="package_desc" placeholder="Enter the description" style="display: block; width: 99%;"></textarea>
         </p>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_create_package" style="margin-top: 1em;" type="button" disabled>Create Package</button>
+        <span class="spinner" style="margin-top: 1.2em;"></span>
+        <br class="clear"/>
         <?php
     }
 
     public function packages_package_listings_meta_box()
     {
-        echo 'package listings here';
+        ?>
+        <table id="dt_packages" data-type="package" class="display" style="width:100%">
+            <thead>
+            <tr>
+                <th>Title</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Title</th>
+            </tr>
+            </tfoot>
+        </table>
+        <?php
     }
 
     public function compatibility_meta_box()
