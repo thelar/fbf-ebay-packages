@@ -176,52 +176,15 @@
 			},
 			minimumInputLength: 3 // the minimum of symbols to input before perform a search
 		});
-		$('#package_chassis').select2({
-			ajax: {
-				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
-				dataType: 'json',
-				delay: 250, // delay in ms while typing when to perform a AJAX search
-				data: function (params) {
-					console.log(params);
-					return {
-						q: params.term, // search query
-						action: 'fbf_ebay_packages_get_package_chassis', // AJAX action for admin-ajax.php
-						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
-					};
-				},
-				processResults: function( data ) {
-					var options = [];
-					if ( data ) {
 
-						// data is the array of arrays, and each of them contains ID and the Label of the option
-						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
-							options.push( { id: text[0], text: text[1]  } );
-						});
-
-					}
-					return {
-						results: options
-					};
-				},
-				cache: true
-			},
-			placeholder: 'Select chassis...'
-		}).on('select2:selecting', function(e) {
-			// Here if user selects a chassis
-			console.log('Selecting: ' , e.params.args.data);
-			$('#package_wheel').attr('data-chassis_id', e.params.args.data.id);
-			$('#package_wheel').attr('data-chassis_name', e.params.args.data.text);
-			$('#package_wheel').prop('disabled', false);
-			$('#package_tyre').prop('disabled', true);
-			$('#package_nut_bolt').prop('disabled', true);
-			$('#fbf_ebay_packages_create_package').prop('disabled', true);
-			package_wheel_select2_init();
-			package_tyre_select2_init();
-			package_nut_bolt_select2_init();
-		});
+		package_chassis_select2_init();
 		package_wheel_select2_init();
 		package_tyre_select2_init();
 		package_nut_bolt_select2_init();
+
+		$('#package_desc, #package_name').bind('blur focus keyup change', function(){
+			check_package_vals();
+		});
 
 		// datatable
 		let $table = $('#example');
@@ -239,8 +202,8 @@
 					type: type
 				}
 			},
-			oLanguage: {
-				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			language: {
+				processing: "<span class='dataTable-loader' style='margin-top: 2.48em;'></span>"
 			},
 			columns: [
 				{ data: 'name', rowId: 'l_id' },
@@ -295,6 +258,26 @@
 			return false;
 		});
 
+		$('#dt_packages tbody').on('click', 'td.details-control a', function () {
+			var tr = $(this).closest('tr');
+			var row = table.row( tr );
+			var $icon = $(this);
+			console.log($icon);
+
+			if( row.child.isShown() ) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass('shown');
+				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}else{
+				// Open this row
+				row.child.show();
+				tr.addClass('shown');
+				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+			}
+			return false;
+		});
+
 		let log = $('#fbf_ep_event_log_table').DataTable({
 			paging: false,
 			searching: false,
@@ -310,9 +293,9 @@
 					action: 'fbf_ebay_packages_event_log'
 				}
 			},
-			oLanguage: {
-				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
-			}
+			language: {
+				processing: "<span class='dataTable-loader' style='margin-top: 1em;'></span>"
+			},
 		});
 
 		let log_detail = $('#fbf_ep_event_log_detail').DataTable({
@@ -328,8 +311,8 @@
 					listing_id: get('listing_id'),
 				}
 			},
-			oLanguage: {
-				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			language: {
+				processing: "<span class='dataTable-loader' style='margin-top: 2.48em;'></span>"
 			},
 			columns: [
 				{ data: 'created' },
@@ -358,11 +341,21 @@
 					action: 'fbf_ebay_packages_packages_table'
 				}
 			},
-			oLanguage: {
-				sProcessing: "<span><i class=\"fas fa-spinner fa-pulse fa-lg\"></i></span><br/><p style=\"margin-top: 0.5em\">Loading</p>"
+			language: {
+				processing: "<span class='dataTable-loader' style='margin-top: 2.48em;'></span>"
 			},
+			order: [
+				[1, 'desc']
+			],
 			columns: [
-				{ data: 'name' }
+				{ data: 'name', rowId: 'l_id' },
+				{ data: 'created' },
+				{
+					"className":      'details-control',
+					"orderable":      false,
+					"data":           null,
+					"defaultContent": '<a href="#" class="dashicons dashicons-arrow-down-alt2"></a>'
+				},
 			]
 		});
 
@@ -796,6 +789,8 @@
 		$('#fbf_ebay_packages_create_package').bind('click', function(){
 			console.log('create package');
 			let $loader = $(this).parent().find('.spinner');
+			let $button = $(this);
+			$button.prop('disabled', true);
 			$loader.addClass('is-active');
 			let selected_chassis = $('#package_chassis').select2('data')[0].text;
 			console.log('selected chassis');
@@ -818,6 +813,31 @@
 				dataType: 'json',
 				success: function (response) {
 					console.log(response);
+					$loader.removeClass('is-active');
+					if(response.status==='success'){
+						console.log('reload the table');
+
+						package_chassis_select2_init();
+						package_wheel_select2_init();
+						$('#package_wheel').prop('disabled', true);
+						package_tyre_select2_init();
+						$('#package_tyre').prop('disabled', true);
+						package_nut_bolt_select2_init();
+						$('#package_nut_bolt').prop('disabled', true);
+						$('#package_name').val('');
+						$('#package_desc').val('');
+
+						// Scroll window to listings table
+						$('html, body').animate({
+							scrollTop: $("#package-listings").offset().top - 50
+						}, 500);
+
+						$('#dt_packages').DataTable().ajax.reload(function(){
+							$('#dt_packages').DataTable().order([[1, 'desc']]).draw();
+						});
+					}else{
+						alert('ERROR: ' + response.error);
+					}
 				},
 			});
 			return false;
@@ -1396,6 +1416,58 @@
 		});
 	}
 
+	function package_chassis_select2_init(){
+		if($('#package_chassis').hasClass('select2-hidden-accessible')){
+			console.log('chassis has select2 - destroy it');
+			$('#package_chassis').select2('destroy');
+			$('#package_chassis').val('');
+		}
+		$('#package_chassis').select2({
+			ajax: {
+				url: fbf_ebay_packages_admin.ajax_url, // AJAX URL is predefined in WordPress admin
+				dataType: 'json',
+				delay: 250, // delay in ms while typing when to perform a AJAX search
+				data: function (params) {
+					console.log(params);
+					return {
+						q: params.term, // search query
+						action: 'fbf_ebay_packages_get_package_chassis', // AJAX action for admin-ajax.php
+						ajax_nonce: fbf_ebay_packages_admin.ajax_nonce
+					};
+				},
+				processResults: function( data ) {
+					var options = [];
+					if ( data ) {
+
+						// data is the array of arrays, and each of them contains ID and the Label of the option
+						$.each( data, function( index, text ) { // do not forget that "index" is just auto incremented value
+							options.push( { id: text[0], text: text[1]  } );
+						});
+
+					}
+					return {
+						results: options
+					};
+				},
+				cache: true
+			},
+			placeholder: 'Select chassis...'
+		}).on('select2:selecting', function(e) {
+			// Here if user selects a chassis
+			console.log('Selecting: ' , e.params.args.data);
+			$('#package_wheel').attr('data-chassis_id', e.params.args.data.id);
+			$('#package_wheel').attr('data-chassis_name', e.params.args.data.text);
+			$('#package_wheel').prop('disabled', false);
+			$('#package_tyre').prop('disabled', true);
+			$('#package_nut_bolt').prop('disabled', true);
+			$('#fbf_ebay_packages_create_package').prop('disabled', true);
+			package_wheel_select2_init();
+			package_tyre_select2_init();
+			package_nut_bolt_select2_init();
+			$('#package_wheel').select2('open');
+		});
+	}
+
 	function package_wheel_select2_init(){
 		if($('#package_wheel').hasClass('select2-hidden-accessible')){
 			console.log('package_wheel has select2 - destroy it');
@@ -1444,6 +1516,7 @@
 			$('#fbf_ebay_packages_create_package').prop('disabled', true);
 			package_tyre_select2_init();
 			package_nut_bolt_select2_init();
+			$('#package_tyre').select2('open');
 		});
 	}
 
@@ -1491,6 +1564,7 @@
 			$('#package_nut_bolt').prop('disabled', false);
 			package_nut_bolt_select2_init();
 			check_package_vals();
+			$('#package_nut_bolt').select2('open');
 		});
 	}
 
@@ -1536,6 +1610,7 @@
 			placeholder: 'Select nut/bolt...'
 		}).on('select2:select', function(e) {
 			check_package_vals();
+			$('#package_name').focus();
 		});
 	}
 
@@ -1545,9 +1620,10 @@
 		let wheel = $('#package_wheel').val();
 		let tyre = $('#package_tyre').val();
 		let nut_bolt = $('#package_nut_bolt').val();
+		let name = $('#package_name').val();
+		let desc = $('#package_desc').val();
 
-
-		if(!chassis || !wheel|| !tyre || !nut_bolt){
+		if(!chassis || !wheel|| !tyre || !nut_bolt || !name || ! desc){
 			$('#fbf_ebay_packages_create_package').prop('disabled', true);
 		}else{
 			$('#fbf_ebay_packages_create_package').prop('disabled', false);

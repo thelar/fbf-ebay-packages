@@ -1152,6 +1152,8 @@ class Fbf_Ebay_Packages_Admin {
             <thead>
             <tr>
                 <th>Title</th>
+                <th>Created</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -1160,6 +1162,8 @@ class Fbf_Ebay_Packages_Admin {
             <tfoot>
             <tr>
                 <th>Title</th>
+                <th>Created</th>
+                <th></th>
             </tr>
             </tfoot>
         </table>

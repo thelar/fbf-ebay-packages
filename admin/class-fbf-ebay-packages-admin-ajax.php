@@ -1194,6 +1194,17 @@ class Fbf_Ebay_Packages_Admin_Ajax
             }
         }
 
+        if($i2 && $u){
+            echo json_encode([
+                'status' => 'success',
+            ]);
+        }else{
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'Insert or Update error',
+            ]);
+        }
+
         die();
     }
 
@@ -1280,15 +1291,23 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $type = 'package';
         $start = absint($_REQUEST['start']);
         $length = absint($_REQUEST['length']);
+        $data = [];
 
         $s = 'FROM wp_fbf_ebay_packages_listings l
             WHERE l.status = %s
             AND l.type = %s';
+        if(isset($_REQUEST['search']['value'])&&!empty($_REQUEST['search']['value'])){
+            $s.= '
+            AND l.name LIKE \'%%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%%\'';
+        }
         if(isset($_REQUEST['order'][0]['column'])) {
             $dir = $_REQUEST['order'][0]['dir'];
             if ($_REQUEST['order'][0]['column'] === '0') {
                 $s .= '
                 ORDER BY l.name ' . strtoupper($dir);
+            }else if ($_REQUEST['order'][0]['column'] === '1'){
+                $s .= '
+                ORDER BY l.created ' . strtoupper($dir);
             }
         }
         $s1 = 'SELECT count(*) as count
@@ -1311,7 +1330,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     'DT_RowData' => [
                         'pKey' => $result['id']
                     ],
-                    'name' => $result['name']
+                    'name' => $result['name'],
+                    'created' => $result['created'],
                 ];
             }
         }
