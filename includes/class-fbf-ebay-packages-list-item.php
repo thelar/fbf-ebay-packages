@@ -11,7 +11,7 @@ class Fbf_Ebay_Packages_List_Item
     private $version;
     private $use_test_image = false; // switch to false to use actual thumbnails
     private $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
-    private $buffer = 4;
+    protected $buffer = 4;
     public $status = [];
     public $logs = [];
     private $tyre_description = 'This listing is for 4 brand new tyres in the size and style specified in the listing title<br/>
@@ -479,7 +479,7 @@ class Fbf_Ebay_Packages_List_Item
         return $result;
     }
 
-    private function item_payload(WC_Product $product, $qty, $type){
+    protected function item_payload(WC_Product $product, $qty, $type){
         $item = [];
         $brand_terms = get_the_terms($product->get_id(), 'pa_brand-name');
 
@@ -766,12 +766,12 @@ class Fbf_Ebay_Packages_List_Item
         return $i;
     }
 
-    private function get_tyre_aspects(WC_Product $product, $qty = 1)
+    protected function get_tyre_aspects(WC_Product $product, $qty = 1, $prefix = '')
     {
         $aspects = [];
 
         // MPN
-        $aspects['Manufacturer Part Number'] = [
+        $aspects[$prefix . 'Manufacturer Part Number'] = [
             $product->get_sku()
         ];
 
@@ -780,7 +780,7 @@ class Fbf_Ebay_Packages_List_Item
         if(!empty($brand_terms)){
             $brand_term = $brand_terms[0];
             $brand_name = $brand_term->name;
-            $aspects['Brand'] = [
+            $aspects[$prefix . 'Brand'] = [
                 $brand_name
             ];
         }
@@ -884,7 +884,7 @@ class Fbf_Ebay_Packages_List_Item
         }
 
         // Unit Quantity
-        $aspects['Unit Quantity'] = [
+        $aspects[$prefix . 'Unit Quantity'] = [
             $qty
         ];
 
@@ -936,12 +936,12 @@ class Fbf_Ebay_Packages_List_Item
         return $aspects;
     }
 
-    private function get_wheel_aspects(WC_Product $product, $qty = 1)
+    protected function get_wheel_aspects(WC_Product $product, $qty = 1, $prefix = '')
     {
         $aspects = [];
 
         // MPN
-        $aspects['Manufacturer Part Number'] = [
+        $aspects[$prefix . 'Manufacturer Part Number'] = [
             $product->get_sku()
         ];
 
@@ -950,7 +950,7 @@ class Fbf_Ebay_Packages_List_Item
         if(!empty($brand_terms)){
             $brand_term = $brand_terms[0];
             $brand_name = $brand_term->name;
-            $aspects['Brand'] = [
+            $aspects[$prefix . 'Brand'] = [
                 $brand_name
             ];
         }

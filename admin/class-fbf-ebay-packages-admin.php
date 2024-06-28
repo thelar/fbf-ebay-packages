@@ -201,7 +201,11 @@ class Fbf_Ebay_Packages_Admin {
 
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-synchronise.php';
         $sync = new Fbf_Ebay_Packages_Synchronise(FBF_EBAY_PACKAGES_PLUGIN_NAME, FBF_EBAY_PACKAGES_VERSION);
-        $sync_result = $sync->run(['tyre', 'wheel'], $items);
+        if($type==='packages'){
+            $sync_result = $sync->run(['package'], $items);
+        }else{
+            $sync_result = $sync->run(['tyre', 'wheel'], $items);
+        }
 
         //$q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
 
@@ -1107,6 +1111,8 @@ class Fbf_Ebay_Packages_Admin {
             </tr>
             </tfoot>
         </table>
+        <button role="button" class="button button-primary" id="fbf_ebay_packages_synchronise_package" style="margin-top: 1em;" type="button">Synchronise with eBay</button>
+        <span class="spinner" style="margin-top: 1.2em;"></span>
         <br class="clear"/>
         <?php
     }

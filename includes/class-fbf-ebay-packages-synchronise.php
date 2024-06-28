@@ -63,18 +63,36 @@ class Fbf_Ebay_Packages_Synchronise
 
 
             foreach($results as $result){
-                // These 2 calls could be expensive when we're dealing with 1000's of listings - may need to find a way of caching the product info!
-                $product_id = wc_get_product_id_by_sku($result->sku);
-                $product = wc_get_product($product_id);
-                $this->products[$result->sku] = $product;
+                if($this->limit && $count >= $this->limit){
+                    //break out of the loops
+                    break 1;
+                }
 
-                //foreach($this->packs as $qty){
-                    if($this->limit && $count >= $this->limit){
-                        //break out of the loops
-                        break 1;
+                require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-item.php';
+                if($result->type==='package'){
+                    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-package.php';
+                    $ebay = new Fbf_Ebay_Packages_List_Package($this->plugin_name, $this->version);
+                    $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
+                    $q = $wpdb->prepare("SELECT post_ids
+                        FROM {$post_ids_table}
+                        WHERE listing_id = %s", $result->listing_id);
+                    $r = $wpdb->get_col($q);
+                    if($r){
+                        $post_ids = unserialize($r[0]);
+                        $chassis = $post_ids['chassis_id'];
+                        $tyre = wc_get_product($post_ids['tyre_id']);
+                        $wheel = wc_get_product($post_ids['wheel_id']);
+                        $nut_bolt = wc_get_product($post_ids['nut_bolt_id']);
+                        $qty = 4;
+                        $item = $ebay->list_item($wheel, $tyre, $nut_bolt, $qty, $result);
                     }
+                }else{
+                    // These 2 calls could be expensive when we're dealing with 1000's of listings - may need to find a way of caching the product info!
+                    $product_id = wc_get_product_id_by_sku($result->sku);
+                    $product = wc_get_product($product_id);
+                    $this->products[$result->sku] = $product;
 
-                    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-item.php';
+                    //foreach($this->packs as $qty){
                     $ebay = new Fbf_Ebay_Packages_List_Item($this->plugin_name, $this->version);
 
                     //If it's a tyre just list as 1x
@@ -90,7 +108,8 @@ class Fbf_Ebay_Packages_Synchronise
                     $this->log_ids = array_merge($this->log_ids, $item->logs);
                     $this->synch_items[] = $item;
                     $count++;
-                //}
+                    //}
+                }
             }
         }
 

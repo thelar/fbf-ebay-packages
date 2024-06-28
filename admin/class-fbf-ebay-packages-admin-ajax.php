@@ -1152,6 +1152,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         global $wpdb;
         $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
         $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
         $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
         $wheel_id = filter_var($_REQUEST['wheel_id'], FILTER_SANITIZE_STRING);
         $tyre_id = filter_var($_REQUEST['tyre_id'], FILTER_SANITIZE_STRING);
@@ -1161,6 +1162,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
         // Get the products
         $wheel_stock = get_post_meta($wheel_id, '_stock', true);
         $tyre_stock = get_post_meta($tyre_id, '_stock', true);
+
+        // Make the SKU for the package - note that this is made from the chassis_id, wheel_id, tyre_id AND the last 4 digits of the timestamp to ensure uniqueness
+        $sku = sprintf('%s_%s_%s_%s', $chassis_id, $wheel_id, $tyre_id, substr(time(), -4));
 
         $package_ids = [
             'chassis_id' => $chassis_id,
@@ -1186,15 +1190,22 @@ class Fbf_Ebay_Packages_Admin_Ajax
             ]);
 
             if($i2){
+                // Insert the listing ID into the $post_ids_table
                 $u = $wpdb->update($post_ids_table, [
                     'listing_id' => $wpdb->insert_id
                 ], [
                     'id' => $pid
                 ]);
+
+                // Create an entry for listing in the skus table
+                $i3 = $wpdb->insert($skus_table, [
+                    'listing_id' => $wpdb->insert_id,
+                    'sku' => $sku
+                ]);
             }
         }
 
-        if($i2 && $u){
+        if($i2 && $u && $i3){
             echo json_encode([
                 'status' => 'success',
             ]);
@@ -1562,6 +1573,19 @@ class Fbf_Ebay_Packages_Admin_Ajax
     public function fbf_ebay_packages_synchronise()
     {
         if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'tyres and wheels')){
+            $status = 'success';
+        }else{
+            $status = 'error';
+        }
+        echo json_encode([
+            'status' => $status,
+        ]);
+        die();
+    }
+
+    public function fbf_ebay_packages_synchronise_package()
+    {
+        if(Fbf_Ebay_Packages_Admin::synchronise('manual', 'packages')){
             $status = 'success';
         }else{
             $status = 'error';

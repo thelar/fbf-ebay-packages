@@ -702,6 +702,28 @@
 			return false;
 		});
 
+		$('#fbf_ebay_packages_synchronise_package').bind('click', function(){
+			console.log('syncronising packages');
+			let $loader = $(this).parent().find('.spinner');
+			$loader.addClass('is-active');
+			let data = {
+				action: 'fbf_ebay_packages_synchronise_package',
+				ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+			};
+			$.ajax({
+				// eslint-disable-next-line no-undef
+				url: fbf_ebay_packages_admin.ajax_url,
+				type: 'POST',
+				data: data,
+				dataType: 'json',
+				success: function (response) {
+					console.log(response);
+					$loader.removeClass('is-active');
+				},
+			});
+			return false;
+		})
+
 		$('#fbf_ebay_packages_schedule').bind('click', function(){
 			let data = {
 				action: 'fbf_ebay_packages_schedule',
