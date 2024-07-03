@@ -9,8 +9,8 @@ class Fbf_Ebay_Packages_List_Item
 {
     private $plugin_name;
     private $version;
-    private $use_test_image = false; // switch to false to use actual thumbnails
-    private $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
+    protected $use_test_image = false; // switch to false to use actual thumbnails
+    protected $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
     protected $buffer = 4;
     public $status = [];
     public $logs = [];
@@ -22,7 +22,7 @@ class Fbf_Ebay_Packages_List_Item
     We are one of the country’s leading suppliers of Load Rated Steel and Alloy wheels to suit 4x4 and SUV.
     Delivery is through a 3rd party carrier. We advise not booking tyre fitting until the wheels have been delivered
     Any questions, please feel free to ask. Thanks';
-    private bool $log_everything = false;
+    protected bool $log_everything = false;
 
     public function __construct($plugin_name, $version)
     {
@@ -332,7 +332,7 @@ class Fbf_Ebay_Packages_List_Item
         $fulfillment = $this->api(sprintf('https://api.ebay.com/sell/fulfillment/v1/order/%s/shipping_fulfillment', $ebay_order_num), 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
     }
 
-    private function log($id, $ebay_action, $log)
+    protected function log($id, $ebay_action, $log)
     {
         global $wpdb;
         $table = $wpdb->prefix . 'fbf_ebay_packages_logs';
@@ -520,6 +520,8 @@ class Fbf_Ebay_Packages_List_Item
         }
         $title = html_entity_decode($product->get_title());
         // Add Wheel to title and Steel if necessary
+
+
         if($type==='wheel'){
             if(strpos($title, 'Steel')!==false){
                 $pos = strpos($title, 'Steel');
@@ -734,7 +736,7 @@ class Fbf_Ebay_Packages_List_Item
         }
     }
 
-    private function is_listing_compatibility_same($payload, $id)
+    protected function is_listing_compatibility_same($payload, $id)
     {
         global $wpdb;
         $listing_compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_listing_compatibility';
@@ -752,7 +754,7 @@ class Fbf_Ebay_Packages_List_Item
         return false;
     }
 
-    private function save_update_listing_compatibility($payload, $id)
+    protected function save_update_listing_compatibility($payload, $id)
     {
         global $wpdb;
         $listing_compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_listing_compatibility';
@@ -1079,7 +1081,7 @@ class Fbf_Ebay_Packages_List_Item
         return $sku_prefix . $sku;
     }
 
-    private function api($url, $method, $headers, $body=null)
+    protected function api($url, $method, $headers, $body=null)
     {
         $curl = curl_init();
         $resp = [];

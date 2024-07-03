@@ -145,6 +145,7 @@ class Fbf_Ebay_Packages_Activator {
             `id` mediumint(9) NOT NULL AUTO_INCREMENT,
             `listing_id` mediumint(9) NOT NULL,
             `post_ids` mediumtext NOT NULL,
+            `description` text,
             PRIMARY KEY (`id`),
             UNIQUE KEY `listing_id` (`listing_id`)
         ) $charset_collate;";

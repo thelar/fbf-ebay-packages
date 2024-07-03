@@ -826,6 +826,7 @@
 				tyre_id: $('#package_tyre').select2('data')[0].id,
 				nut_bolt_id: $('#package_nut_bolt').select2('data')[0].id,
 				package_name: $('#package_name').val(),
+				package_desc: $('#package_desc').val(),
 			};
 			$.ajax({
 				// eslint-disable-next-line no-undef

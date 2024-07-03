@@ -1158,6 +1158,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $tyre_id = filter_var($_REQUEST['tyre_id'], FILTER_SANITIZE_STRING);
         $nut_bolt_id = filter_var($_REQUEST['nut_bolt_id'], FILTER_SANITIZE_STRING);
         $package_name = filter_var($_REQUEST['package_name'], FILTER_SANITIZE_STRING);
+        $package_description = filter_var($_REQUEST['package_desc'], FILTER_SANITIZE_STRING);
 
         // Get the products
         $wheel_stock = get_post_meta($wheel_id, '_stock', true);
@@ -1174,7 +1175,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
         ];
 
         $i = $wpdb->insert($post_ids_table, [
-            'post_ids' => serialize($package_ids)
+            'post_ids' => serialize($package_ids),
+            'description' => $package_description,
         ]);
 
 
