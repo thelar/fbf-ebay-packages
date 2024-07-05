@@ -2,6 +2,8 @@
 
 class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
 {
+    private $package_description;
+
     public function list_item(WC_Product $wheel, WC_Product $tyre, WC_Product $nut_bolt, $qty, $result)
     {
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
@@ -11,6 +13,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
         $q = $wpdb->prepare("SELECT description from {$post_ids_table} WHERE listing_id = %s", $result->listing_id);
         $r = $wpdb->get_col($q);
+        $this->package_description = $r[0];
 
         if($token['status']==='success'){
             $payload = $this->item_payload($wheel, 4, '', $result, $tyre, $nut_bolt, $r[0]);
@@ -116,7 +119,8 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                 if(!is_null($result->offer_id)){
 
                 }else{
-
+                    // Doesn't exist - create the offer
+                    $offer_payload = $this->offer_payload($wheel, $tyre, $sku, $qty, $result->type, $result->listing_id);
                 }
             }
         }
@@ -273,5 +277,28 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                 'compatibleProducts' => $compatibility
             ]);
         }
+    }
+
+    private function offer_payload($wheel, $tyre, $sku, $qty, $type, $id)
+    {
+        $offer = [];
+        $ebay_price_wheel = get_post_meta($wheel->get_id(), '_ebay_price', true);
+        $ebay_price_tyre = get_post_meta($tyre->get_id(), '_ebay_price', true);
+        $ebay_price = $ebay_price_tyre + $ebay_price_wheel;
+        if($ebay_price > 0) {
+            $reg_price = $ebay_price;
+        }else{
+            $reg_price = (float) $wheel->get_regular_price() + (float) $tyre->get_regular_price();
+        }
+
+        $listing_description = $this->package_description;
+        $limitPerBuyer = 1;
+
+        $vat = ($reg_price/100) * 20;
+        $reg_price = number_format(($reg_price + $vat) * $qty, 2, '.', '');
+        $offer['sku'] = $sku;
+        $offer['marketplaceId'] = 'EBAY_GB';
+        $offer['format'] = 'FIXED_PRICE';
+        $offer['availableQuantity'] = min(max(floor(($wheel->get_stock_quantity() - $this->buffer) / $qty), 0), max(floor(($tyre->get_stock_quantity() - $this->buffer) / $qty), 0));
     }
 }
