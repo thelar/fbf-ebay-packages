@@ -401,7 +401,7 @@ class Fbf_Ebay_Packages_List_Item
         return true;
     }
 
-    private function insert_or_update_offer($offer_id, $payload)
+    protected function insert_or_update_offer($offer_id, $payload)
     {
         global $wpdb;
         $table = $wpdb->prefix . 'fbf_ebay_packages_offers';
@@ -432,7 +432,7 @@ class Fbf_Ebay_Packages_List_Item
         }
     }
 
-    private function update_listing_id($listing_id, $id)
+    protected function update_listing_id($listing_id, $id)
     {
         global $wpdb;
         $listing_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
@@ -446,7 +446,7 @@ class Fbf_Ebay_Packages_List_Item
         return $result;
     }
 
-    private function update_offer_id($offer_id, $id, $offer_payload)
+    protected function update_offer_id($offer_id, $id, $offer_payload)
     {
         global $wpdb;
         $listing_table = $wpdb->prefix . 'fbf_ebay_packages_listings';

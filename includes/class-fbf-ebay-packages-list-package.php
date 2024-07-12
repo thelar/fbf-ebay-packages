@@ -117,13 +117,118 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
             if(isset($inv_item_created) && $inv_item_created===true){
                 //First see if there is already an Offer ID
                 if(!is_null($result->offer_id)){
+                    // Exists - do we need to update it?
+                    $new_update_required = $this->is_offer_update_required($result->offer_id, $wheel, $tyre, $qty);
 
+                    // Force an update
+                    //$new_update_required = true;
+
+                    if($new_update_required){
+                        // Update the offer
+                        $offer_payload = $this->offer_payload($wheel, $tyre, $sku, $qty, $result->type, $result->listing_id);
+                        $offer_update = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $result->offer_id, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
+
+                        if ($offer_update['status']==='success'&&($offer_update['response_code'] === 200||$offer_update['response_code'] === 204)) {
+                            // Update the offer here
+                            $this->insert_or_update_offer($result->offer_id, $offer_payload);
+
+                            // Unset the listingDescription in $offer_payload so we don't include it in the log
+                            unset($offer_payload['listingDescription']);
+
+                            $this->logs[] = $this->log($result->listing_id, 'update_offer', [
+                                'status' => 'success',
+                                'action' => 'updated',
+                                'response' => $offer_update,
+                                'payload' => $offer_payload
+                            ]);
+                        }else{
+                            // Unset the listingDescription in $offer_payload so we don't include it in the log
+                            unset($offer_payload['listingDescription']);
+
+                            $this->logs[] = $this->log($result->listing_id, 'update_offer', [
+                                'status' => 'error',
+                                'action' => 'none required',
+                                'response' => $offer_update,
+                                'payload' => $offer_payload
+                            ]);
+                        }
+                    }else{
+                        if($this->log_everything===true){ // Don't bother to log if log_everything is false
+                            $this->logs[] = $this->log($result->listing_id, 'update_offer', [
+                                'status' => 'success',
+                                'action' => 'none required'
+                            ]);
+                        }
+                    }
                 }else{
                     // Doesn't exist - create the offer
                     $offer_payload = $this->offer_payload($wheel, $tyre, $sku, $qty, $result->type, $result->listing_id);
+                    $offer_create = $this->api('https://api.ebay.com/sell/inventory/v1/offer', 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($offer_payload));
+
+                    if($offer_create['status']==='success'&&$offer_create['response_code']===201){
+                        $offer_id = json_decode($offer_create['response']);
+
+                        // Create the offer here
+                        $this->insert_or_update_offer($offer_id->offerId, $offer_payload);
+
+                        // Created
+                        $this->update_offer_id($offer_id->offerId, $result->listing_id, $offer_payload);
+                        $publish_offer_id = $offer_id->offerId;
+                        $offer_status = 'UNPUBLISHED';
+
+                        $this->logs[] = $this->log($result->listing_id, 'create_offer', [
+                            'status' => 'success',
+                            'action' => 'created',
+                            'response' => $offer_create
+                        ]);
+                    }else{
+                        // Unset the listingDescription in $offer_payload so we don't include it in the log
+                        unset($offer_payload['listingDescription']);
+
+                        $this->logs[] = $this->log($result->listing_id, 'create_offer', [
+                            'status' => 'error',
+                            'action' => 'none required',
+                            'response' => $offer_create,
+                            'payload' => $offer_payload
+                        ]);
+                    }
                 }
             }
         }
+
+        // Publish the offer
+        if(!is_null($publish_offer_id) && $offer_status==='UNPUBLISHED') {
+            $publish = $this->api('https://api.ebay.com/sell/inventory/v1/offer/' . $publish_offer_id . '/publish/', 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+
+            if($publish['status']==='success'&&$publish['response_code']===200){
+                $publish_response = json_decode($publish['response']);
+                $listing_id = $publish_response->listingId;
+                $this->update_listing_id($listing_id, $result->listing_id);
+                /*$this->status['publish_offer_status'] = 'success';
+                $this->status['publish_offer_response'] = $publish_response;*/
+
+
+                // On publishing we need to re-save
+
+
+
+                $this->logs[] = $this->log($result->listing_id, 'publish_offer', [
+                    'status' => 'success',
+                    'action' => 'published',
+                    'response' => $publish
+                ]);
+            }else{
+                /*$this->status['publish_offer_status'] = 'error';
+                $this->status['publish_offer_response'] = json_decode($publish['response']);*/
+
+                $this->logs[] = $this->log($result->listing_id, 'publish_offer', [
+                    'status' => 'error',
+                    'action' => 'none required',
+                    'response' => $publish
+                ]);
+            }
+        }
+        return $this;
     }
 
     protected function item_payload(WC_Product $product, $qty, $type, $result = null, WC_Product $tyre = null, WC_Product $nut_bolt = null, $description = null){
@@ -300,5 +405,61 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $offer['marketplaceId'] = 'EBAY_GB';
         $offer['format'] = 'FIXED_PRICE';
         $offer['availableQuantity'] = min(max(floor(($wheel->get_stock_quantity() - $this->buffer) / $qty), 0), max(floor(($tyre->get_stock_quantity() - $this->buffer) / $qty), 0));
+        $offer['categoryId'] = '179679';
+        $offer['listingDescription'] = $listing_description;
+        $offer['listingPolicies'] = [
+            //'fulfillmentPolicyId' => '163248243010',
+            'fulfillmentPolicyId' => '197048873010',
+            'paymentPolicyId' => '191152500010',
+            'returnPolicyId' => '75920337010'
+        ];
+        $offer['pricingSummary'] = [
+            'price' => [
+                'currency' => 'GBP',
+                'value' => $reg_price
+            ]
+        ];
+        $offer['quantityLimitPerBuyer'] = $limitPerBuyer;
+        $offer['includeCatalogProductDetails'] = true;
+        $offer['merchantLocationKey'] = 'STRAT';
+        return $offer;
+    }
+
+    private function is_offer_update_required($offer_id, WC_Product $wheel, WC_Product $tyre, int $qty){
+        global $wpdb;
+        $offer_table = $wpdb->prefix . 'fbf_ebay_packages_offers';
+
+        $ebay_price_wheel = get_post_meta($wheel->get_id(), '_ebay_price', true);
+        $ebay_price_tyre = get_post_meta($tyre->get_id(), '_ebay_price', true);
+        $ebay_price = $ebay_price_tyre + $ebay_price_wheel;
+        if($ebay_price > 0) {
+            $reg_price = $ebay_price;
+        }else{
+            $reg_price = (float) $wheel->get_regular_price() + (float) $tyre->get_regular_price();
+        }
+        $vat = ($reg_price/100) * 20;
+        $product_price = number_format(($reg_price + $vat) * $qty, 2, '.', '');
+
+        $product_qty = min(max(floor(($wheel->get_stock_quantity() - $this->buffer) / $qty), 0), max(floor(($tyre->get_stock_quantity() - $this->buffer) / $qty), 0));
+
+        // Look in the $offer_table for the id
+        $q = $wpdb->prepare("SELECT *
+            FROM {$offer_table}
+            WHERE offer_id = %s", $offer_id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r!==false&&!empty($r)) {
+            // We have a match!
+            if (!empty($r['payload'])) {
+                $payload = unserialize($r['payload']);
+                if(is_array($payload) && isset($payload['availableQuantity']) && isset($payload['pricingSummary']['price']['value'])){
+                    if((int)$payload['availableQuantity']===(int)$product_qty&&(float)$payload['pricingSummary']['price']['value']===(float)$product_price){
+                        return false;
+                    }else{
+                        return true;
+                    }
+                }
+            }
+        }
+        return true;
     }
 }
