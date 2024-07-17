@@ -1160,6 +1160,14 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $package_name = filter_var($_REQUEST['package_name'], FILTER_SANITIZE_STRING);
         $package_description = filter_var($_REQUEST['package_desc'], FILTER_SANITIZE_STRING);
 
+        if(strlen(stripslashes(htmlspecialchars_decode($package_name))) > 80){
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'The title is too long, 80 characters max',
+            ]);
+            die();
+        }
+
         // Get the products
         $wheel_stock = get_post_meta($wheel_id, '_stock', true);
         $tyre_stock = get_post_meta($tyre_id, '_stock', true);
@@ -1184,7 +1192,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             $pid = $wpdb->insert_id;
             // Now create the entry in the listings table - using $i as the value in post_id instead of an actual product, this will serve as a lookup
             $i2 = $wpdb->insert($listings_table, [
-                'name' => $package_name,
+                'name' => stripslashes($package_name),
                 'post_id' => $pid,
                 'status' => 'active',
                 'type' => 'package',
@@ -1208,6 +1216,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
         }
 
         if($i2 && $u && $i3){
+            // Now we need to list the new package
+            $sync = Fbf_Ebay_Packages_Admin::synchronise('manual', 'packages', [$sku]);
+
             echo json_encode([
                 'status' => 'success',
             ]);
@@ -1345,6 +1356,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     ],
                     'name' => $result['name'],
                     'created' => $result['created'],
+                    'l_id' => $result['l_id'],
+                    'qty' => $result['qty'],
                 ];
             }
         }

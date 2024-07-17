@@ -350,13 +350,27 @@
 			columns: [
 				{ data: 'name', rowId: 'l_id' },
 				{ data: 'created' },
+				{ data: 'qty' },
+				{ data: 'l_id' },
 				{
 					"className":      'details-control',
 					"orderable":      false,
 					"data":           null,
 					"defaultContent": '<a href="#" class="dashicons dashicons-arrow-down-alt2"></a>'
 				},
-			]
+			],
+			columnDefs: [
+				{
+					targets: 3,
+					render: function ( data, type, row, meta ) {
+						if(data){
+							return '<a href="https://www.ebay.co.uk/itm/'+data+'" style="text-decoration: none;" target="_blank">'+data+'<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a>';
+						}else{
+							return ''
+						}
+					}
+				}
+			],
 		});
 
 

@@ -105,11 +105,10 @@ class Fbf_Ebay_Packages_Synchronise
                     }
 
                     $item = $ebay->list_item($product, $result, $lq); // TODO: refactor this block when we allow for multiple packs
-                    $this->log_ids = array_merge($this->log_ids, $item->logs);
-                    $this->synch_items[] = $item;
-                    $count++;
-                    //}
                 }
+                $this->log_ids = array_merge($this->log_ids, $item->logs);
+                $this->synch_items[] = $item;
+                $count++;
             }
         }
 

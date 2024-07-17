@@ -11,9 +11,11 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $auth = new Fbf_Ebay_Packages_Api_Auth();
         $token = $auth->get_valid_token();
         $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
+        $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
         $q = $wpdb->prepare("SELECT description from {$post_ids_table} WHERE listing_id = %s", $result->listing_id);
         $r = $wpdb->get_col($q);
         $this->package_description = $r[0];
+        $force_inv_update = true;
 
         if($token['status']==='success'){
             $payload = $this->item_payload($wheel, 4, '', $result, $tyre, $nut_bolt, $r[0]);
@@ -28,7 +30,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                 $tyre_stock = get_post_meta($tyre->get_id(), '_stock', true);
 
                 // If there is a change of quantity OR if the inventory item has not yet been created:
-                if($curr_qty!=min($wheel_stock, $tyre_stock) || $result->inventory_sku===null){
+                if($curr_qty!=min($wheel_stock, $tyre_stock) || $result->inventory_sku===null || $force_inv_update){
                     //Create or update inventory item
                     $create_or_update_inv = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $sku, 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
 
@@ -121,7 +123,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                     $new_update_required = $this->is_offer_update_required($result->offer_id, $wheel, $tyre, $qty);
 
                     // Force an update
-                    //$new_update_required = true;
+                    $new_update_required = true;
 
                     if($new_update_required){
                         // Update the offer
@@ -134,6 +136,16 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
 
                             // Unset the listingDescription in $offer_payload so we don't include it in the log
                             unset($offer_payload['listingDescription']);
+
+                            // Figure out if we need to publish it
+                            $q = $wpdb->prepare("SELECT listing_id FROM {$listings_table} WHERE id = %s", $result->listing_id);
+                            $res = $wpdb->get_col($q, 0);
+                            if(is_null($res[0])){
+                                // listing_id is null - need to publish
+                                $publish_offer_id = $result->offer_id;
+                                $offer_status = 'UNPUBLISHED';
+                            }
+
 
                             $this->logs[] = $this->log($result->listing_id, 'update_offer', [
                                 'status' => 'success',
@@ -256,7 +268,8 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                 ]
             ];
             $item['condition'] = 'NEW';
-            $item['packageWeightAndSize'] = [
+            // Comment out weight and size because potentially causing an issue with publishing the listing
+            /*$item['packageWeightAndSize'] = [
                 'dimensions' => [
                     'height' => $tyre->get_height(),
                     'length' => $tyre->get_length(),
@@ -268,10 +281,10 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                     'unit' => 'KILOGRAM',
                     'value' => ($tyre->get_weight() + $wheel->get_weight()) * $qty,
                 ]
-            ];
+            ];*/
             $wheel_aspects = $this->get_wheel_aspects($wheel, $qty);
             $tyre_aspects = $this->get_tyre_aspects($tyre, $qty);
-            $title = html_entity_decode($result->name);
+            $title = stripslashes(html_entity_decode($result->name));
 
             // Combine the aspects for packages
             $aspects = [];
@@ -303,6 +316,9 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                 if(!key_exists($wheel_key, $aspects)){
                     if($wheel_key!=='Brand' && $wheel_key!=='Type'){
                         $aspects[$wheel_key] = $wheel_aspect;
+                    }else if($wheel_key==='Brand'){
+                        $brand = $wheel_aspect[0];
+                        $aspects[$wheel_key] = $wheel_aspect;
                     }
                 }
             }
@@ -317,8 +333,12 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
             $item['product'] = [
                 'title' => $title,
                 'description' => $description,
-                'aspects' => $aspects
+                'aspects' => $aspects,
+                'mpn' => 'tp.q' . $qty . '.' . $result->sku,
             ];
+            if($brand){
+                $item['product']['brand'] = $brand;
+            }
             // Image
             if($this->use_test_image){
                 $item['product']['imageUrls'] = [
@@ -389,7 +409,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $offer = [];
         $ebay_price_wheel = get_post_meta($wheel->get_id(), '_ebay_price', true);
         $ebay_price_tyre = get_post_meta($tyre->get_id(), '_ebay_price', true);
-        $ebay_price = $ebay_price_tyre + $ebay_price_wheel;
+        $ebay_price = (float) $ebay_price_tyre + (float) $ebay_price_wheel;
         if($ebay_price > 0) {
             $reg_price = $ebay_price;
         }else{

@@ -1138,7 +1138,7 @@ class Fbf_Ebay_Packages_Admin {
             <select id="package_nut_bolt" name="package_nut_bolt" style="width: 99%; max-width: 25em;" disabled></select>
         </p>
         <p>
-            <label for="package_name">Enter the Title of the Package:</label>
+            <label for="package_name">Enter the Title of the Package (80 characters maximum):</label>
             <input type="text" id="package_name" name="package_name" style="display: block; width: 99%;"/>
         </p>
         <p>
@@ -1159,6 +1159,8 @@ class Fbf_Ebay_Packages_Admin {
             <tr>
                 <th>Title</th>
                 <th>Created</th>
+                <th>Qty</th>
+                <th>Listing ID</th>
                 <th></th>
             </tr>
             </thead>
@@ -1169,6 +1171,8 @@ class Fbf_Ebay_Packages_Admin {
             <tr>
                 <th>Title</th>
                 <th>Created</th>
+                <th>Qty</th>
+                <th>Listing ID</th>
                 <th></th>
             </tr>
             </tfoot>
