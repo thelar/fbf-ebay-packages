@@ -204,7 +204,7 @@ class Fbf_Ebay_Packages_Admin {
         if($type==='packages'){
             $sync_result = $sync->run(['package'], $items);
         }else{
-            $sync_result = $sync->run(['tyre', 'wheel'], $items);
+            $sync_result = $sync->run(['tyre', 'wheel', 'package'], $items);
         }
 
         //$q = $wpdb->prepare("INSERT INTO {$table} (hook, type, log) VALUES (%s, %s, %s)", $via, $type, serialize($sync_result));
