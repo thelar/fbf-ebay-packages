@@ -1358,6 +1358,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     'created' => $result['created'],
                     'l_id' => $result['l_id'],
                     'qty' => $result['qty'],
+                    'id' => $result['id'],
                 ];
             }
         }

@@ -243,6 +243,9 @@
 			var row = table.row( tr );
 			var $icon = $(this);
 			console.log($icon);
+			console.log(row);
+			console.log(row.child);
+			console.log(row.data());
 
 			if( row.child.isShown() ) {
 				// This row is already open - close it
@@ -252,26 +255,6 @@
 			}else{
 				// Open this row
 				row.child(format(row.data())).show();
-				tr.addClass('shown');
-				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
-			}
-			return false;
-		});
-
-		$('#dt_packages tbody').on('click', 'td.details-control a', function () {
-			var tr = $(this).closest('tr');
-			var row = table.row( tr );
-			var $icon = $(this);
-			console.log($icon);
-
-			if( row.child.isShown() ) {
-				// This row is already open - close it
-				row.child.hide();
-				tr.removeClass('shown');
-				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
-			}else{
-				// Open this row
-				row.child.show();
 				tr.addClass('shown');
 				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
 			}
@@ -371,6 +354,29 @@
 					}
 				}
 			],
+		});
+
+		packages.on('click', 'td.details-control a', function () {
+			var tr = $(this).closest('tr');
+			var row = packages.row( tr );
+			var $icon = $(this);
+			console.log($icon);
+			console.log(row);
+			console.log(row.child);
+			console.log(row.data());
+
+			if( row.child.isShown() ) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass('shown');
+				$icon.removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+			}else{
+				// Open this row
+				row.child(format(row.data())).show();
+				tr.addClass('shown');
+				$icon.removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+			}
+			return false;
 		});
 
 
@@ -973,6 +979,7 @@
 		function format(d){
 			console.log('format');
 			console.log(d);
+			console.log(d.id);
 
 			let data = {
 				action: 'fbf_ebay_packages_listing_info',
@@ -1175,6 +1182,11 @@
 				}
 			});
 
+			return '<table cellpadding="5" cellspacing="0" border="0" style="width: 100%;" id="child_'+d.id+'">'+
+				'</table>';
+		}
+
+		function format3(d){
 			return '<table cellpadding="5" cellspacing="0" border="0" style="width: 100%;" id="child_'+d.id+'">'+
 				'</table>';
 		}
