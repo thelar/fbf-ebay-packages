@@ -330,15 +330,58 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                 }
             }
 
+            $package_aspects = [
+                'Aspect Ratio' => $tyre_aspects['Aspect Ratio'],
+                'Tyre Width' => $tyre_aspects['Tyre Width'],
+                'Package Quantity' => [
+                    $qty
+                ],
+                'Wheel Diameter' => $wheel_aspects['Rim Diameter'],
+                'Tyre Brand' => $tyre_aspects['Brand'],
+                'Rim Brand' => $wheel_aspects['Brand'],
+                'Offset (ET)' => $wheel_aspects['Offset'],
+                'Type' => $tyre_aspects['Type'],
+                'Number of Studs' => $wheel_aspects['Number of Studs'],
+                'Wheel Width' => $wheel_aspects['Rim Width'],
+                'Tyre Diameter' => $tyre_aspects['Rim Diameter'],
+                'Wet Grip Performance (A-G)' => $tyre_aspects['Wet grip performance (A-G)'],
+                'Tyre Fuel Efficiency (A-G)' => $tyre_aspects['Tyre fuel efficiency (A-G)'],
+                'Wheel Material' => get_term_by('id', $product->get_category_ids()[0], 'product_cat')->name == 'Steel Wheel' ? ['Steel'] : ['Alloy'],
+                'External Rolling Noise (dB; class)' => $tyre_aspects['External rolling noise (dB; class)'],
+                'Stud Diameter' => $wheel_aspects['Stud Diameter'],
+                'Speed Rating' => $tyre_aspects['Speed Rating'],
+                'Tyre Manufacturer Part Number' => $tyre_aspects['Manufacturer Part Number'],
+                'Rim Manufacturer Part Number' => $wheel_aspects['Manufacturer Part Number'],
+                'Load Index' => $tyre_aspects['Load Index'],
+                'Compatible Vehicle Type' => $tyre_aspects['Vehicle Type'],
+                'Country/Region of Manufacture' => $tyre_aspects['Country/Region of Manufacture'],
+                'Wheel Model' => [$wheel->get_attribute('pa_model-name')],
+                'Tyre Model' => [$tyre->get_attribute('pa_model-name')],
+            ];
+            if($wheel->get_attributes('pa_wheel-colour')){
+                $package_aspects['Wheel Colour'] = [$wheel->get_attribute('pa_wheel-colour')];
+            }
+            if($tyre->get_attributes('pa_tyre-runflat')){
+                $package_aspects['Run Flat'] = $tyre->get_attribute('pa_tyre-runflat') == 'True' ? ['Yes'] : ['No'];
+            }
+            if($wheel->get_attributes('pa_centre-bore')){
+                $package_aspects['Centre Bore'] = [$wheel->get_attribute('pa_centre-bore')];
+            }
+            if($tyre->get_attribute('pa_tyre-type') == 'Winter'){
+                $package_aspects['Snow Traction'] = ['Yes'];
+            }else{
+                $package_aspects['Snow Traction'] = ['No'];
+            }
+
             $item['product'] = [
                 'title' => $title,
                 'description' => $description,
-                'aspects' => $aspects,
-                'mpn' => 'tp.q' . $qty . '.' . $result->sku,
+                'aspects' => $package_aspects,
+                //'mpn' => 'tp.q' . $qty . '.' . $result->sku,
             ];
-            if($brand){
+            /*if($brand){
                 $item['product']['brand'] = $brand;
-            }
+            }*/
             // Image
             if($this->use_test_image){
                 $item['product']['imageUrls'] = [
@@ -425,7 +468,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $offer['marketplaceId'] = 'EBAY_GB';
         $offer['format'] = 'FIXED_PRICE';
         $offer['availableQuantity'] = min(max(floor(($wheel->get_stock_quantity() - $this->buffer) / $qty), 0), max(floor(($tyre->get_stock_quantity() - $this->buffer) / $qty), 0));
-        $offer['categoryId'] = '179679';
+        $offer['categoryId'] = '179681'; // 179679
         $offer['listingDescription'] = $listing_description;
         $offer['listingPolicies'] = [
             //'fulfillmentPolicyId' => '163248243010',

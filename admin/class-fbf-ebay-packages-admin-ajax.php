@@ -1878,6 +1878,10 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'publish_info'=> $this->get_publish_info($r['id'], $r['listing_id']),
             'full_log_url' => get_admin_url() . 'admin.php?page=' . $this->plugin_name . '-tyres&listing_id=' . $r['id']
         ];
+        if($r['type']==='package'){
+            $result['is_package'] = true;
+            $result['package_info'] = $this->get_package_info($r['id']);
+        }
 
         if($r['type']==='wheel'){
             $result['fitting_info'] = $this->get_fitting_info($r['id']);
@@ -2326,6 +2330,49 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 }
             }
             $info['error_count'] = $error_count;
+        }
+        return $info;
+    }
+
+    private function get_package_info($id)
+    {
+        $info = [];
+        global $wpdb;
+        $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
+        $q = $wpdb->prepare("SELECT * FROM {$post_ids_table} WHERE listing_id = %s", $id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r){
+            $data = unserialize($r['post_ids']);
+            $key = "boughto_chassis_{$data['chassis_id']}";
+            $transient = get_transient($key);
+            $wheel = wc_get_product($data['wheel_id']);
+            $wheel_name = $wheel->get_title();
+            $wheel_url = $wheel->get_permalink();
+            $tyre = wc_get_product($data['tyre_id']);
+            $tyre_name = $tyre->get_title();
+            $tyre_url = $tyre->get_permalink();
+            $nut_bolt = wc_get_product($data['nut_bolt_id']);
+            $nut_bolt_name = $nut_bolt->get_title();
+            $nut_bolt_url = $nut_bolt->get_permalink();
+            $info['chassis'] = [
+                'id' => $data['chassis_id'],
+                'name' => $transient['manufacturer']['name'] . ' ' . $transient['model']['name'] . ' ' . $transient['generation']['name'],
+            ];
+            $info['wheel'] = [
+                'id' => $data['wheel_id'],
+                'name' => $wheel_name,
+                'permalink' => $wheel_url,
+            ];
+            $info['tyre'] = [
+                'id' => $data['tyre_id'],
+                'name' => $tyre_name,
+                'permalink' => $tyre_url,
+            ];
+            $info['nut_bolt'] = [
+                'id' => $data['nut_bolt_id'],
+                'name' => $nut_bolt_name,
+                'permalink' => $nut_bolt_url,
+            ];
         }
         return $info;
     }

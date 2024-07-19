@@ -996,6 +996,39 @@
 					console.log(response);
 					let $child = $('#child_'+response.result.id);
 					let html = '';
+					if(response.result.is_package){
+						if(response.result.package_info.chassis){
+							html+= '' +
+								'<tr>' +
+								'<td colspan="2"><strong>Package info:</strong></td>' +
+								'</tr>' +
+								'<tr>' +
+								'<td>Chassis:</td>' +
+								'<td>'+response.result.package_info.chassis.name+'</td>' +
+								'</tr>';
+						}
+						if(response.result.package_info.wheel){
+							html+= '' +
+								'<tr>' +
+								'<td>Wheel:</td>' +
+								`<td><a href="${response.result.package_info.wheel.permalink}" target="_blank" style="text-decoration: none">${response.result.package_info.wheel.name}<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a></td>` +
+								'</tr>';
+						}
+						if(response.result.package_info.tyre){
+							html+= '' +
+								'<tr>' +
+								'<td>Tyre:</td>' +
+								`<td><a href="${response.result.package_info.tyre.permalink}" target="_blank" style="text-decoration: none">${response.result.package_info.tyre.name}<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a></td>` +
+								'</tr>';
+						}
+						if(response.result.package_info.nut_bolt){
+							html+= '' +
+								'<tr>' +
+								'<td>Nut/Bolt:</td>' +
+								`<td><a href="${response.result.package_info.nut_bolt.permalink}" target="_blank" style="text-decoration: none">${response.result.package_info.nut_bolt.name}<span class="dashicons dashicons-external" style="position: relative; top: -2px;"></span></a></td>` +
+								'</tr>';
+						}
+					}
 					if(response.result.info.created){
 						html+= '' +
 							'<tr>' +
@@ -1149,9 +1182,20 @@
 							'</td>' +
 							'</tr>';
 					}
-
-
 					$child.append(html);
+
+					if(response.result.is_package){
+						let $row = $('<tr></tr>');
+						let $col = $('<td colspan="2"></td>');
+						let $remove_button = $('<input class="button-secondary" type="submit" value="De-list Package" />');
+						$remove_button.bind('click', function(){
+							console.log('Remove package button click');
+							return false;
+						});
+						$col.append($remove_button);
+						$row.append($col);
+						$child.append($row);
+					}
 				}
 			});
 
