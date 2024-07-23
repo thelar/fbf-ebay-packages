@@ -98,6 +98,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
 
     private function create_order($order)
     {
+        global $wpdb;
         // Use the Woo API to create the order and add the meta
         $woo_order = wc_create_order();
 
@@ -158,6 +159,14 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
 
         // Add the items
         foreach($order->lineItems as $lineItem){
+            // Insert the line item into the orders table for reporting statistics
+            $ebay_orders_table = $wpdb->prefix . 'fbf_ebay_packages_orders';
+            $i = $wpdb->insert($ebay_orders_table, [
+                'qty' => $lineItem->quantity,
+                'sku' => $lineItem->sku,
+                'ebay_order_id' => $ebay_id
+            ]);
+
             $qty = $lineItem->quantity;
             $sku_a = explode('.', $lineItem->sku);
 

@@ -2165,23 +2165,64 @@ class Fbf_Ebay_Packages_Admin_Ajax
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
         $id = filter_var($_POST['id'], FILTER_SANITIZE_STRING);
+        $resp = [];
         global $wpdb;
         $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
         $q = $wpdb->prepare("SELECT * from {$table} WHERE id = %s", $id);
         $r = $wpdb->get_row($q, ARRAY_A);
-        if($r){
-            require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+        if($r&&!is_null($r['inventory_sku'])) {
+            require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-fbf-ebay-packages-api-auth.php';
             $auth = new Fbf_Ebay_Packages_Api_Auth();
             $token = $auth->get_valid_token();
 
-            $clean = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $this->inventory_sku, 'DELETE', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
-            if($clean['status']==='success'&&$clean['response_code']===204){
+            $clean = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $r['inventory_sku'], 'DELETE', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
 
+            if($clean['status']==='success'&&$clean['response_code']===204){
+                $offers_table = $wpdb->prefix . 'fbf_ebay_packages_offers';
+                $d3 = $wpdb->delete($offers_table,
+                    [
+                        'offer_id' => $r['offer_id']
+                    ]
+                );
+                $listing_compatability_table = $wpdb->prefix . 'fbf_ebay_packages_listing_compatibility';
+                $d4 = $wpdb->delete($listing_compatability_table,
+                    [
+                        'listing_id' => $r['id']
+                    ]
+                );
+            }else{
+                echo json_encode([
+                    'status' => 'error',
+                    'eBay returned an error, response code: ' . $clean['response_code']
+                ]);
+                die();
             }
         }
-        echo json_encode([
-            'id' => $id
-        ]);
+        $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
+        $d1 = $wpdb->delete($skus_table,
+            [
+                'listing_id' => $r['id']
+            ]
+        );
+        $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
+        $d2 = $wpdb->delete($post_ids_table,
+            [
+                'listing_id' => $r['id']
+            ]
+        );
+        $d5 = $wpdb->delete($table,
+            [
+                'id' => $r['id']
+            ]
+        );
+        if($d5&&$d2&&$d1){
+            $resp['status'] = 'success';
+        }else{
+            $resp['status'] = 'error';
+            $resp['error'] = '$d1 or $d2 or $d5 is false';
+        }
+
+        echo json_encode($resp);
         die();
     }
 

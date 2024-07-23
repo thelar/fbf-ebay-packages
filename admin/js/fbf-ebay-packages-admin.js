@@ -1207,8 +1207,17 @@
 									success: function (response) {
 										console.log(response);
 										$spinner.removeClass('is-active');
+										if(response.status==='success'){
+											$('#dt_packages').DataTable().ajax.reload(function(){
+												$('#dt_packages').DataTable().order([[1, 'desc']]).draw();
+											});
+										}else{
+											alert(response.error);
+										}
 									},
 								});
+							}else{
+								$spinner.removeClass('is-active');
 							}
 							return false;
 						});
