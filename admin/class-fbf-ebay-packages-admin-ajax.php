@@ -2161,6 +2161,30 @@ class Fbf_Ebay_Packages_Admin_Ajax
         die();
     }
 
+    public function fbf_ebay_packages_delete_package()
+    {
+        check_ajax_referer($this->plugin_name, 'ajax_nonce');
+        $id = filter_var($_POST['id'], FILTER_SANITIZE_STRING);
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $q = $wpdb->prepare("SELECT * from {$table} WHERE id = %s", $id);
+        $r = $wpdb->get_row($q, ARRAY_A);
+        if($r){
+            require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-api-auth.php';
+            $auth = new Fbf_Ebay_Packages_Api_Auth();
+            $token = $auth->get_valid_token();
+
+            $clean = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/' . $this->inventory_sku, 'DELETE', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB']);
+            if($clean['status']==='success'&&$clean['response_code']===204){
+
+            }
+        }
+        echo json_encode([
+            'id' => $id
+        ]);
+        die();
+    }
+
     private function get_listing_info($id)
     {
         global $wpdb;

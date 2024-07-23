@@ -330,6 +330,7 @@ class Fbf_Ebay_Packages_List_Item
         $auth = new Fbf_Ebay_Packages_Api_Auth();
         $token = $auth->get_valid_token();
         $fulfillment = $this->api(sprintf('https://api.ebay.com/sell/fulfillment/v1/order/%s/shipping_fulfillment', $ebay_order_num), 'POST', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], json_encode($payload));
+        return $fulfillment;
     }
 
     protected function log($id, $ebay_action, $log)

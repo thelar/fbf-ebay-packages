@@ -248,6 +248,8 @@ class Fbf_Ebay_Packages {
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_package_tyre', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_tyre' );
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_get_package_nut_bolt', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_nut_bolt' );
         $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_get_package_nut_bolt', $plugin_admin_ajax, 'fbf_ebay_packages_get_package_nut_bolt' );
+        $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_delete_package', $plugin_admin_ajax, 'fbf_ebay_packages_delete_package' );
+        $this->loader->add_action( 'wp_ajax_nopriv_fbf_ebay_packages_delete_package', $plugin_admin_ajax, 'fbf_ebay_packages_delete_package' );
 
         // Compatibility
         $this->loader->add_action( 'wp_ajax_fbf_ebay_packages_compatibility', $plugin_admin_ajax, 'fbf_ebay_packages_compatibility' );

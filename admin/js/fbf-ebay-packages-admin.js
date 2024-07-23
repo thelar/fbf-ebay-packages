@@ -1188,11 +1188,32 @@
 						let $row = $('<tr></tr>');
 						let $col = $('<td colspan="2"></td>');
 						let $remove_button = $('<input class="button-secondary" type="submit" value="De-list Package" />');
+						let $spinner = $('<span class="spinner"></span>');
 						$remove_button.bind('click', function(){
 							console.log('Remove package button click');
+							$spinner.addClass('is-active');
+							if(confirm(`Are you sure you want to de-list ${d.name}?`)){
+								let data = {
+									action: 'fbf_ebay_packages_delete_package',
+									ajax_nonce: fbf_ebay_packages_admin.ajax_nonce,
+									id: d.id,
+								};
+								$.ajax({
+									// eslint-disable-next-line no-undef
+									url: fbf_ebay_packages_admin.ajax_url,
+									type: 'POST',
+									data: data,
+									dataType: 'json',
+									success: function (response) {
+										console.log(response);
+										$spinner.removeClass('is-active');
+									},
+								});
+							}
 							return false;
 						});
 						$col.append($remove_button);
+						$col.append($spinner);
 						$row.append($col);
 						$child.append($row);
 					}

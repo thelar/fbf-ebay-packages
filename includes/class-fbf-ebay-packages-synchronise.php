@@ -126,7 +126,7 @@ class Fbf_Ebay_Packages_Synchronise
             foreach($results_d as $result_d){
                 // TODO: allow for packs when ready
                 require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-item.php';
-                $ebay = new Fbf_Ebay_Packages_List_Item($this->plugin_name, $this->version);
+                $ebay = new Fbf_Ebay_Packages_List_Package($this->plugin_name, $this->version);
                 $clean = $ebay->clean_item($result_d);
             }
         }
