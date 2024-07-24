@@ -101,6 +101,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
         global $wpdb;
         // Use the Woo API to create the order and add the meta
         $woo_order = wc_create_order();
+        $discount = 0;
 
         // Add the eBay order number as meta
         $ebay_id = $order->orderId;
@@ -177,13 +178,47 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
                 $qty = 1 * $lineItem->quantity;
             }
 
-            $sku = $sku_a[array_key_last($sku_a)];
-            $id = wc_get_product_id_by_sku($sku);
-            $item_id = $woo_order->add_product(wc_get_product($id), $qty);
-            $line_item  = $woo_order->get_item( $item_id, false);
-            $line_item->calculate_taxes($calculate_taxes_for);
-            $line_item->save();
+            // Firstly is it a package?
+            if(str_starts_with($lineItem->sku, 'tp')){
+                $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+                $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
+                $q = $wpdb->prepare("SELECT *
+                    FROM {$listings_table} l
+                    LEFT JOIN {$post_ids_table} p
+                    ON l.id = p.listing_id
+                    WHERE l.inventory_sku = %s", $lineItem->sku);
+                $r = $wpdb->get_row($q, ARRAY_A);
+                if(!is_null($r)){
+                    $post_ids = unserialize($r['post_ids']);
+                    $wheel_item_id = $woo_order->add_product(wc_get_product($post_ids['wheel_id']), $qty);
+                    $wheel_line_item = $woo_order->get_item($wheel_item_id, false);
+                    $wheel_line_item->save();
+                    $tyre_item_id = $woo_order->add_product(wc_get_product($post_ids['tyre_id']), $qty);
+                    $tyre_line_item = $woo_order->get_item($tyre_item_id, false);
+                    $tyre_line_item->save();
+
+                    // Calculate how many nuts or bolts are required
+                    $wheel_product = wc_get_product($wheel_item_id);
+                    $pcd = $wheel_product->get_attribute('pa_wheel-pcd');
+                    $per_wheel = substr($pcd, 0, 1);
+                    $nut_bolt_qty = $per_wheel * $qty;
+                    $nut_bolt_item_id = $woo_order->add_product(wc_get_product($post_ids['nut_bolt_id']), $nut_bolt_qty);
+                    $nut_bolt_line_item = $woo_order->get_item($nut_bolt_item_id, false);
+                    $nut_bolt_line_item->save();
+
+                    // Now apply a discount for the same value as the nuts/bolts
+                    $discount+= wc_get_price_including_tax(wc_get_product($nut_bolt_item_id)) * $nut_bolt_qty;
+                }
+            }else{
+                $sku = $sku_a[array_key_last($sku_a)];
+                $id = wc_get_product_id_by_sku($sku);
+                $item_id = $woo_order->add_product(wc_get_product($id), $qty);
+                $line_item  = $woo_order->get_item( $item_id, false);
+                $line_item->calculate_taxes($calculate_taxes_for);
+                $line_item->save();
+            }
         }
+
         $woo_order->calculate_totals();
 
         // Set the status
@@ -211,6 +246,30 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
 
         // Add Note
         $woo_order->add_order_note('eBay order number: ' . $ebay_id, false);
+
+        // Fees
+        // Get the customer country code
+        $country_code = $woo_order->get_shipping_country();
+
+        // Set the array for tax calculations
+        $calculate_tax_for = array(
+            'country' => $country_code,
+            'state' => '',
+            'postcode' => '',
+            'city' => ''
+        );
+
+        // Get a new instance of the WC_Order_Item_Fee Object
+        $item_fee = new WC_Order_Item_Fee();
+
+        $item_fee->set_name( "Discount" ); // Generic fee name
+        $item_fee->set_amount( -$discount ); // Fee amount
+        $item_fee->set_tax_class( '' ); // default for ''
+        $item_fee->set_tax_status( 'taxable' ); // or 'none'
+        $item_fee->set_total( -$discount ); // Fee amount
+
+        // Calculating Fee taxes
+        $item_fee->calculate_taxes( $calculate_tax_for );
 
         // Save
         $woo_order->save();
