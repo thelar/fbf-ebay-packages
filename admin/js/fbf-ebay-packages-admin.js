@@ -210,6 +210,7 @@
 				{ data: 'sku' },
 				{ data: 'qty' },
 				{ data: 'l_id' },
+				{ data: 'o_qty'},
 				{
 					"className":      'details-control',
 					"orderable":      false,
@@ -335,6 +336,7 @@
 				{ data: 'created' },
 				{ data: 'qty' },
 				{ data: 'l_id' },
+				{ data: 'o_qty' },
 				{
 					"className":      'details-control',
 					"orderable":      false,

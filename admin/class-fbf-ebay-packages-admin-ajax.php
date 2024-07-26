@@ -1246,12 +1246,17 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $s = 'FROM wp_fbf_ebay_packages_listings l
             INNER JOIN wp_fbf_ebay_packages_skus s 
                 ON s.listing_id = l.id
+            LEFT JOIN wp_fbf_ebay_packages_orders o
+                ON l.inventory_sku = o.sku
             WHERE l.status = %s
             AND l.type = %s';
         if(isset($_REQUEST['search']['value'])&&!empty($_REQUEST['search']['value'])){
             $s.= '
             AND (l.name LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR s.sku LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%\' OR l.listing_id LIKE \'%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) . '%\')';
         }
+        // Group by order qty
+        $s.= '
+        GROUP BY l.id';
         if(isset($_REQUEST['order'][0]['column'])){
             $dir = $_REQUEST['order'][0]['dir'];
             if($_REQUEST['order'][0]['column']==='0'){
@@ -1266,6 +1271,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
             }else if($_REQUEST['order'][0]['column']==='3'){
                 $s.= '
                 ORDER BY l.listing_id ' . strtoupper($dir);
+            }else if($_REQUEST['order'][0]['column']==='4'){
+                $s.= '
+                ORDER BY o_qty ' . strtoupper($dir);
             }
         }
         $s1 = 'SELECT count(*) as count
@@ -1274,7 +1282,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $main_q = $wpdb->prepare("{$s1}", 'active', $type);
         $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
 
-        $s2 = 'SELECT *, l.listing_id as l_id
+        $s2 = 'SELECT *, l.listing_id as l_id, l.id as t_id, l.qty as l_qty, s.sku as s_sku, SUM(o.qty) as o_qty
         ' . $s;
         $paginated_q = $wpdb->prepare("{$s2}
             LIMIT {$length}
@@ -1283,18 +1291,19 @@ class Fbf_Ebay_Packages_Admin_Ajax
         if($results!==false){
             foreach($results as $result){
                 $data[] = [
-                    'DT_RowId' => sprintf('row_%s', $result['id']),
+                    'DT_RowId' => sprintf('row_%s', $result['t_id']),
                     'DT_RowClass' => 'dataTable_listing',
                     'DT_RowData' => [
-                        'pKey' => $result['id']
+                        'pKey' => $result['t_id']
                     ],
                     'name' => $result['name'],
-                    'sku' => $result['sku'],
-                    'qty' => $result['qty'],
+                    'sku' => $result['s_sku'],
+                    'qty' => $result['l_qty'],
                     'l_id' => $result['l_id'],
                     'post_id' => $result['post_id'],
-                    'id' => $result['id'],
-                    'type' => ucwords($type)
+                    'id' => $result['t_id'],
+                    'type' => ucwords($type),
+                    'o_qty' => $result['o_qty']?:0
                 ];
             }
         }
@@ -1318,12 +1327,17 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $data = [];
 
         $s = 'FROM wp_fbf_ebay_packages_listings l
+            LEFT JOIN wp_fbf_ebay_packages_orders o
+                ON l.inventory_sku = o.sku
             WHERE l.status = %s
             AND l.type = %s';
         if(isset($_REQUEST['search']['value'])&&!empty($_REQUEST['search']['value'])){
             $s.= '
             AND l.name LIKE \'%%' . filter_var($_REQUEST['search']['value'], FILTER_SANITIZE_STRING) .'%%\'';
         }
+        // Group by order qty
+        $s.= '
+        GROUP BY l.id';
         if(isset($_REQUEST['order'][0]['column'])) {
             $dir = $_REQUEST['order'][0]['dir'];
             if ($_REQUEST['order'][0]['column'] === '0') {
@@ -1332,6 +1346,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
             }else if ($_REQUEST['order'][0]['column'] === '1'){
                 $s .= '
                 ORDER BY l.created ' . strtoupper($dir);
+            }else if($_REQUEST['order'][0]['column']==='2'){
+                $s.= '
+                ORDER BY o_qty ' . strtoupper($dir);
             }
         }
         $s1 = 'SELECT count(*) as count
@@ -1340,7 +1357,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $main_q = $wpdb->prepare("{$s1}", 'active', $type);
         $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
 
-        $s2 = 'SELECT *, l.listing_id as l_id
+        $s2 = 'SELECT *, l.listing_id as l_id, l.id as t_id, l.qty as l_qty, l.created as l_created, SUM(o.qty) as o_qty
         ' . $s;
         $paginated_q = $wpdb->prepare("{$s2}
             LIMIT {$length}
@@ -1352,13 +1369,14 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     'DT_RowId' => sprintf('row_%s', $result['id']),
                     'DT_RowClass' => 'dataTable_listing',
                     'DT_RowData' => [
-                        'pKey' => $result['id']
+                        'pKey' => $result['t_id']
                     ],
                     'name' => $result['name'],
-                    'created' => $result['created'],
+                    'created' => $result['l_created'],
                     'l_id' => $result['l_id'],
-                    'qty' => $result['qty'],
-                    'id' => $result['id'],
+                    'qty' => $result['l_qty'],
+                    'id' => $result['t_id'],
+                    'o_qty' => $result['o_qty']?:0
                 ];
             }
         }

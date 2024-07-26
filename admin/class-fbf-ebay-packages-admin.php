@@ -946,6 +946,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>SKU</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th>Sales</th>
                 <th></th>
             </tr>
             </thead>
@@ -958,6 +959,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>SKU</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th>Sales</th>
                 <th></th>
             </tr>
             </tfoot>
@@ -975,6 +977,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>SKU</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th>Sales</th>
                 <th></th>
             </tr>
             </thead>
@@ -987,6 +990,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>SKU</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th>Sales</th>
                 <th></th>
             </tr>
             </tfoot>
@@ -1161,6 +1165,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>Created</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th>Sales</th>
                 <th></th>
             </tr>
             </thead>
@@ -1173,6 +1178,7 @@ class Fbf_Ebay_Packages_Admin {
                 <th>Created</th>
                 <th>Qty</th>
                 <th>Listing ID</th>
+                <th>Sales</th>
                 <th></th>
             </tr>
             </tfoot>
