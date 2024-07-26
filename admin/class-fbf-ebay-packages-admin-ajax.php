@@ -1276,14 +1276,10 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 ORDER BY o_qty ' . strtoupper($dir);
             }
         }
-        $s1 = 'SELECT count(*) as count
-        ' . $s;
-
-        $main_q = $wpdb->prepare("{$s1}", 'active', $type);
-        $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
-
         $s2 = 'SELECT *, l.listing_id as l_id, l.id as t_id, l.qty as l_qty, s.sku as s_sku, SUM(o.qty) as o_qty
         ' . $s;
+        $non_paginated_q = $wpdb->prepare("{$s2}", 'active', $type);
+        $count_results = $wpdb->get_results($non_paginated_q, ARRAY_A);
         $paginated_q = $wpdb->prepare("{$s2}
             LIMIT {$length}
             OFFSET {$start}", 'active', $type);
@@ -1310,8 +1306,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
         echo json_encode([
             'draw' => $draw,
-            'recordsTotal' => $count,
-            'recordsFiltered' => $count,
+            'recordsTotal' => count($count_results),
+            'recordsFiltered' => count($count_results),
             'data' => $data
         ]);
         die();
@@ -1351,14 +1347,11 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 ORDER BY o_qty ' . strtoupper($dir);
             }
         }
-        $s1 = 'SELECT count(*) as count
-        ' . $s;
-
-        $main_q = $wpdb->prepare("{$s1}", 'active', $type);
-        $count = $wpdb->get_row($main_q, ARRAY_A)['count'];
 
         $s2 = 'SELECT *, l.listing_id as l_id, l.id as t_id, l.qty as l_qty, l.created as l_created, SUM(o.qty) as o_qty
         ' . $s;
+        $non_paginated_q = $wpdb->prepare("{$s2}", 'active', $type);
+        $count_results = $wpdb->get_results($non_paginated_q, ARRAY_A);
         $paginated_q = $wpdb->prepare("{$s2}
             LIMIT {$length}
             OFFSET {$start}", 'active', $type);
@@ -1383,8 +1376,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
         echo json_encode([
             'draw' => $draw,
-            'recordsTotal' => $count,
-            'recordsFiltered' => $count,
+            'recordsTotal' => count($count_results),
+            'recordsFiltered' => count($count_results),
             'data' => $data
         ]);
         die();
