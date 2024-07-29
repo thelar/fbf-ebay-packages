@@ -459,7 +459,11 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
             $reg_price = (float) $wheel->get_regular_price() + (float) $tyre->get_regular_price();
         }
 
-        $listing_description = $this->package_description;
+        if($this->get_html_listing($qty, $sku, $id)){
+            $listing_description = $this->get_html_listing($qty, $sku, $id);
+        }else{
+            $listing_description = $this->package_description;
+        }
         $limitPerBuyer = 1;
 
         $vat = ($reg_price/100) * 20;
@@ -470,6 +474,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $offer['availableQuantity'] = min(max(floor(($wheel->get_stock_quantity() - $this->buffer) / $qty), 0), max(floor(($tyre->get_stock_quantity() - $this->buffer) / $qty), 0));
         $offer['categoryId'] = '179681'; // 179679
         $offer['listingDescription'] = $listing_description;
+
         $offer['listingPolicies'] = [
             //'fulfillmentPolicyId' => '163248243010',
             'fulfillmentPolicyId' => '197048873010',
@@ -524,5 +529,32 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
             }
         }
         return true;
+    }
+
+    private function get_html_listing($qty, $product_id, $listing_id)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $p = $wpdb->prepare("SELECT listing_id
+            FROM {$table}
+            WHERE id=%s", $listing_id);
+        $r = $wpdb->get_row($p);
+
+        if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+            $url = "https://";
+        else
+            $url = "http://";
+        // Append the host(domain name, ip) to the URL.
+        $url.= $_SERVER['HTTP_HOST'];
+        $template = $url . '/ebay_template?package_id=' . $product_id . '&qty=' . $qty;
+        if($r->listing_id){
+            $template.= '&listing_id=' . $r->listing_id;
+        }
+        $html = file_get_contents($template);
+        if(!empty($html)){
+            return $html;
+        }else{
+            return false;
+        }
     }
 }
