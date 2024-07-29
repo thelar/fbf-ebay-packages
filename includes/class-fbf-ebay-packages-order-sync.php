@@ -198,7 +198,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
                     $tyre_line_item->save();
 
                     // Calculate how many nuts or bolts are required
-                    $wheel_product = wc_get_product($wheel_item_id);
+                    $wheel_product = wc_get_product($post_ids['wheel_id']);
                     $pcd = $wheel_product->get_attribute('pa_wheel-pcd');
                     $per_wheel = substr($pcd, 0, 1);
                     $nut_bolt_qty = $per_wheel * $qty;
@@ -207,7 +207,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
                     $nut_bolt_line_item->save();
 
                     // Now apply a discount for the same value as the nuts/bolts
-                    $discount+= wc_get_price_including_tax(wc_get_product($nut_bolt_item_id)) * $nut_bolt_qty;
+                    $discount+= wc_get_price_excluding_tax(wc_get_product($post_ids['nut_bolt_id'])) * $nut_bolt_qty;
                 }
             }else{
                 $sku = $sku_a[array_key_last($sku_a)];
@@ -270,6 +270,8 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
 
         // Calculating Fee taxes
         $item_fee->calculate_taxes( $calculate_tax_for );
+        $woo_order->add_item($item_fee);
+        $woo_order->calculate_totals();
 
         // Save
         $woo_order->save();
