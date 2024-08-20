@@ -1141,6 +1141,10 @@ class Fbf_Ebay_Packages_Admin {
             <label for="package_nut_bolt">Choose the Nut/Bolt for the Package:</label>
             <select id="package_nut_bolt" name="package_nut_bolt" style="width: 99%; max-width: 25em;" disabled></select>
         </p>
+        <div>
+            <input type="checkbox" name="package_tpms_include" id="package_tpms_include"/>
+            <label for="package_tpms_include">Include TPMS Sensor</label>
+        </div>
         <p>
             <label for="package_name">Enter the Title of the Package (80 characters maximum):</label>
             <input type="text" id="package_name" name="package_name" style="display: block; width: 99%;"/>

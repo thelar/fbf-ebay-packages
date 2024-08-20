@@ -1159,6 +1159,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $nut_bolt_id = filter_var($_REQUEST['nut_bolt_id'], FILTER_SANITIZE_STRING);
         $package_name = filter_var($_REQUEST['package_name'], FILTER_SANITIZE_STRING);
         $package_description = filter_var($_REQUEST['package_desc'], FILTER_SANITIZE_STRING);
+        $include_tpms = filter_var($_REQUEST['tpms'], FILTER_VALIDATE_BOOLEAN);
 
         if(strlen(stripslashes(htmlspecialchars_decode($package_name))) > 80){
             echo json_encode([
