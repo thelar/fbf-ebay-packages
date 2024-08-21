@@ -206,6 +206,15 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
                     $nut_bolt_line_item = $woo_order->get_item($nut_bolt_item_id, false);
                     $nut_bolt_line_item->save();
 
+                    // Handle TPMS
+                    if($post_ids['has_tpms']){
+                        $tpms_item = get_field('tpms_sensor', 'options');
+                        $tpms_product = wc_get_product($tpms_item[0]);
+                        $tpms_item_id = $woo_order->add_product($tpms_product, $qty);
+                        $tpms_line_item = $woo_order->get_item($tpms_item_id, false);
+                        $tpms_line_item->save();
+                    }
+
                     // Now apply a discount for the same value as the nuts/bolts
                     $discount+= wc_get_price_excluding_tax(wc_get_product($post_ids['nut_bolt_id'])) * $nut_bolt_qty;
                 }

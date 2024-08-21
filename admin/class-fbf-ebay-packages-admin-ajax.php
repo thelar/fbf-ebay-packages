@@ -1181,6 +1181,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
             'wheel_id' => $wheel_id,
             'tyre_id' => $tyre_id,
             'nut_bolt_id' => $nut_bolt_id,
+            'has_tpms' => $include_tpms,
         ];
 
         $i = $wpdb->insert($post_ids_table, [

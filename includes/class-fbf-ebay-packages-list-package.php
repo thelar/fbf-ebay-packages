@@ -3,6 +3,7 @@
 class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
 {
     private $package_description;
+    private $has_tpms;
 
     public function list_item(WC_Product $wheel, WC_Product $tyre, WC_Product $nut_bolt, $qty, $result)
     {
@@ -12,13 +13,14 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         $token = $auth->get_valid_token();
         $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
         $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
-        $q = $wpdb->prepare("SELECT description from {$post_ids_table} WHERE listing_id = %s", $result->listing_id);
-        $r = $wpdb->get_col($q);
-        $this->package_description = $r[0];
+        $q = $wpdb->prepare("SELECT * from {$post_ids_table} WHERE listing_id = %s", $result->listing_id);
+        $r = $wpdb->get_row($q);
+        $this->package_description = $r->description;
+        $this->has_tpms = unserialize($r->post_ids)['has_tpms'];
         $force_inv_update = true;
 
         if($token['status']==='success'){
-            $payload = $this->item_payload($wheel, 4, '', $result, $tyre, $nut_bolt, $r[0]);
+            $payload = $this->item_payload($wheel, 4, '', $result, $tyre, $nut_bolt, $this->has_tpms, $this->package_description);
 
             // Only create the item if the image exists
             if(isset($payload['product']['imageUrls'])) {
@@ -243,7 +245,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
         return $this;
     }
 
-    protected function item_payload(WC_Product $product, $qty, $type, $result = null, WC_Product $tyre = null, WC_Product $nut_bolt = null, $description = null){
+    protected function item_payload(WC_Product $product, $qty, $type, $result = null, WC_Product $tyre = null, WC_Product $nut_bolt = null, $has_tpms = false, $description = null){
         $item = [];
         $wheel = $product;
         $wheel_brand_terms = get_the_terms($wheel->get_id(), 'pa_brand-name');
@@ -399,11 +401,19 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
                     $main_tyre_image = wp_get_attachment_image_src(get_post_thumbnail_id($tyre->get_id()), 'fbf-1950-1950')[0];
                 }
                 $nut_bolt_image = wp_get_attachment_image_src(get_post_thumbnail_id($nut_bolt->get_id()), 'fbf-1950-1950')[0];
+
                 $item['product']['imageUrls'] = [
                     $main_tyre_image,
                     $main_wheel_image,
                     $nut_bolt_image
                 ];
+
+                if($has_tpms){
+                    $tpms_item = get_field('tpms_sensor', 'options');
+                    $tpms_product = wc_get_product($tpms_item[0]);
+                    $tpms_image = wp_get_attachment_image_src(get_post_thumbnail_id($tpms_product->get_id()), 'fbf-1950-1950')[0];
+                    $item['product']['imageUrls'][] = $tpms_image;
+                }
             }
         }
         return $item;
@@ -450,6 +460,7 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
     private function offer_payload($wheel, $tyre, $sku, $qty, $type, $id)
     {
         $offer = [];
+
         $ebay_price_wheel = get_post_meta($wheel->get_id(), '_ebay_price', true);
         $ebay_price_tyre = get_post_meta($tyre->get_id(), '_ebay_price', true);
         $ebay_price = (float) $ebay_price_tyre + (float) $ebay_price_wheel;
@@ -457,6 +468,17 @@ class Fbf_Ebay_Packages_List_Package extends Fbf_Ebay_Packages_List_Item
             $reg_price = $ebay_price;
         }else{
             $reg_price = (float) $wheel->get_regular_price() + (float) $tyre->get_regular_price();
+        }
+
+        if($this->has_tpms){
+            $tpms_item = get_field('tpms_sensor', 'options');
+            $tpms_product = wc_get_product($tpms_item[0]);
+            $ebay_price_tpms = get_post_meta($tpms_product->get_id(), '_ebay_price', true);
+            if($ebay_price_tpms > 0){
+                $reg_price+= (float) $ebay_price_tpms;
+            }else{
+                $reg_price+= (float) $tpms_product->get_regular_price();
+            }
         }
 
         if($this->get_html_listing($qty, $sku, $id)){
