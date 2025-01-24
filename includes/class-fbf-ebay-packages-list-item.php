@@ -679,6 +679,7 @@ class Fbf_Ebay_Packages_List_Item
         if($type==='tyre'){
             $offer['categoryId'] = '179680';
             $description = $this->tyre_description;
+            $offer['availableQuantity'] = 0;
         }else if($type==='wheel'){
             $offer['categoryId'] = '179679';
             $description = $this->wheel_description;
