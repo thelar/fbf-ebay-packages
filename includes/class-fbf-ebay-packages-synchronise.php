@@ -120,6 +120,18 @@ class Fbf_Ebay_Packages_Synchronise
             WHERE l.status = %s
             AND l.type = %s
             AND l.inventory_sku IS NOT NULL", 'inactive', $type);
+
+        // email query
+        $subject = 'eBay delist query';
+        ob_start();
+        echo '<pre>';
+        print_r($q_d);
+        echo '</pre>';
+        $html = ob_get_clean();
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+        wp_mail('kevin.price-ward@4x4tyres.co.uk', $subject, $html, $headers);
+
         $results_d = $wpdb->get_results( $q_d );
 
         if($results_d!==false){
