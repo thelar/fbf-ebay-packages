@@ -27,6 +27,7 @@ class Fbf_Ebay_Packages_Synchronise
         $listing_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
         $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
 
+        /*
         //List items that need listing (any listings that are of the correct type and are 'active'), this will also handle updating already listed items
         //TODO: refactor here to allow for different pack sizes meaning that one listing could potentially have several ebay listings!
         if(empty($items)){
@@ -110,16 +111,29 @@ class Fbf_Ebay_Packages_Synchronise
                 $this->synch_items[] = $item;
                 $count++;
             }
-        }
+        }*/
 
         //De-list items that need removing from eBay (any items of correct $type, are 'inactive' AND have a value in the inventory_sku column)
-        $q_d = $wpdb->prepare("SELECT *
+        foreach($type as $type_l){
+            $q_d = $wpdb->prepare("SELECT l.id, l.inventory_sku, l.offer_id, l.listing_id
             FROM {$listing_table} l
             INNER JOIN {$skus_table} s
                 ON s.listing_id = l.id
             WHERE l.status = %s
             AND l.type = %s
-            AND l.inventory_sku IS NOT NULL", 'inactive', $type);
+            AND l.inventory_sku IS NOT NULL", 'inactive', $type_l);
+
+            $results_d = $wpdb->get_results( $q_d );
+            if(!empty($results_d)){
+                foreach($results_d as $result){
+                    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-item.php';
+                    $ebay = new Fbf_Ebay_Packages_List_Item($this->plugin_name, $this->version);
+                    $clean = $ebay->clean_item($result);
+                }
+            }
+        }
+
+
 
         // email query
         $subject = 'eBay delist query';

@@ -299,6 +299,35 @@ class Fbf_Ebay_Packages_List_Item
                 'response' => $clean
             ]);
 
+        }else if($clean['status']==='success'&&$clean['response_code']===404) { // No eBay listing found - still delete the database entries
+            //remove the database entries
+            global $wpdb;
+            $table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+            $offers_table = $wpdb->prefix . 'fbf_ebay_packages_offers';
+            $u = $wpdb->update($table,
+                [
+                    'inventory_sku' => null,
+                    'offer_id' => null,
+                    'listing_id' => null
+                ],
+                [
+                    'id' => $result->id
+                ]
+            );
+
+            if($result->offer_id){
+                $d = $wpdb->delete($offers_table,
+                    [
+                        'offer_id' => $result->offer_id
+                    ]
+                );
+            }
+
+            $this->log($result->id, 'delete_inv', [
+                'status' => 'error',
+                'action' => 'none required',
+                'response' => $clean
+            ]);
         }else{
             $this->log($result->id, 'delete_inv', [
                 'status' => 'error',
