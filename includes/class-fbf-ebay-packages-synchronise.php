@@ -27,7 +27,7 @@ class Fbf_Ebay_Packages_Synchronise
         $listing_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
         $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
 
-        /*
+
         //List items that need listing (any listings that are of the correct type and are 'active'), this will also handle updating already listed items
         //TODO: refactor here to allow for different pack sizes meaning that one listing could potentially have several ebay listings!
         if(empty($items)){
@@ -111,7 +111,7 @@ class Fbf_Ebay_Packages_Synchronise
                 $this->synch_items[] = $item;
                 $count++;
             }
-        }*/
+        }
 
         //De-list items that need removing from eBay (any items of correct $type, are 'inactive' AND have a value in the inventory_sku column)
         foreach($type as $type_l){
