@@ -146,7 +146,7 @@ class Fbf_Ebay_Packages_Synchronise
         $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";*/
         //wp_mail('kevin.price-ward@4x4tyres.co.uk', $subject, $html, $headers);
 
-        $results_d = $wpdb->get_results( $q_d );
+        /*$results_d = $wpdb->get_results( $q_d );
 
         if($results_d!==false){
             foreach($results_d as $result_d){
@@ -155,7 +155,9 @@ class Fbf_Ebay_Packages_Synchronise
                 $ebay = new Fbf_Ebay_Packages_List_Package($this->plugin_name, $this->version);
                 $clean = $ebay->clean_item($result_d);
             }
-        }
+        }*/
+
+
         $resp['end'] = microtime(true);
         $resp['execution_time'] = $resp['end'] - $resp['start'];
         $resp['log_ids'] = $this->log_ids;
