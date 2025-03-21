@@ -125,7 +125,7 @@ class Fbf_Ebay_Packages_Synchronise
 
             $results_d = $wpdb->get_results( $q_d );
 
-            $subject = 'eBay delist query';
+            /*$subject = 'eBay delist query';
             ob_start();
             echo '<h2>Query:</h2>';
             echo '<pre>';
@@ -138,7 +138,7 @@ class Fbf_Ebay_Packages_Synchronise
             $html = ob_get_clean();
             $headers = "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-            wp_mail('kevin.price-ward@4x4tyres.co.uk', $subject, $html, $headers);
+            wp_mail('kevin.price-ward@4x4tyres.co.uk', $subject, $html, $headers);*/
 
             if(!empty($results_d)){
                 foreach($results_d as $result){
