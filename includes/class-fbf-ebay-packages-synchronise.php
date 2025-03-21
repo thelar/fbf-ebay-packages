@@ -124,6 +124,22 @@ class Fbf_Ebay_Packages_Synchronise
             AND l.inventory_sku IS NOT NULL", 'inactive', $type_l);
 
             $results_d = $wpdb->get_results( $q_d );
+
+            $subject = 'eBay delist query';
+            ob_start();
+            echo '<h2>Query:</h2>';
+            echo '<pre>';
+            print_r($q_d);
+            echo '</pre>';
+            echo '<h2>Results:</h2>';
+            echo '<pre>';
+            print_r($results_d);
+            echo '</pre>';
+            $html = ob_get_clean();
+            $headers = "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+            wp_mail('kevin.price-ward@4x4tyres.co.uk', $subject, $html, $headers);
+
             if(!empty($results_d)){
                 foreach($results_d as $result){
                     require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbf-ebay-packages-list-item.php';
