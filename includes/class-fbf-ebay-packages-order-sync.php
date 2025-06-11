@@ -257,6 +257,8 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
         $woo_order->add_order_note('eBay order number: ' . $ebay_id, false);
 
         // Fees
+
+
         // Get the customer country code
         $country_code = $woo_order->get_shipping_country();
 
@@ -267,6 +269,18 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
             'postcode' => '',
             'city' => ''
         );
+
+        // If theres a delivery cost - add it as a fee
+        if($delivery = (int)$order->pricingSummary->deliveryCost->value + (int)$order->pricingSummary->deliveryDiscount->value){
+            $tyre_delivery = new \WC_Order_Item_Fee();
+            $tyre_delivery->set_name( 'eBay Tyre Delivery' );
+            $tyre_delivery->set_amount( $delivery/1.2 );
+            $tyre_delivery->set_tax_class( '' );
+            $tyre_delivery->set_tax_status( 'taxable' );
+            $tyre_delivery->set_total( $delivery/1.2 );
+            $tyre_delivery->calculate_taxes($calculate_tax_for);
+            $woo_order->add_item( $tyre_delivery );
+        }
 
         // Get a new instance of the WC_Order_Item_Fee Object
         $item_fee = new WC_Order_Item_Fee();
