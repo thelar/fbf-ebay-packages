@@ -707,16 +707,18 @@ class Fbf_Ebay_Packages_List_Item
         $offer['availableQuantity'] = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
         if($type==='tyre'){
             $offer['categoryId'] = '179680';
+            $fulfilment_id = '249447701010';
             $description = $this->tyre_description;
             //$offer['availableQuantity'] = 0;
         }else if($type==='wheel'){
             $offer['categoryId'] = '179679';
+            $fulfilment_id = '197048873010';
             $description = $this->wheel_description;
         }
         $offer['listingDescription'] = $listing_description;
         $offer['listingPolicies'] = [
             //'fulfillmentPolicyId' => '163248243010',
-            'fulfillmentPolicyId' => '197048873010',
+            'fulfillmentPolicyId' => $fulfilment_id,
             'paymentPolicyId' => '191152500010',
             'returnPolicyId' => '75920337010'
         ];
