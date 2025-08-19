@@ -36,7 +36,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
     public function fbf_ebay_packages_get_brands()
     {
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
-        $query = filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING);
+        $query = strip_tags($_REQUEST['q']);
         $data = [];
 
         $all_brands = get_terms([
@@ -91,7 +91,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
         if(isset($_REQUEST['brands']) && is_array($_REQUEST['brands'])){
             foreach($_REQUEST['brands'] as $brand){
-                $brand_id = filter_var($brand, FILTER_SANITIZE_STRING);
+                $brand_id = $brand;
                 $term = get_term_by('ID', $brand, 'pa_brand-name');
 
                 $save_brands[] = [
