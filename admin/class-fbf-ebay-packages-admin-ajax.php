@@ -57,7 +57,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
     {
         global $wpdb;
         $data = [];
-        $search = filter_var($_REQUEST['q'], FILTER_SANITIZE_STRING);
+        $search = strip_tags($_REQUEST['q']);
         $table = $wpdb->prefix . 'fbf_vehicle_manufacturers';
 
         $q = "SELECT * FROM {$table} WHERE enabled = %s";
@@ -270,7 +270,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
 
         if(isset($_REQUEST['brands']) && is_array($_REQUEST['brands'])){
             foreach($_REQUEST['brands'] as $brand){
-                $brand_id = filter_var($brand, FILTER_SANITIZE_STRING);
+                $brand_id = strip_tags($brand);
                 $term = get_term_by('ID', $brand, 'pa_brand-name');
 
                 $save_brands[] = [
@@ -378,7 +378,11 @@ class Fbf_Ebay_Packages_Admin_Ajax
                 foreach($manufacturers as $manufacturer){
                     $data = $api->get_chasis($manufacturer['ID']);
                     //$manufacturer_saved_chassis = $saved_chassis[$manufacturer['ID']];
-                    $all_manufacturer_saved_chassis = array_column($all_saved_chassis[$manufacturer['ID']], 'id');
+	                if(isset($all_saved_chassis[$manufacturer['ID']])){
+		                $all_manufacturer_saved_chassis = array_column($all_saved_chassis[$manufacturer['ID']], 'id');
+	                }else{
+						$all_manufacturer_saved_chassis = [];
+	                }
 
                     if(!empty($data)&&!array_key_exists('error', $data)){
                         $all_chassis = [];
@@ -860,6 +864,8 @@ class Fbf_Ebay_Packages_Admin_Ajax
                     }
                 }
             }
+
+
 
             $post__in = array_keys($listings);
             // Now run WP_Query to filter against the brands
@@ -1396,6 +1402,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $post_skus = [];
         $post_lookup = [];
         $listings_table = $wpdb->prefix . 'fbf_ebay_packages_listings';
+        $skus_table = $wpdb->prefix . 'fbf_ebay_packages_skus';
 
         // Errors
         $status = 'success';
@@ -1920,7 +1927,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         $name = null;
         $selected = null;
         $data = json_decode(stripslashes($_REQUEST['data']));
-        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+        $chassis_id = strip_tags($_REQUEST['chassis_id']);
 
         if(property_exists($data, 'next_level')){
             $level = $data->next_level;
@@ -2002,7 +2009,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         global $wpdb;
         $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
         $data = json_decode(stripslashes($_REQUEST['data']));
-        $chassis_id = filter_var($_REQUEST['chassis_id'], FILTER_SANITIZE_STRING);
+        $chassis_id = strip_tags($_REQUEST['chassis_id']);
 
         $payloads = [];
 
@@ -2110,7 +2117,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
         global $wpdb;
         $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
-        $id = filter_var($_REQUEST['id'], FILTER_SANITIZE_STRING);
+        $id = strip_tags($_REQUEST['id']);
         $q = $wpdb->prepare("SELECT chassis_id
             FROM {$compatibility_table}
             WHERE id = %s", $id);
@@ -2151,7 +2158,7 @@ class Fbf_Ebay_Packages_Admin_Ajax
         check_ajax_referer($this->plugin_name, 'ajax_nonce');
         global $wpdb;
         $compatibility_table = $wpdb->prefix . 'fbf_ebay_packages_compatibility';
-        $id = filter_var($_REQUEST['id'], FILTER_SANITIZE_STRING);
+        $id = strip_tags($_REQUEST['id']);
 
         $d = $wpdb->delete(
             $compatibility_table,

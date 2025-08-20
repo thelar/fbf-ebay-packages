@@ -200,7 +200,7 @@ class Fbf_Ebay_Packages_List_Item
                         $offer_id = json_decode($offer_create['response']);
 
                         // Create the offer here
-                        $this->insert_or_update_offer($offer_id, $offer_payload);
+                        $this->insert_or_update_offer($offer_id->offerId, $offer_payload);
 
                         // Created
                         $this->update_offer_id($offer_id->offerId, $result->id, $offer_payload);
@@ -684,19 +684,19 @@ class Fbf_Ebay_Packages_List_Item
 
         if($this->get_html_listing($qty, $product->get_id(), $listing_id)){
             $listing_description = $this->get_html_listing($qty, $product->get_id(), $listing_id);
-        }else{
-            if($type==='tyre'){
-                $listing_description = $this->tyre_description;
-                if(floor(($product->get_stock_quantity() - $this->buffer) / $qty) > 4){
-                    $limitPerBuyer = 4;
-                }else{
-                    $limitPerBuyer = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
-                }
-            }else if($type==='wheel'){
-                $listing_description = $this->wheel_description;
-                $limitPerBuyer = 1;
-            }
         }
+
+	    if($type==='tyre'){
+		    $listing_description = $this->tyre_description;
+		    if(floor(($product->get_stock_quantity() - $this->buffer) / $qty) > 4){
+			    $limitPerBuyer = 4;
+		    }else{
+			    $limitPerBuyer = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
+		    }
+	    }else if($type==='wheel'){
+		    $listing_description = $this->wheel_description;
+		    $limitPerBuyer = 1;
+	    }
 
         $vat = ($reg_price/100) * 20;
         //$reg_price = round(($reg_price + $vat) * $qty, 2);
@@ -751,7 +751,7 @@ class Fbf_Ebay_Packages_List_Item
         $r = $wpdb->get_results($q, ARRAY_A);
         if($r!==false&&!empty($r)){
             foreach($r as $result){
-                $payload = unserialize($result['payload']);
+                $payload = $result['payload']?unserialize($result['payload']):[];
                 $props = [
                     'compatibilityProperties' => $payload
                 ];
