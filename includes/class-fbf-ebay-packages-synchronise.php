@@ -7,7 +7,7 @@ class Fbf_Ebay_Packages_Synchronise
     private $products = []; // This is somewhere to store WC products that we need to retrieve quickly
     private $buffer = 4;
     private $packs = [4]; // Could be [1, 2, 4] or [1, 4] depends on what we want to list!
-    private $limit = null; // limit the amount of items we are creating during testing
+    private $limit = 4; // limit the amount of items we are creating during testing
     private $use_test_image = false; // switch to false to use actual thumbnails
     private $test_image = 'https://4x4tyres.co.uk/app/uploads/2019/12/Cooper_Discoverer_AT3_4S-1000x1000.png';
     private $synch_items = [];
