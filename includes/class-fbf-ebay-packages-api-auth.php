@@ -33,7 +33,7 @@ class Fbf_Ebay_Packages_Api_Auth
         if($this->has_valid_code($fh)===false){
             // Check to see if the user consent code exists - if not initiate User Consent
             if(isset($_REQUEST['code'])){
-                $code = filter_var($_REQUEST['code'], FILTER_SANITIZE_STRING);
+                $code = strip_tags($_REQUEST['code']);
             }
 
 
@@ -106,6 +106,9 @@ class Fbf_Ebay_Packages_Api_Auth
                 return true;
             }else{
                 // Access token is expired so check refresh token
+	            if(!isset($a['refresh_token_expires'])){
+					$a['refresh_token_expires'] = $now + $a['refresh_token_expires_in'];
+	            }
                 if($a['refresh_token_expires'] > $now){
                     // Refresh token is valid so lets use it to get a new access token here
                     $token = $this->mint_token($a['refresh_token']);
