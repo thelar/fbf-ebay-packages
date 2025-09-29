@@ -222,6 +222,18 @@ class Fbf_Ebay_Packages_List_Item
                         // Unset the listingDescription in $offer_payload so we don't include it in the log
                         unset($offer_payload['listingDescription']);
 
+						if(isset($offer_create->errors)){
+							foreach($offer_create->errors as $error){
+								if($error->errorId==25002){
+									foreach($error->parameters as $parameter){
+										if($parameter->name==='offerId'){
+											trigger_error('OfferID: ' . $parameter->value . ' already exists', E_USER_WARNING);
+										}
+									}
+								}
+							}
+						}
+
                         $this->logs[] = $this->log($result->id, 'create_offer', [
                             'status' => 'error',
                             'action' => 'none required',
