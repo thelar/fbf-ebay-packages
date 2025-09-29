@@ -223,10 +223,10 @@ class Fbf_Ebay_Packages_List_Item
                         unset($offer_payload['listingDescription']);
 
 	                    trigger_error('$offer_create returned an error', E_USER_WARNING);
-	                    if(isset($offer_create->errors)){
-							trigger_error('$offer_create->errors exists', E_USER_WARNING);
-		                    foreach($offer_create->errors as $error){
-								trigger_error('$error->errorId = ' . $error->errorId, E_USER_WARNING);
+	                    if(isset($offer_create['response']->errors)){
+							trigger_error('$offer_create[\'response\']->errors exists', E_USER_WARNING);
+		                    foreach($offer_create['response']->errors as $error){
+								trigger_error('$error[\'response\']->errorId = ' . $error->errorId, E_USER_WARNING);
 								if($error->errorId==25002){
 									foreach($error->parameters as $parameter){
 										if($parameter->name==='offerId'){
