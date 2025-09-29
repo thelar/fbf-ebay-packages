@@ -102,12 +102,15 @@ class Fbf_Ebay_Packages_List_Item
                 ]);
             }
 
-            //$inv_item_created = true;
+            $inv_item_created = true;
 
             //Handle the compatibility
             if(isset($inv_item_created) && $inv_item_created===true){
-                if($compatibilty_payload = $this->compatibility_payload($result->id)){
-                    if($compatibilty_payload && !$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
+				trigger_error('$inv_item_created is set and is true');
+	            if($compatibilty_payload = $this->compatibility_payload($result->id)){
+	                trigger_error('$compatibility_payload is:' . $compatibilty_payload);
+	                if($compatibilty_payload && !$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
+		                trigger_error('$compatibility_payload is set and is NOT the same as listing_compatibility');
                         $create_or_update_compatibility = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/'.$sku.'/product_compatibility', 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], $compatibilty_payload);
                         if($create_or_update_compatibility['status']==='success' && (
                             $create_or_update_compatibility['response_code']===200 ||
@@ -129,7 +132,8 @@ class Fbf_Ebay_Packages_List_Item
                             ]);
                         }
                     }else{
-                        if($this->log_everything===true){ // Don't bother to log if log_everything is false
+		                trigger_error('$compatibility_payload is set and IS the same as listing_compatibility');
+		                if($this->log_everything===true){ // Don't bother to log if log_everything is false
                             $this->logs[] = $this->log($result->id, 'product_compat', [
                                 'status' => 'success',
                                 'action' => 'none required',
