@@ -110,7 +110,8 @@ class Fbf_Ebay_Packages_List_Item
 				trigger_error('$inv_item_created is set and is true', E_USER_WARNING);
 	            if($compatibilty_payload = $this->compatibility_payload($result->id)){
 	                trigger_error('$compatibility_payload is:' . $compatibilty_payload, E_USER_WARNING);
-	                if($compatibilty_payload && !$this->is_listing_compatibility_same($compatibilty_payload, $result->id)){
+					$force_compatibility_update = true;
+	                if($force_compatibility_update || ($compatibilty_payload && !$this->is_listing_compatibility_same($compatibilty_payload, $result->id))){
 		                trigger_error('$compatibility_payload is set and is NOT the same as listing_compatibility', E_USER_WARNING);
                         $create_or_update_compatibility = $this->api('https://api.ebay.com/sell/inventory/v1/inventory_item/'.$sku.'/product_compatibility', 'PUT', ['Authorization: Bearer ' . $token['token'], 'Content-Type:application/json', 'Content-Language:en-GB'], $compatibilty_payload);
                         if($create_or_update_compatibility['status']==='success' && (
