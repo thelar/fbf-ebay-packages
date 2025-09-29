@@ -233,14 +233,15 @@ class Fbf_Ebay_Packages_List_Item
 									foreach($error->parameters as $parameter){
 										if($parameter->name==='offerId'){
 											trigger_error('OfferID: ' . $parameter->value . ' already exists', E_USER_WARNING);
+											// Created
+											$this->update_offer_id($parameter->value, $result->id, $offer_payload);
+											$publish_offer_id = $parameter->value;
+											$offer_status = 'UNPUBLISHED';
 										}
 									}
 								}
 							}
-						}else{
-		                    trigger_error('$offer_create[\'response\']->errors is not set', E_USER_WARNING);
-		                    trigger_error('$offer_create: ' . json_encode($offer_create_a->errors), E_USER_WARNING);
-	                    }
+						}
 
                         $this->logs[] = $this->log($result->id, 'create_offer', [
                             'status' => 'error',
