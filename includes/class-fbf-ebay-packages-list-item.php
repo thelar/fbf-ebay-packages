@@ -222,7 +222,7 @@ class Fbf_Ebay_Packages_List_Item
                         // Unset the listingDescription in $offer_payload so we don't include it in the log
                         unset($offer_payload['listingDescription']);
 
-						$offer_create_a = json_decode($offer_create['response']);
+						/*$offer_create_a = json_decode($offer_create['response']);
 
 	                    trigger_error('$offer_create returned an error', E_USER_WARNING);
 	                    if(isset($offer_create_a->errors)){
@@ -241,7 +241,7 @@ class Fbf_Ebay_Packages_List_Item
 									}
 								}
 							}
-						}
+						}*/
 
                         $this->logs[] = $this->log($result->id, 'create_offer', [
                             'status' => 'error',
