@@ -105,7 +105,8 @@ class Fbf_Ebay_Packages_List_Item
             $inv_item_created = true;
 
             //Handle the compatibility
-            if(isset($inv_item_created) && $inv_item_created===true){
+	        trigger_error('Handle compat');
+	        if(isset($inv_item_created) && $inv_item_created===true){
 				trigger_error('$inv_item_created is set and is true');
 	            if($compatibilty_payload = $this->compatibility_payload($result->id)){
 	                trigger_error('$compatibility_payload is:' . $compatibilty_payload);
