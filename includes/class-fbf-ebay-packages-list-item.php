@@ -222,6 +222,7 @@ class Fbf_Ebay_Packages_List_Item
                         // Unset the listingDescription in $offer_payload so we don't include it in the log
                         unset($offer_payload['listingDescription']);
 
+	                    trigger_error('$offer_create returned an error', E_USER_WARNING);
 						if(isset($offer_create->errors)){
 							foreach($offer_create->errors as $error){
 								if($error->errorId==25002){
