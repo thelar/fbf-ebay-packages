@@ -235,7 +235,9 @@ class Fbf_Ebay_Packages_List_Item
 									}
 								}
 							}
-						}
+						}else{
+		                    trigger_error('$offer_create[\'response\']->errors is not set', E_USER_WARNING);
+	                    }
 
                         $this->logs[] = $this->log($result->id, 'create_offer', [
                             'status' => 'error',
