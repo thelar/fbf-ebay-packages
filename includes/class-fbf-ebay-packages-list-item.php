@@ -102,7 +102,7 @@ class Fbf_Ebay_Packages_List_Item
                 ]);
             }
 
-            //$inv_item_created = true;
+            $inv_item_created = true;
 
             //Handle the compatibility
 	        //trigger_error('Handle compat', E_USER_WARNING);
