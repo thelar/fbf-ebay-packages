@@ -711,17 +711,21 @@ class Fbf_Ebay_Packages_List_Item
 
         if($this->get_html_listing($qty, $product->get_id(), $listing_id)){
             $listing_description = $this->get_html_listing($qty, $product->get_id(), $listing_id);
+        }else{
+	        if($type==='tyre'){
+		        $listing_description = $this->tyre_description;
+	        }else if($type==='wheel'){
+		        $listing_description = $this->wheel_description;
+	        }
         }
 
 	    if($type==='tyre'){
-		    $listing_description = $this->tyre_description;
 		    if(floor(($product->get_stock_quantity() - $this->buffer) / $qty) > 4){
 			    $limitPerBuyer = 4;
 		    }else{
 			    $limitPerBuyer = max(floor(($product->get_stock_quantity() - $this->buffer) / $qty), 0);
 		    }
 	    }else if($type==='wheel'){
-		    $listing_description = $this->wheel_description;
 		    $limitPerBuyer = 1;
 	    }
 
