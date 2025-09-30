@@ -102,7 +102,7 @@ class Fbf_Ebay_Packages_List_Item
                 ]);
             }
 
-            $inv_item_created = true;
+            //$inv_item_created = true;
 
             //Handle the compatibility
 	        //trigger_error('Handle compat', E_USER_WARNING);
@@ -156,7 +156,7 @@ class Fbf_Ebay_Packages_List_Item
                     $new_update_required = $this->is_offer_update_required($result->offer_id, $product, $qty);
 
                     // Force an update
-                    $new_update_required = true;
+                    //$new_update_required = true;
 
                     if ($new_update_required) {
                         // Update the offer
