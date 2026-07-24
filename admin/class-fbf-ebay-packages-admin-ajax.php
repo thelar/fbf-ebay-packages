@@ -2423,13 +2423,16 @@ class Fbf_Ebay_Packages_Admin_Ajax
     {
         $info = [];
         global $wpdb;
+	    require_once plugin_dir_path(WP_PLUGIN_DIR . '/fbf-wheel-search/fbf-wheel-search.php') . 'includes/class-fbf-wheel-search-boughto-api.php';
+	    $boughto_api = new \Fbf_Wheel_Search_Boughto_Api('fbf_wheel_search', 'fbf-wheel-search');
         $post_ids_table = $wpdb->prefix . 'fbf_ebay_packages_package_post_ids';
         $q = $wpdb->prepare("SELECT * FROM {$post_ids_table} WHERE listing_id = %s", $id);
         $r = $wpdb->get_row($q, ARRAY_A);
         if($r){
             $data = unserialize($r['post_ids']);
             $key = "boughto_chassis_{$data['chassis_id']}";
-            $transient = get_transient($key);
+            //$transient = get_transient($key);
+	        $transient = $boughto_api->get_boughto_data($key);
             $wheel = wc_get_product($data['wheel_id']);
             $wheel_name = $wheel->get_title();
             $wheel_url = $wheel->get_permalink();
