@@ -1023,9 +1023,9 @@ class Fbf_Ebay_Packages_Admin {
 
     public function tyre_schedule_sync_meta_box()
     {
-        $hourly_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
-        $schedule = wp_get_schedule($hourly_hook);
-        $next_schedule = wp_next_scheduled($hourly_hook);
+        $daily_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK;
+        $schedule = wp_get_schedule($daily_hook);
+        $next_schedule = wp_next_scheduled($daily_hook);
         $date = new DateTime();
         $timezone = new DateTimeZone("Europe/London");
         $date->setTimezone($timezone);
@@ -1065,9 +1065,9 @@ class Fbf_Ebay_Packages_Admin {
 
     public function wheel_schedule_sync_meta_box()
     {
-        $hourly_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
-        $schedule = wp_get_schedule($hourly_hook);
-        $next_schedule = wp_next_scheduled($hourly_hook);
+        $daily_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK;
+        $schedule = wp_get_schedule($daily_hook);
+        $next_schedule = wp_next_scheduled($daily_hook);
         $date = new DateTime();
         $timezone = new DateTimeZone("Europe/London");
         $date->setTimezone($timezone);
@@ -1107,9 +1107,9 @@ class Fbf_Ebay_Packages_Admin {
 
     public function package_schedule_sync_meta_box()
     {
-        $hourly_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
-        $schedule = wp_get_schedule($hourly_hook);
-        $next_schedule = wp_next_scheduled($hourly_hook);
+        $daily_hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK;
+        $schedule = wp_get_schedule($daily_hook);
+        $next_schedule = wp_next_scheduled($daily_hook);
         $date = new DateTime();
         $timezone = new DateTimeZone("Europe/London");
         $date->setTimezone($timezone);
