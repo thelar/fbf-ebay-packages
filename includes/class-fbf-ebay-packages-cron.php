@@ -25,8 +25,8 @@ class Fbf_Ebay_Packages_Cron {
      * Check if already scheduled, and schedule if not.
      */
     public static function schedule() {
-        if ( ! self::next_scheduled_hourly() ) {
-            self::hourly_schedule();
+        if ( ! self::next_scheduled_daily() ) {
+            self::daily_schedule();
         }
     }
     /**

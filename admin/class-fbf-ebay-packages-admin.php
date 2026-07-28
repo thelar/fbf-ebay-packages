@@ -150,7 +150,7 @@ class Fbf_Ebay_Packages_Admin {
 	}
 
     /**
-     * Example daily event.
+     * Example hourly event.
      *
      * @param null $h the handle
      * @since 1.0.0
@@ -166,6 +166,29 @@ class Fbf_Ebay_Packages_Admin {
                 $hook = $h;
             }else{
                 $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK;
+            }
+            $i = self::synchronise($hook, 'tyres and wheels');
+            // TODO: handle times when maybe the logging fails
+        }
+    }
+
+    /**
+     * Example daily event.
+     *
+     * @param null $h the handle
+     * @since 1.0.0
+     */
+    public function run_daily_event( $h = null ) {
+        // Do something every hour
+        // only run the sync if it's on the live site!!
+        $allowed_hosts = [
+                '4x4tyres.co.uk'
+        ];
+        if (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], $allowed_hosts)) {
+            if(!is_null($h)){
+                $hook = $h;
+            }else{
+                $hook = Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK;
             }
             $i = self::synchronise($hook, 'tyres and wheels');
             // TODO: handle times when maybe the logging fails

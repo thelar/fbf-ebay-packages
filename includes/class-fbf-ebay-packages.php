@@ -177,7 +177,8 @@ class Fbf_Ebay_Packages {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
 		// CRON Hook
-        $this->loader->add_action( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK, $plugin_admin, 'run_hourly_event' );
+        //$this->loader->add_action( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK, $plugin_admin, 'run_hourly_event' );
+        $this->loader->add_action( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK, $plugin_admin, 'run_daily_event' );
 
         $this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'fbf_ebay_packages_admin_meta_box');
 
