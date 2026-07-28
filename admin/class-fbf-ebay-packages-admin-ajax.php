@@ -1635,9 +1635,9 @@ class Fbf_Ebay_Packages_Admin_Ajax
     public function fbf_ebay_packages_schedule()
     {
         $resp = [];
-        $next = wp_next_scheduled( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK );
+        $next = wp_next_scheduled( Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK );
         if(!$next){
-            $reschedule = wp_schedule_event( time(), 'hourly', Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_HOURLY_HOOK );
+            $reschedule = wp_schedule_event( time(), 'daily', Fbf_Ebay_Packages_Cron::FBF_EBAY_PACKAGES_EVENT_DAILY_HOOK );
             $resp['reschedule'] = $reschedule;
         }else{
             $resp['next'] = $next;
