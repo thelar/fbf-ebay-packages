@@ -72,16 +72,15 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
             foreach($orders as $order){
                 // 1. Is there an order in Woo for this eBay Order
                 $ebay_order_id = $order->orderId;
-                $args = [
-                    'post_type' => 'shop_order',
-                    'posts_per_page' => -1,
-                    'post_status' => 'any',
+                $woo_order_id = wc_get_orders([
+                    'limit' => 1,
+                    'status' => 'any',
+                    'type' => 'shop_order',
                     'meta_key' => '_ebay_order_number',
                     'meta_value' => $ebay_order_id,
                     'meta_compare' => '=',
-                    'fields' => 'ids',
-                ];
-                $woo_order_id = get_posts($args);
+                    'return' => 'ids',
+                ]);
 
                 if(empty($woo_order_id)){
                     // Woo Order does not exist for eBay order so need to create it here
@@ -105,7 +104,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
 
         // Add the eBay order number as meta
         $ebay_id = $order->orderId;
-        update_post_meta($woo_order->get_id(), '_ebay_order_number', $ebay_id);
+        $woo_order->update_meta_data('_ebay_order_number', $ebay_id);
 
         $line_items = [];
         foreach($order->lineItems as $lineItem){
@@ -114,7 +113,7 @@ class Fbf_Ebay_Packages_Order_Sync extends Fbf_Ebay_Packages_Admin
                 'qty' => $lineItem->quantity,
             ];
         }
-        update_post_meta($woo_order->get_id(), '_ebay_order_line_items', $line_items);
+        $woo_order->update_meta_data('_ebay_order_line_items', $line_items);
 
         // Contact details
         $names = explode(' ', $order->buyer->buyerRegistrationAddress->fullName);
